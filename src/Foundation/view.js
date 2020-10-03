@@ -6,8 +6,14 @@ class BaseView {
         this.textColor = $color("primaryText", "secondaryText")
     }
 
+    init() { }
+
     setController(controller) {
         this.controller = controller
+    }
+
+    setDataCenter(dataCenter) {
+        this.dataCenter = dataCenter
     }
 
     /**

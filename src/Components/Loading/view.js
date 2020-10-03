@@ -1,9 +1,8 @@
 const BaseView = require("../../Foundation/view")
 
 class View extends BaseView {
-    constructor(kernel) {
-        super(kernel)
-        this.id = "base-ui-prepare"
+    init() {
+        this.dataCenter.set("id", "base-ui-prepare")
     }
 
     /**
@@ -18,7 +17,7 @@ class View extends BaseView {
             views: [{
                 type: "view",
                 props: {
-                    id: this.id
+                    id: this.dataCenter.get("id")
                 },
                 views: [{
                     type: "spinner",

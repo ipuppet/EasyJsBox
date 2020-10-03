@@ -1,26 +1,23 @@
 const BaseView = require("../../Foundation/view")
 
 class View extends BaseView {
-    constructor(kernel) {
-        super(kernel)
-        this.pageIdPrefix = "page-"
-    }
-
-    setPages(pages) {
-        this.pages = pages
+    init() {
+        this.dataCenter.set("selectedPage", 0)
+        this.dataCenter.set("pageIdPrefix", "page-")
     }
 
     /**
      * 创建一个页面
-     * @param {*} views 页面内容
-     * @param {*} index 页面索引，需要和菜单对应
+     * @param {Array} views 页面内容
+     * @param {Number} index 页面索引，需要和菜单对应
+     * @param {Boolean} isHorizontalSafeArea 是否水平方向自动裁剪到安全距离
      */
     creator(views, index, isHorizontalSafeArea = true) {
         return {
             type: "view",
             props: {
-                id: `${this.prefix}${index}`,
-                hidden: this.selectedPage !== index,
+                id: `${this.dataCenter.get("pageIdPrefix")}${index}`,
+                hidden: this.dataCenter.get("selectedPage") !== index,
                 clipsToBounds: true
             },
             layout: (make, view) => {
@@ -35,12 +32,12 @@ class View extends BaseView {
         }
     }
 
-    view() {
+    getView() {
         return {
             type: "view",
             props: { clipsToBounds: true },
             layout: $layout.fill,
-            views: this.pages
+            views: this.dataCenter.get("pages")
         }
     }
 }

@@ -3,8 +3,14 @@ class BaseController {
         this.kernel = kernel
     }
 
+    init() { }
+
     setView(view) {
         this.view = view
+    }
+
+    setDataCenter(dataCenter) {
+        this.dataCenter = dataCenter
     }
 }
 

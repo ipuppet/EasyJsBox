@@ -1,15 +1,14 @@
 const BaseView = require("../../Foundation/view")
 
 class View extends BaseView {
-    constructor(kernel) {
-        super(kernel)
-        this.itemIdPrefix = "menu-item-"
-        this.id = "menu"
+    init() {
+        this.dataCenter.set("itemIdPrefix", "menu-item-")
+        this.dataCenter.set("id", "menu")
         this.selected = 0 // 当前菜单
         this.menuLayout = { // menu layout
             menuItem: (make, view) => {
                 make.size.equalTo(50)
-                let length = this.menus.length
+                let length = this.dataCenter.get("menus").length
                 let spacing = (this.getMenuWidth() - length * 50) / (length + 1)
                 if (view.prev) {
                     make.left.equalTo(view.prev.right).offset(spacing)
@@ -31,7 +30,7 @@ class View extends BaseView {
                     make.bottom.equalTo(0)
                 }
                 $("menu").cornerRadius = isLargeScreen ? 10 : 0
-                if ($(`${this.itemIdPrefix}canvas`)) $(`${this.itemIdPrefix}canvas`).hidden = isLargeScreen
+                if ($(`${this.dataCenter.get("itemIdPrefix")}canvas`)) $(`${this.dataCenter.get("itemIdPrefix")}canvas`).hidden = isLargeScreen
             }
         }
     }
@@ -45,10 +44,6 @@ class View extends BaseView {
         this.controller.callback(from, to)
     }
 
-    setMenus(menus) {
-        this.menus = menus
-    }
-
     getMenuWidth() {
         return this.isLargeScreen() ? 500 : $device.info.screen.width
     }
@@ -58,41 +53,41 @@ class View extends BaseView {
      */
     menuItemTemplate() {
         let views = []
-        for (let i = 0; i < this.menus.length; i++) {
+        for (let i = 0; i < this.dataCenter.get("menus").length; i++) {
             // 整理menus 格式化单个icon和多个icon的menu
-            if (typeof this.menus[i].icon !== "object") {
-                this.menus[i].icon = [this.menus[i].icon, this.menus[i].icon]
-            } else if (this.menus[i].icon.length === 1) {
-                this.menus[i].icon = [this.menus[i].icon[0], this.menus[i].icon[0]]
+            if (typeof this.dataCenter.get("menus")[i].icon !== "object") {
+                this.dataCenter.get("menus")[i].icon = [this.dataCenter.get("menus")[i].icon, this.dataCenter.get("menus")[i].icon]
+            } else if (this.dataCenter.get("menus")[i].icon.length === 1) {
+                this.dataCenter.get("menus")[i].icon = [this.dataCenter.get("menus")[i].icon[0], this.dataCenter.get("menus")[i].icon[0]]
             }
             // menu模板
             let menu = {
                 info: {
                     index: i,
                     icon: {
-                        id: `${this.itemIdPrefix}icon-${i}`,
-                        icon: this.menus[i].icon,
+                        id: `${this.dataCenter.get("itemIdPrefix")}icon-${i}`,
+                        icon: this.dataCenter.get("menus")[i].icon,
                         tintColor: ["lightGray", "systemLink"]
                     },
                     title: {
-                        id: `${this.itemIdPrefix}title-${i}`,
+                        id: `${this.dataCenter.get("itemIdPrefix")}title-${i}`,
                         textColor: ["lightGray", "systemLink"]
                     }
                 },
                 icon: {
-                    id: `${this.itemIdPrefix}icon-${i}`,
-                    image: $image(this.menus[i].icon[0]),
+                    id: `${this.dataCenter.get("itemIdPrefix")}icon-${i}`,
+                    image: $image(this.dataCenter.get("menus")[i].icon[0]),
                     tintColor: $color("lightGray")
                 },
                 title: {
-                    id: `${this.itemIdPrefix}title-${i}`,
-                    text: this.menus[i].title,
+                    id: `${this.dataCenter.get("itemIdPrefix")}title-${i}`,
+                    text: this.dataCenter.get("menus")[i].title,
                     textColor: $color("lightGray")
                 }
             }
             // 当前菜单
             if (this.selected === i) {
-                menu.icon.image = $image(this.menus[i].icon[1])
+                menu.icon.image = $image(this.dataCenter.get("menus")[i].icon[1])
                 menu.icon.tintColor = $color("systemLink")
                 menu.title.textColor = $color("systemLink")
             }
@@ -100,7 +95,7 @@ class View extends BaseView {
                 type: "view",
                 props: {
                     info: menu.info,
-                    id: `${this.itemIdPrefix}${i}`
+                    id: `${this.dataCenter.get("itemIdPrefix")}${i}`
                 },
                 views: [
                     {
@@ -142,12 +137,12 @@ class View extends BaseView {
                             }
                         })
                         // 之前的图标
-                        let data = $(`${this.itemIdPrefix}${this.selected}`).info
+                        let data = $(`${this.dataCenter.get("itemIdPrefix")}${this.selected}`).info
                         let icon = $(data.icon.id)
                         icon.image = $image(data.icon.icon[0])
                         icon.tintColor = $color(data.icon.tintColor[0])
                         $(data.title.id).textColor = $color(data.title.textColor[0])
-                        // 触发控制器
+                        // 触发器
                         this.change(this.selected, sender.info.index)
                         // 更新selected值
                         this.selected = sender.info.index
@@ -158,7 +153,7 @@ class View extends BaseView {
         return views
     }
 
-    view() {
+    getView() {
         return {
             type: "view",
             layout: this.menuLayout.menuBar,
@@ -166,7 +161,7 @@ class View extends BaseView {
                 {
                     type: "blur",
                     props: {
-                        id: this.id,
+                        id: this.dataCenter.get("id"),
                         style: this.blurStyle,
                         cornerRadius: this.isLargeScreen() ? 10 : 0
                     },
@@ -176,7 +171,7 @@ class View extends BaseView {
                 {// 菜单栏上方灰色横线
                     type: "canvas",
                     props: {
-                        id: `${this.itemIdPrefix}canvas`,
+                        id: `${this.dataCenter.get("itemIdPrefix")}canvas`,
                         hidden: this.isLargeScreen()
                     },
                     layout: (make, view) => {

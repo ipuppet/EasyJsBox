@@ -8,6 +8,10 @@ class Controller extends BaseController {
     setCallback(callback) {
         this.callback = callback
     }
+
+    setMenus(menus) {
+        this.dataCenter.set("menus", menus)
+    }
 }
 
 module.exports = Controller

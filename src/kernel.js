@@ -1,3 +1,5 @@
+const DataCenter = require("./Foundation/data-center")
+
 class Kernel {
     constructor() {
         this.path = {
@@ -13,13 +15,24 @@ class Kernel {
     _registerComponent(component) {
         let View = require(`${this.path.components}${component}/view`)
         let Controller = require(`${this.path.components}${component}/controller`)
+        // 新实例
         let view = new View(this)
         let controller = new Controller(this)
+        // 相互注入
         view.setController(controller)
         controller.setView(view)
+        // 加载数据中心
+        let dataCenter = new DataCenter()
+        view.setDataCenter(dataCenter)
+        controller.setDataCenter(dataCenter)
+        // 初始化
+        view.init()
+        controller.init()
+        // 注册到kernel
         this.components[component] = {
             view: view,
-            controller: controller
+            controller: controller,
+            dataCenter: dataCenter
         }
         return this.components[component]
     }
@@ -46,7 +59,7 @@ class Kernel {
      * 渲染页面
      * @return {CallableFunction} 返回值为匿名函数，调用该函数开始渲染页面
      */
-    render() {
+    render(pages, menus) {
         this._registerComponents([
             "Loading",
             "Menu",
@@ -54,14 +67,15 @@ class Kernel {
         ])
         // 注入menu控制器
         this.components.Menu.controller.setCallback((from, to) => {
-            $(`${this.components.Page.view.pageIdPrefix}${from}`).hidden = false
-            $(`${this.components.Page.view.pageIdPrefix}${to}`).hidden = true
+            $(`${this.components.Page.dataCenter.get("pageIdPrefix")}${from}`).hidden = true
+            $(`${this.components.Page.dataCenter.get("pageIdPrefix")}${to}`).hidden = false
         })
         // 首页加载动画
         this.components.Loading.controller.start()
-        return (menus, pages) => {
-            this.components.Page.view.setPages(pages)
-            this.components.Menu.view.setMenus(menus)
+        // 注入页面和菜单
+        this.components.Page.controller.setPages(pages)
+        this.components.Menu.controller.setMenus(menus)
+        return () => {
             $ui.render({
                 type: "view",
                 props: {
@@ -70,8 +84,8 @@ class Kernel {
                 },
                 layout: $layout.fill,
                 views: [
-                    this.components.Page.view.view(),
-                    this.components.Menu.view.view()
+                    this.components.Page.view.getView(),
+                    this.components.Menu.view.getView()
                 ],
                 events: {
                     ready: () => {

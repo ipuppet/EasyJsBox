@@ -6,7 +6,7 @@ class Controller extends BaseController {
     }
 
     end() {
-        $(this.view.id).remove()
+        $(this.dataCenter.get("id")).remove()
     }
 }
 

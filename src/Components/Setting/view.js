@@ -1,8 +1,7 @@
 const BaseView = require("../../Foundation/view")
 
 class View extends BaseView {
-    constructor(kernel) {
-        super(kernel)
+    init() {
         this.titleSize = 35
         this.titleSizeMax = 40
         this.titleOffset = 50
