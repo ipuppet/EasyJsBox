@@ -9,7 +9,7 @@ class Controller extends BaseController {
         this.view.setInfo(info)
         return this
     }
-    
+
     loadConfig() {
         this.setting = {}
         let user = {}
