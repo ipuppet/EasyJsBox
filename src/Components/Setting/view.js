@@ -1,8 +1,8 @@
-const UIBase = require("../../Foundation/ui-base")
+const BaseView = require("../../Foundation/view")
 
-class View extends UIBase {
-    constructor(controller) {
-        this.controller = controller
+class View extends BaseView {
+    constructor(kernel) {
+        super(kernel)
         this.titleSize = 35
         this.titleSizeMax = 40
         this.titleOffset = 50

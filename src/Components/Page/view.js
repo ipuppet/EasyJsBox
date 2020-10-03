@@ -1,13 +1,13 @@
-const UIBase = require("../../Foundation/ui-base")
+const BaseView = require("../../Foundation/view")
 
-class View extends UIBase {
-    constructor(controller) {
-        this.controller = controller
+class View extends BaseView {
+    constructor(kernel) {
+        super(kernel)
         this.pageIdPrefix = "page-"
     }
 
-    setViews(views) {
-        this.views = views
+    setPages(pages) {
+        this.pages = pages
     }
 
     /**
@@ -40,7 +40,7 @@ class View extends UIBase {
             type: "view",
             props: { clipsToBounds: true },
             layout: $layout.fill,
-            views: this.views
+            views: this.pages
         }
     }
 }

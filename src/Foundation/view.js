@@ -1,8 +1,13 @@
-class UIBase {
-    constructor() {
+class BaseView {
+    constructor(kernel) {
+        this.kernel = kernel
         // 通用样式
         this.blurStyle = $blurStyle.thinMaterial
         this.textColor = $color("primaryText", "secondaryText")
+    }
+
+    setController(controller) {
+        this.controller = controller
     }
 
     /**
@@ -234,4 +239,4 @@ class UIBase {
     }
 }
 
-module.exports = UIBase
+module.exports = BaseView

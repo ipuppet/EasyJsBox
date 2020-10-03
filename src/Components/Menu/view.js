@@ -1,8 +1,8 @@
-const UIBase = require("../../Foundation/ui-base")
+const BaseView = require("../../Foundation/view")
 
-class View extends UIBase {
-    constructor(controller) {
-        this.controller = controller
+class View extends BaseView {
+    constructor(kernel) {
+        super(kernel)
         this.itemIdPrefix = "menu-item-"
         this.id = "menu"
         this.selected = 0 // 当前菜单
