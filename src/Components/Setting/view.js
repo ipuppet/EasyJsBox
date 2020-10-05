@@ -750,9 +750,10 @@ class View extends BaseView {
                                                 this.dataCenter.get("pop")()
                                             }
                                         },
-                                        layout: make => {
+                                        layout: (make, view) => {
                                             make.left.inset(10)
                                             make.size.equalTo(30)
+                                            make.centerY.equalTo(view.super)
                                         }
                                     },
                                     {
