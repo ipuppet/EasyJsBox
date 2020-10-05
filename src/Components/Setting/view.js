@@ -753,6 +753,7 @@ class View extends BaseView {
                                         layout: (make, view) => {
                                             make.left.inset(10)
                                             make.size.equalTo(30)
+                                            make.top.equalTo(view.super.safeArea)
                                             make.centerY.equalTo(view.super)
                                         }
                                     },
