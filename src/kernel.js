@@ -1,3 +1,5 @@
+const VERSION = "1.0.0"
+
 const DataCenter = require("./Foundation/data-center")
 
 class Kernel {
@@ -112,4 +114,7 @@ class Kernel {
     }
 }
 
-module.exports = Kernel
+module.exports = {
+    Kernel: Kernel,
+    VERSION: VERSION
+}
