@@ -624,6 +624,7 @@ class View extends BaseView {
      * @param {*} events
      */
     standardList(header, footer, data, events = {}) {
+        let indicatorInsetBottom = this.dataCenter.get("secondaryPage") ? 0 : 50
         return [
             {
                 type: "view",
@@ -641,13 +642,17 @@ class View extends BaseView {
                                 style: 2,
                                 separatorInset: $insets(0, 50, 0, 10),
                                 rowHeight: 50,
-                                indicatorInsets: $insets(55, 0, 50, 0),
-                                header: header,
+                                indicatorInsets: $insets(55, 0, indicatorInsetBottom, 0),
+                                header: this.dataCenter.get("secondaryPage") ? {} : header,
                                 footer: footer,
                                 data: data
                             },
                             events: Object.assign({
                                 didScroll: sender => {
+                                    // 全屏显示视图则关闭动画
+                                    if (this.dataCenter.get("secondaryPage")) {
+                                        return
+                                    }
                                     // 下拉放大字体
                                     if (sender.contentOffset.y <= this.topOffset) {
                                         let size = 35 - sender.contentOffset.y * 0.04
@@ -698,7 +703,7 @@ class View extends BaseView {
                         type: "view",
                         props: {
                             id: header.info.id + "-header",
-                            alpha: 0
+                            alpha: this.dataCenter.get("secondaryPage") ? 1 : 0
                         },
                         layout: (make, view) => {
                             make.left.top.right.inset(0)
@@ -732,23 +737,42 @@ class View extends BaseView {
                             {
                                 type: "view",
                                 layout: $layout.fill,
-                                views: [{
-                                    type: "label",
-                                    props: {
-                                        id: header.info.id + "-header-title",
-                                        alpha: 0,
-                                        text: header.info.title,
-                                        font: $font("bold", 17),
-                                        align: $align.center,
-                                        bgcolor: $color("clear"),
-                                        textColor: this.textColor
+                                views: [
+                                    {
+                                        type: "button",
+                                        props: {
+                                            symbol: "chevron.left",
+                                            tintColor: this.textColor,
+                                            bgcolor: $color("clear")
+                                        },
+                                        events: {
+                                            tapped: () => {
+                                                this.dataCenter.get("pop")()
+                                            }
+                                        },
+                                        layout: make => {
+                                            make.left.inset(10)
+                                            make.size.equalTo(30)
+                                        }
                                     },
-                                    layout: (make, view) => {
-                                        make.left.right.inset(0)
-                                        make.top.equalTo(view.super.safeAreaTop)
-                                        make.bottom.equalTo(view.super)
+                                    {
+                                        type: "label",
+                                        props: {
+                                            id: header.info.id + "-header-title",
+                                            alpha: this.dataCenter.get("secondaryPage") ? 1 : 0,
+                                            text: header.info.title,
+                                            font: $font("bold", 17),
+                                            align: $align.center,
+                                            bgcolor: $color("clear"),
+                                            textColor: this.textColor
+                                        },
+                                        layout: (make, view) => {
+                                            make.left.right.inset(0)
+                                            make.top.equalTo(view.super.safeAreaTop)
+                                            make.bottom.equalTo(view.super)
+                                        }
                                     }
-                                }]
+                                ]
                             }
                         ]
                     }

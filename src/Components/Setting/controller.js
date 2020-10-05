@@ -7,7 +7,19 @@ class Controller extends BaseController {
         // 默认读取"/config.json"中的内容
         info = info ? info : JSON.parse($file.read("/config.json"))["info"]
         this.view.setInfo(info)
+        // 是否全屏显示
+        this.dataCenter.set("secondaryPage", false)
         return this
+    }
+
+    /**
+     * 是否全屏显示
+     * @param {Boolean} secondaryPage 
+     */
+    isSecondaryPage(secondaryPage, pop) {
+        this.dataCenter.set("secondaryPage", secondaryPage)
+        if (secondaryPage)
+            this.dataCenter.set("pop", pop)
     }
 
     loadConfig() {
