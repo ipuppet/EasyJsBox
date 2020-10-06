@@ -9,6 +9,8 @@ class Controller extends BaseController {
         this.view.setInfo(info)
         // 是否全屏显示
         this.dataCenter.set("secondaryPage", false)
+        // 注册调色板插件
+        this.kernel.registerPlugin("palette")
         return this
     }
 

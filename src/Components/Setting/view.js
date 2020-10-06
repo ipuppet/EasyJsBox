@@ -14,7 +14,7 @@ class View extends BaseView {
     }
 
     updateSetting(key, value) {
-        return this.kernel.setting.set(key, value)
+        return this.controller.set(key, value)
     }
 
     createLineLabel(title, icon) {
@@ -299,7 +299,7 @@ class View extends BaseView {
                         changed: (sender) => {
                             $(key).text = sender.value
                             if (!this.updateSetting(key, sender.value)) {
-                                $(key).text = this.kernel.setting.get(key)
+                                $(key).text = this.controller.get(key)
                             }
                         }
                     },
@@ -546,6 +546,84 @@ class View extends BaseView {
         }
     }
 
+    createColor(key, icon, title, value) {
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {// 仅用于显示图片
+                            type: "view",
+                            props: {
+                                id: `setting-color-${key}`,
+                                bgcolor: $color(value),
+                                circular: true
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.right.inset(0)
+                                make.size.equalTo(20)
+                            }
+                        },
+                        {// 覆盖在图片上监听点击动作
+                            type: "view",
+                            events: {
+                                tapped: () => {
+                                    const Palette = (this.controller.kernel.getPlugin("palette").plugin)
+                                    let palette = new Palette()
+                                    let color = this.controller.get(key).trim()
+                                    if (typeof color === "string" && color !== "") {
+                                        color = $color(color)
+                                    } else {
+                                        color = $(`setting-color-${key}`).bgcolor
+                                    }
+                                    let navButtons = [
+                                        {
+                                            type: "button",
+                                            props: {
+                                                symbol: "checkmark",
+                                                tintColor: this.textColor,
+                                                bgcolor: $color("clear")
+                                            },
+                                            layout: make => {
+                                                make.right.inset(10)
+                                                make.size.equalTo(20)
+                                            },
+                                            events: {
+                                                tapped: () => {
+                                                    let rgb = palette.rgb
+                                                    let newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
+                                                    this.updateSetting(key, newColor)
+                                                    $(`setting-color-${key}`).bgcolor = $color(newColor)
+                                                    $ui.pop()
+                                                }
+                                            }
+                                        }
+                                    ]
+                                    palette.setRGB(color.components.red, color.components.green, color.components.blue)
+                                    let views = [palette.getView()]
+                                    this.push(views, $l10n("BACK"), navButtons)
+                                }
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.size.equalTo(view.super)
+                            }
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     getViews() {
         let header = this.headerTitle("setting-title", $l10n("SETTING"))
         let footer = {
@@ -575,10 +653,10 @@ class View extends BaseView {
 
     getSections() {
         let sections = []
-        for (let section of this.kernel.setting.struct) {
+        for (let section of this.controller.struct) {
             let rows = []
             for (let item of section.items) {
-                let value = this.kernel.setting.get(item.key)
+                let value = this.controller.get(item.key)
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
                 switch (item.type) {
@@ -602,6 +680,9 @@ class View extends BaseView {
                         break
                     case "tab":
                         row = this.createTab(item.key, item.icon, $l10n(item.title), item.items, value)
+                        break
+                    case "color":
+                        row = this.createColor(item.key, item.icon, $l10n(item.title), value)
                         break
                     default:
                         continue
@@ -754,8 +835,8 @@ class View extends BaseView {
                                         layout: (make, view) => {
                                             make.left.inset(10)
                                             make.size.equalTo(30)
-                                            make.top.equalTo(view.super.safeArea)
-                                            make.centerY.equalTo(view.super)
+                                            make.top.equalTo(view.super.safeAreaTop)
+                                            make.bottom.equalTo(view.super)
                                         }
                                     },
                                     {
