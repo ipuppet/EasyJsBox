@@ -65,7 +65,7 @@ class Kernel {
     registerPlugin(plugin) {
         let { Plugin, VERSION } = require(`./Plugins/${plugin}`)
         this.plugins[plugin] = {
-            plugin: new Plugin(),
+            plugin: Plugin,
             version: VERSION
         }
         return this.plugins[plugin].plugin
