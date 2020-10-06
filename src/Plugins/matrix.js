@@ -1,3 +1,5 @@
+const VERSION = "1.0.0"
+
 class Matrix {
     constructor() {
         this.indexFlag = 1
@@ -95,4 +97,7 @@ class Matrix {
     }
 }
 
-module.exports = new Matrix()
+module.exports = {
+    VERSION: VERSION,
+    Plugin: Matrix
+}

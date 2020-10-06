@@ -1,3 +1,5 @@
+const VERSION = "1.0.0"
+
 class Palette {
     constructor() {
         // 调色器离顶端的距离，因为有两个调色板所以写死高度比较方便
@@ -535,4 +537,7 @@ class Palette {
     }
 }
 
-module.exports = new Palette()
+module.exports = {
+    VERSION: VERSION,
+    Plugin: Palette
+}
