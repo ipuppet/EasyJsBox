@@ -535,4 +535,4 @@ class Palette {
     }
 }
 
-module.exports = Palette
+module.exports = new Palette()

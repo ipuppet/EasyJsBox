@@ -8,6 +8,7 @@ class Kernel {
             components: "./Components/"
         }
         this.components = {}
+        this.plugins = {}
     }
 
     /**
@@ -55,6 +56,25 @@ class Kernel {
      */
     getComponent(component) {
         return this.components[component]
+    }
+
+    /**
+     * 注册组件
+     * @param {String} plugin 
+     */
+    registerPlugin(plugin) {
+        let Plugin = require(`./Plugins/${plugin}`)
+        this.plugin[plugin] = Plugin
+    }
+
+    /**
+     * 批量注册组件
+     * @param {Array} plugins 
+     */
+    registerPlugins(plugins) {
+        for (let plugin of plugins) {
+            this.registerPlugin(plugin)
+        }
     }
 
     /**

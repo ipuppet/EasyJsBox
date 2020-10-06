@@ -95,4 +95,4 @@ class Matrix {
     }
 }
 
-module.exports = Matrix
+module.exports = new Matrix()
