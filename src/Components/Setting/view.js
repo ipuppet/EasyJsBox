@@ -743,7 +743,8 @@ class View extends BaseView {
                                         props: {
                                             symbol: "chevron.left",
                                             tintColor: this.textColor,
-                                            bgcolor: $color("clear")
+                                            bgcolor: $color("clear"),
+                                            hidden: this.dataCenter.get("secondaryPage") ? false : true
                                         },
                                         events: {
                                             tapped: () => {
