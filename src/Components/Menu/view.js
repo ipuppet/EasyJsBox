@@ -20,7 +20,7 @@ class View extends BaseView {
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(this.getMenuWidth())
                 let isLargeScreen = this.isLargeScreen()
-                make.height.equalTo(50)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
                 make.bottom.equalTo(view.super)
                 $("menu").cornerRadius = isLargeScreen ? 10 : 0
                 if ($(`${this.dataCenter.get("itemIdPrefix")}canvas`))
