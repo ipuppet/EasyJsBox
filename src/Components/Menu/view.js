@@ -17,20 +17,14 @@ class View extends BaseView {
                 }
             },
             menuBar: (make, view) => {
-                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(this.getMenuWidth())
                 let isLargeScreen = this.isLargeScreen()
-                if (isLargeScreen) {
-                    make.bottom.equalTo(-20)
-                    if (!$device.isIphoneX) {
-                        make.top.equalTo(view.super.safeAreaBottom).offset(-70)
-                    }
-                } else {
-                    make.bottom.equalTo(0)
-                }
+                make.height.equalTo(50)
+                make.bottom.equalTo(view.super)
                 $("menu").cornerRadius = isLargeScreen ? 10 : 0
-                if ($(`${this.dataCenter.get("itemIdPrefix")}canvas`)) $(`${this.dataCenter.get("itemIdPrefix")}canvas`).hidden = isLargeScreen
+                if ($(`${this.dataCenter.get("itemIdPrefix")}canvas`))
+                    $(`${this.dataCenter.get("itemIdPrefix")}canvas`).hidden = isLargeScreen
             }
         }
     }

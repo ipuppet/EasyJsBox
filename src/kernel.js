@@ -132,12 +132,14 @@ class Kernel {
                         }
                         if (this.orientation !== $device.info.screen.orientation) {
                             this.orientation = $device.info.screen.orientation
+                            let menuView = this.components.Menu.view
+                            let menuDataCenter = this.components.Menu.dataCenter
                             // 更新菜单元素的布局
-                            for (let i = 0; i < this.components.Menu.view.menus.length; i++) {
-                                $(`${this.components.Menu.view.itemIdPrefix}${i}`).updateLayout(this.components.Menu.view.menuLayout.menuItem)
+                            for (let i = 0; i < menuDataCenter.get("menus").length; i++) {
+                                $(`${menuDataCenter.get("itemIdPrefix")}${i}`).remakeLayout(menuView.menuLayout.menuItem)
                             }
                             // 更新菜单栏
-                            $(this.components.Menu.view.id).updateLayout(this.components.Menu.view.menuLayout.menuBar)
+                            $(menuDataCenter.get("id")).remakeLayout(menuView.menuLayout.menuBar)
                         }
                     }
                 }
