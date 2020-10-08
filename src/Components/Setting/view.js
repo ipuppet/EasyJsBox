@@ -626,28 +626,30 @@ class View extends BaseView {
 
     getViews() {
         let header = this.headerTitle("setting-title", $l10n("SETTING"))
-        let footer = {
-            type: "view",
-            props: { height: 130 },
-            views: [
-                {
-                    type: "label",
-                    props: {
-                        font: $font(14),
-                        text: `${$l10n("VERSION")} ${this.info.version} © ${this.info.author}`,
-                        textColor: $color({
-                            light: "#C0C0C0",
-                            dark: "#545454"
-                        }),
-                        align: $align.center
-                    },
-                    layout: make => {
-                        make.left.right.inset(0)
-                        make.top.inset(10)
+        let footer = this.dataCenter.get("footer")
+        if (!footer)
+            footer = {
+                type: "view",
+                props: { height: 130 },
+                views: [
+                    {
+                        type: "label",
+                        props: {
+                            font: $font(14),
+                            text: `${$l10n("VERSION")} ${this.info.version} © ${this.info.author}`,
+                            textColor: $color({
+                                light: "#C0C0C0",
+                                dark: "#545454"
+                            }),
+                            align: $align.center
+                        },
+                        layout: make => {
+                            make.left.right.inset(0)
+                            make.top.inset(10)
+                        }
                     }
-                }
-            ]
-        }
+                ]
+            }
         return this.standardList(header, footer, this.getSections())
     }
 

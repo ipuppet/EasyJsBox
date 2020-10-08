@@ -24,6 +24,10 @@ class Controller extends BaseController {
             this.dataCenter.set("pop", pop)
     }
 
+    setFooter(footer) {
+        this.dataCenter.set("footer", footer)
+    }
+
     loadConfig() {
         this.setting = {}
         let user = {}
