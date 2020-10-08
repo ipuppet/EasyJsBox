@@ -15,7 +15,8 @@ class Kernel {
      * 注册组件
      * @param {String} component 组件名
      */
-    _registerComponent(component) {
+    _registerComponent(component, name = null) {
+        if (!name) name = component
         let View = require(`${this.path.components}${component}/view`)
         let Controller = require(`${this.path.components}${component}/controller`)
         // 新实例
@@ -32,12 +33,12 @@ class Kernel {
         view.init()
         controller.init()
         // 注册到kernel
-        this.components[component] = {
+        this.components[name] = {
             view: view,
             controller: controller,
             dataCenter: dataCenter
         }
-        return this.components[component]
+        return this.components[name]
     }
 
     /**
