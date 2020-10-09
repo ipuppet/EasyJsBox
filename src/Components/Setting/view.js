@@ -404,7 +404,7 @@ class View extends BaseView {
     }
 
     createScript(icon, title, script) {
-        let id = `script-${title}`
+        let id = `script-${this.dataCenter.get("name")}-${title}`
         let touchHighlightStart = () => {
             $(`script-line-${id}`).bgcolor = $color("insetGroupedBackground")
         }

@@ -11,6 +11,7 @@ class Controller extends BaseController {
         this.dataCenter.set("secondaryPage", false)
         // 注册调色板插件
         this.kernel.registerPlugin("palette")
+        this.setName(settintPath.replace("/", "-"))
         return this
     }
 
@@ -26,6 +27,14 @@ class Controller extends BaseController {
 
     setFooter(footer) {
         this.dataCenter.set("footer", footer)
+    }
+
+    /**
+     * 设置一个独一无二的名字
+     * @param {String} name 名字
+     */
+    setName(name) {
+        this.dataCenter.set("name", name)
     }
 
     loadConfig() {
