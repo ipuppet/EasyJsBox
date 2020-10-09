@@ -406,13 +406,13 @@ class View extends BaseView {
     createScript(icon, title, script) {
         let id = `script-${this.dataCenter.get("name")}-${title}`
         let touchHighlightStart = () => {
-            $(`script-line-${id}`).bgcolor = $color("insetGroupedBackground")
+            $(`script-${this.dataCenter.get("name")}-line-${id}`).bgcolor = $color("insetGroupedBackground")
         }
         let touchHighlightEnd = (duration = 0.2) => {
             $ui.animate({
                 duration: duration,
                 animation: () => {
-                    $(`script-line-${id}`).bgcolor = $color("clear")
+                    $(`script-${this.dataCenter.get("name")}-line-${id}`).bgcolor = $color("clear")
                 }
             })
         }
@@ -423,18 +423,18 @@ class View extends BaseView {
         let actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
-            $(`script-spinner-${id}`).alpha = 1
+            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 1
             touchHighlightStart()
         }
 
         let actionCancel = () => {
             $(id).alpha = 1
-            $(`script-spinner-${id}`).alpha = 0
+            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 0
             touchHighlightEnd()
         }
 
         let actionDone = (status = true, message = $l10n("ERROR")) => {
-            $(`script-spinner-${id}`).alpha = 0
+            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 0
             touchHighlightEnd()
             let button = $(id)
             if (!status) { // 失败
@@ -476,7 +476,7 @@ class View extends BaseView {
         return {
             type: "view",
             props: {
-                id: `script-line-${id}`
+                id: `script-${this.dataCenter.get("name")}-line-${id}`
             },
             views: [
                 this.createLineLabel(title, icon),
@@ -499,7 +499,7 @@ class View extends BaseView {
                         {
                             type: "spinner",
                             props: {
-                                id: `script-spinner-${id}`,
+                                id: `script-${this.dataCenter.get("name")}-spinner-${id}`,
                                 loading: true,
                                 alpha: 0
                             },
@@ -642,7 +642,7 @@ class View extends BaseView {
     }
 
     getViews() {
-        let header = this.headerTitle("setting-title", $l10n("SETTING"))
+        let header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         let footer = this.dataCenter.get("footer")
         if (!footer)
             footer = {
