@@ -127,7 +127,7 @@ class View extends BaseView {
         }
     }
 
-    createSwitch(key, icon, title, on = true) {
+    createSwitch(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -135,7 +135,7 @@ class View extends BaseView {
                 {
                     type: "switch",
                     props: {
-                        on: on,
+                        on: this.controller.get(key),
                         onColor: $color("#00CC00")
                     },
                     events: {
@@ -155,7 +155,7 @@ class View extends BaseView {
         }
     }
 
-    createString(key, icon, title, text = "") {
+    createString(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -180,7 +180,7 @@ class View extends BaseView {
                                         props: {
                                             id: key,
                                             align: $align.left,
-                                            text: text
+                                            text: this.controller.get(key)
                                         },
                                         layout: make => {
                                             make.left.right.inset(10)
@@ -224,7 +224,7 @@ class View extends BaseView {
         }
     }
 
-    createNumber(key, icon, title, number = "") {
+    createNumber(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -234,13 +234,13 @@ class View extends BaseView {
                     props: {
                         id: key,
                         align: $align.right,
-                        text: number
+                        text: this.controller.get(key)
                     },
                     events: {
                         tapped: () => {
                             $input.text({
                                 type: $kbType.number,
-                                text: number,
+                                text: this.controller.get(key),
                                 placeholder: title,
                                 handler: (text) => {
                                     const isNumber = (str) => {
@@ -270,7 +270,7 @@ class View extends BaseView {
         }
     }
 
-    createStepper(key, icon, title, value = 1, min = 1, max = 12) {
+    createStepper(key, icon, title, min = 1, max = 12) {
         return {
             type: "view",
             views: [
@@ -279,7 +279,7 @@ class View extends BaseView {
                     type: "label",
                     props: {
                         id: key,
-                        text: value,
+                        text: this.controller.get(key),
                         textColor: this.textColor,
                         align: $align.left
                     },
@@ -293,7 +293,7 @@ class View extends BaseView {
                     props: {
                         min: min,
                         max: max,
-                        value: value
+                        value: this.controller.get(key)
                     },
                     events: {
                         changed: (sender) => {
@@ -540,7 +540,7 @@ class View extends BaseView {
         }
     }
 
-    createTab(key, icon, title, items, value) {
+    createTab(key, icon, title, items) {
         for (let i = 0; i < items.length; i++) {
             items[i] = $l10n(items[i])
         }
@@ -552,7 +552,7 @@ class View extends BaseView {
                     type: "tab",
                     props: {
                         items: items,
-                        index: value,
+                        index: this.controller.get(key),
                         dynamicWidth: true
                     },
                     layout: (make, view) => {
@@ -570,7 +570,7 @@ class View extends BaseView {
         }
     }
 
-    createColor(key, icon, title, value) {
+    createColor(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -581,8 +581,8 @@ class View extends BaseView {
                         {// 颜色预览以及按钮功能
                             type: "view",
                             props: {
-                                id: `setting-color-${key}`,
-                                bgcolor: $color(value),
+                                id: `setting-${this.dataCenter.get("name")}-color-${key}`,
+                                bgcolor: $color(this.controller.get(key)),
                                 circular: true
                             },
                             events: {
@@ -593,7 +593,7 @@ class View extends BaseView {
                                     if (typeof color === "string" && color !== "") {
                                         color = $color(color)
                                     } else {
-                                        color = $(`setting-color-${key}`).bgcolor
+                                        color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
                                     }
                                     let navButtons = [
                                         {
@@ -612,7 +612,7 @@ class View extends BaseView {
                                                     let rgb = palette.rgb
                                                     let newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
                                                     this.updateSetting(key, newColor)
-                                                    $(`setting-color-${key}`).bgcolor = $color(newColor)
+                                                    $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor)
                                                     $ui.pop()
                                                 }
                                             }
@@ -680,16 +680,16 @@ class View extends BaseView {
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
                 switch (item.type) {
                     case "switch":
-                        row = this.createSwitch(item.key, item.icon, $l10n(item.title), value)
+                        row = this.createSwitch(item.key, item.icon, $l10n(item.title))
                         break
                     case "stepper":
-                        row = this.createStepper(item.key, item.icon, $l10n(item.title), value, 1, 12)
+                        row = this.createStepper(item.key, item.icon, $l10n(item.title), 1, 12)
                         break
                     case "string":
-                        row = this.createString(item.key, item.icon, $l10n(item.title), value)
+                        row = this.createString(item.key, item.icon, $l10n(item.title))
                         break
                     case "number":
-                        row = this.createNumber(item.key, item.icon, $l10n(item.title), value)
+                        row = this.createNumber(item.key, item.icon, $l10n(item.title))
                         break
                     case "info":
                         row = this.createInfo(item.icon, $l10n(item.title), value)
@@ -698,10 +698,10 @@ class View extends BaseView {
                         row = this.createScript(item.icon, $l10n(item.title), value)
                         break
                     case "tab":
-                        row = this.createTab(item.key, item.icon, $l10n(item.title), item.items, value)
+                        row = this.createTab(item.key, item.icon, $l10n(item.title), item.items)
                         break
                     case "color":
-                        row = this.createColor(item.key, item.icon, $l10n(item.title), value)
+                        row = this.createColor(item.key, item.icon, $l10n(item.title))
                         break
                     default:
                         continue
