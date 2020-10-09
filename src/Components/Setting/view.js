@@ -405,19 +405,37 @@ class View extends BaseView {
 
     createScript(icon, title, script) {
         let id = `script-${title}`
+        let touchHighlightStart = () => {
+            $(`script-line-${id}`).bgcolor = $color("insetGroupedBackground")
+        }
+        let touchHighlightEnd = (duration = 0.2) => {
+            $ui.animate({
+                duration: duration,
+                animation: () => {
+                    $(`script-line-${id}`).bgcolor = $color("clear")
+                }
+            })
+        }
+        let touchHighlight = () => {
+            touchHighlightStart()
+            touchHighlightEnd(0.5)
+        }
         let actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
             $(`script-spinner-${id}`).alpha = 1
+            touchHighlightStart()
         }
 
         let actionCancel = () => {
             $(id).alpha = 1
             $(`script-spinner-${id}`).alpha = 0
+            touchHighlightEnd()
         }
 
         let actionDone = (status = true, message = $l10n("ERROR")) => {
             $(`script-spinner-${id}`).alpha = 0
+            touchHighlightEnd()
             let button = $(id)
             if (!status) { // 失败
                 $ui.toast(message)
@@ -457,6 +475,9 @@ class View extends BaseView {
         }
         return {
             type: "view",
+            props: {
+                id: `script-line-${id}`
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -495,6 +516,9 @@ class View extends BaseView {
                                     this.start = actionStart
                                     this.cancel = actionCancel
                                     this.done = actionDone
+                                    this.touchHighlight = touchHighlight
+                                    this.touchHighlightStart = touchHighlightStart
+                                    this.touchHighlightEnd = touchHighlightEnd
                                     // 执行代码
                                     eval(script)
                                 }
@@ -554,21 +578,13 @@ class View extends BaseView {
                 {
                     type: "view",
                     views: [
-                        {// 仅用于显示图片
+                        {// 颜色预览以及按钮功能
                             type: "view",
                             props: {
                                 id: `setting-color-${key}`,
                                 bgcolor: $color(value),
                                 circular: true
                             },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.right.inset(0)
-                                make.size.equalTo(20)
-                            }
-                        },
-                        {// 覆盖在图片上监听点击动作
-                            type: "view",
                             events: {
                                 tapped: () => {
                                     const Palette = (this.controller.kernel.getPlugin("palette").plugin)
@@ -608,8 +624,9 @@ class View extends BaseView {
                                 }
                             },
                             layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(view.super)
+                                make.size.equalTo(20)
                             }
                         }
                     ],

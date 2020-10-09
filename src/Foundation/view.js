@@ -59,7 +59,7 @@ class BaseView {
      * @param {*} parentTitle 上级目录名称，显示在返回按钮旁边
      * @param {*} navButtons 右侧按钮，需要自己调整位置
      */
-    push(views, parentTitle = $l10n("BACK"), navButtons = []) {
+    push(views, parentTitle = $l10n("BACK"), navButtons = [], disappeared = undefined) {
         navButtons = navButtons.concat([
             {
                 type: "button",
@@ -96,9 +96,7 @@ class BaseView {
                     make.left.inset(10)
                 },
                 events: {
-                    tapped: () => {
-                        $ui.pop()
-                    }
+                    tapped: () => { $ui.pop() }
                 }
             }
         ])
@@ -106,6 +104,14 @@ class BaseView {
             props: {
                 navBarHidden: true,
                 statusBarStyle: 0
+            },
+            events: {
+                disappeared: () => {
+                    if (disappeared !== undefined) disappeared()
+                },
+                dealloc: () => {
+                    if (disappeared !== undefined) disappeared()
+                }
             },
             views: [
                 {
