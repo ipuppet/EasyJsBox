@@ -215,7 +215,7 @@ class View extends BaseView {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(15)
+                        make.right.inset(0)
                         make.size.equalTo(50)
                     }
                 }
