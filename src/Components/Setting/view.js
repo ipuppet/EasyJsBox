@@ -683,7 +683,7 @@ class View extends BaseView {
                         row = this.createSwitch(item.key, item.icon, $l10n(item.title))
                         break
                     case "stepper":
-                        row = this.createStepper(item.key, item.icon, $l10n(item.title), 1, 12)
+                        row = this.createStepper(item.key, item.icon, $l10n(item.title), item.min ? item.min : 1, item.max ? item.max : 12)
                         break
                     case "string":
                         row = this.createString(item.key, item.icon, $l10n(item.title))
