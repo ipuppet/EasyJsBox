@@ -403,16 +403,16 @@ class View extends BaseView {
         }
     }
 
-    createScript(icon, title, script) {
-        let id = `script-${this.dataCenter.get("name")}-${title}`
+    createScript(key, icon, title, script) {
+        let id = `script-${this.dataCenter.get("name")}-${key}`
         let touchHighlightStart = () => {
-            $(`script-${this.dataCenter.get("name")}-line-${id}`).bgcolor = $color("insetGroupedBackground")
+            $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
         }
         let touchHighlightEnd = (duration = 0.2) => {
             $ui.animate({
                 duration: duration,
                 animation: () => {
-                    $(`script-${this.dataCenter.get("name")}-line-${id}`).bgcolor = $color("clear")
+                    $(`${id}-line`).bgcolor = $color("clear")
                 }
             })
         }
@@ -423,18 +423,16 @@ class View extends BaseView {
         let actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
-            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 1
+            $(`${id}-spinner`).alpha = 1
             touchHighlightStart()
         }
-
         let actionCancel = () => {
             $(id).alpha = 1
-            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 0
+            $(`${id}-spinner`).alpha = 0
             touchHighlightEnd()
         }
-
         let actionDone = (status = true, message = $l10n("ERROR")) => {
-            $(`script-${this.dataCenter.get("name")}-spinner-${id}`).alpha = 0
+            $(`${id}-spinner`).alpha = 0
             touchHighlightEnd()
             let button = $(id)
             if (!status) { // 失败
@@ -475,9 +473,7 @@ class View extends BaseView {
         }
         return {
             type: "view",
-            props: {
-                id: `script-${this.dataCenter.get("name")}-line-${id}`
-            },
+            props: { id: `${id}-line` },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -499,7 +495,7 @@ class View extends BaseView {
                         {
                             type: "spinner",
                             props: {
-                                id: `script-${this.dataCenter.get("name")}-spinner-${id}`,
+                                id: `${id}-spinner`,
                                 loading: true,
                                 alpha: 0
                             },
@@ -541,9 +537,6 @@ class View extends BaseView {
     }
 
     createTab(key, icon, title, items) {
-        for (let i = 0; i < items.length; i++) {
-            items[i] = $l10n(items[i])
-        }
         return {
             type: "view",
             views: [
@@ -641,6 +634,55 @@ class View extends BaseView {
         }
     }
 
+    createMenu(key, icon, title, items) {
+        let id = `setting-menu-${this.dataCenter.get("name")}-${key}`
+        return {
+            type: "view",
+            props: { id: `${id}-line` },
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: items[this.controller.get(key)],
+                                color: $color("secondaryText"),
+                                id: id
+                            },
+                            events: {
+                                tapped: () => {
+                                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
+                                    $ui.menu({
+                                        items: items,
+                                        handler: (title, idx) => {
+                                            this.updateSetting(key, idx)
+                                            $(id).text = $l10n(title)
+                                        },
+                                        finished: () => {
+                                            $(`${id}-line`).bgcolor = $color("clear")
+                                        }
+                                    })
+                                }
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.equalTo(view.super)
+                            }
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     getViews() {
         let header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         let footer = this.dataCenter.get("footer")
@@ -678,6 +720,7 @@ class View extends BaseView {
                 let value = this.controller.get(item.key)
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
+                if (item.items) item.items = item.items.map(item => $l10n(item))
                 switch (item.type) {
                     case "switch":
                         row = this.createSwitch(item.key, item.icon, $l10n(item.title))
@@ -695,13 +738,16 @@ class View extends BaseView {
                         row = this.createInfo(item.icon, $l10n(item.title), value)
                         break
                     case "script":
-                        row = this.createScript(item.icon, $l10n(item.title), value)
+                        row = this.createScript(item.key, item.icon, $l10n(item.title), value)
                         break
                     case "tab":
                         row = this.createTab(item.key, item.icon, $l10n(item.title), item.items)
                         break
                     case "color":
                         row = this.createColor(item.key, item.icon, $l10n(item.title))
+                        break
+                    case "menu":
+                        row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items)
                         break
                     default:
                         continue
