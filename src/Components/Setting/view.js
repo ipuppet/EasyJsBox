@@ -542,7 +542,7 @@ class View extends BaseView {
         }
     }
 
-    createTab(key, icon, title, items, events) {
+    createTab(key, icon, title, items, events, withTitle) {
         return {
             type: "view",
             views: [
@@ -560,7 +560,8 @@ class View extends BaseView {
                     },
                     events: {
                         changed: (sender) => {
-                            this.updateSetting(key, sender.index)
+                            let value = withTitle ? [sender.index, title] : sender.index
+                            this.updateSetting(key, value)
                             if (events) eval(`(()=>{return ${events}})()`)
                         }
                     }
@@ -642,7 +643,7 @@ class View extends BaseView {
         }
     }
 
-    createMenu(key, icon, title, items, events) {
+    createMenu(key, icon, title, items, events, withTitle) {
         let id = `setting-menu-${this.dataCenter.get("name")}-${key}`
         return {
             type: "view",
@@ -665,7 +666,8 @@ class View extends BaseView {
                                     $ui.menu({
                                         items: items,
                                         handler: (title, idx) => {
-                                            this.updateSetting(key, idx)
+                                            let value = withTitle ? [idx, title] : idx
+                                            this.updateSetting(key, value)
                                             if (events) eval(`(()=>{return ${events}})()`)
                                             $(id).text = $l10n(title)
                                         },
@@ -840,7 +842,7 @@ class View extends BaseView {
                                 "value": 0
                             }
                          */
-                        row = this.createTab(item.key, item.icon, $l10n(item.title), item.items, item.events)
+                        row = this.createTab(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
                         break
                     case "color":
                         /**
@@ -873,7 +875,7 @@ class View extends BaseView {
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}})()`)
                         }
-                        row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items, item.events)
+                        row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
                         break
                     default:
                         continue
