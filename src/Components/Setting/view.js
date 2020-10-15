@@ -656,7 +656,11 @@ class View extends BaseView {
                         {
                             type: "label",
                             props: {
-                                text: items[this.controller.get(key)],
+                                text: withTitle ? items[(() => {
+                                    let value = this.controller.get(key)
+                                    if (typeof value === "object") return value[0]
+                                    else return value
+                                })()] : items[this.controller.get(key)],
                                 color: $color("secondaryText"),
                                 id: id
                             },
