@@ -274,7 +274,7 @@ class View extends BaseView {
         }
     }
 
-    createStepper(key, icon, title, min = 1, max = 12, events) {
+    createStepper(key, icon, title, min, max, events) {
         return {
             type: "view",
             views: [
@@ -767,7 +767,7 @@ class View extends BaseView {
                                 "value": 10
                             }
                          */
-                        row = this.createStepper(item.key, item.icon, $l10n(item.title), item.min ? item.min : 1, item.max ? item.max : 12, item.events)
+                        row = this.createStepper(item.key, item.icon, $l10n(item.title), item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
                         break
                     case "string":
                         /**
