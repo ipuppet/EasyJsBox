@@ -163,13 +163,16 @@ class BaseView {
     navButton(id, symbol, tapped, hidden) {
         let actionStart = () => {
             // 隐藏button，显示spinner
-            $(id).alpha = 0
+            let button = $(id)
+            button.alpha = 0
+            button.hidden = true
             $("spinner-" + id).alpha = 1
         }
 
         let actionDone = (status = true, message = $l10n("ERROR")) => {
             $("spinner-" + id).alpha = 0
             let button = $(id)
+            button.hidden = false
             if (!status) { // 失败
                 $ui.toast(message)
                 button.alpha = 1
@@ -206,6 +209,14 @@ class BaseView {
                 }
             })
         }
+
+        let actionCancel = () => {
+            $("spinner-" + id).alpha = 0
+            let button = $(id)
+            button.alpha = 1
+            button.hidden = false
+        }
+
         return {
             type: "view",
             props: { id: id },
@@ -221,7 +232,7 @@ class BaseView {
                     },
                     events: {
                         tapped: () => {
-                            tapped(actionStart, actionDone)
+                            tapped(actionStart, actionDone, actionCancel)
                         }
                     },
                     layout: (make, view) => {
