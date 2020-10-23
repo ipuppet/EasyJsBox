@@ -160,7 +160,7 @@ class BaseView {
      *          else { done(false, "Upload Error!") }
      *      }
      */
-    navButton(id, symbol, tapped) {
+    navButton(id, symbol, tapped, hidden) {
         let actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
@@ -214,6 +214,7 @@ class BaseView {
                     type: "button",
                     props: {
                         id: id,
+                        hidden: hidden,
                         tintColor: this.textColor,
                         symbol: symbol,
                         bgcolor: $color("clear")
