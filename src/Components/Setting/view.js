@@ -725,7 +725,6 @@ class View extends BaseView {
         }
         return {
             type: "view",
-            props: { id: `${id}-date` },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -754,6 +753,56 @@ class View extends BaseView {
                             if (events) eval(`(()=>{return ${events}})()`)
                             this.updateSetting(key, date.getTime())
                             $(`${id}-label`).text = getFormatDate(date)
+                        }
+                    },
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
+    createInput(key, icon, title, events) {
+        let id = `setting-input-${this.dataCenter.get("name")}-${key}`
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [{
+                        type: "label",
+                        props: {
+                            id: `${id}-label`,
+                            color: $color("secondaryText"),
+                            text: this.controller.get(key)
+                        },
+                        layout: (make, view) => {
+                            make.right.inset(0)
+                            make.height.equalTo(view.super)
+
+                        }
+                    }],
+                    events: {
+                        tapped: async () => {
+                            $input.text({
+                                text: this.controller.get(key),
+                                placeholder: title,
+                                handler: (text) => {
+                                    if (text === "") {
+                                        $ui.toast($l10n("INVALID_VALUE"))
+                                        return
+                                    }
+                                    if (this.updateSetting(key, text)) {
+                                        $(`${id}-label`).text = text
+                                        if (events) eval(`(()=>{return ${events}})()`)
+                                    }
+                                }
+                            })
                         }
                     },
                     layout: (make, view) => {
@@ -952,6 +1001,9 @@ class View extends BaseView {
                         break
                     case "date":
                         row = this.createDate(item.key, item.icon, $l10n(item.title), item.mode, item.events)
+                        break
+                    case "input":
+                        row = this.createInput(item.key, item.icon, $l10n(item.title), item.events)
                         break
                     default:
                         continue
