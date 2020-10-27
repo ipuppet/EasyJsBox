@@ -587,42 +587,49 @@ class View extends BaseView {
                                 circular: true
                             },
                             events: {
-                                tapped: () => {
-                                    const Palette = (this.controller.kernel.getPlugin("palette").plugin)
-                                    let palette = new Palette()
-                                    let color = this.controller.get(key).trim()
-                                    if (typeof color === "string" && color !== "") {
-                                        color = $color(color)
+                                tapped: async () => {
+                                    if (typeof $picker.color === "function") {
+                                        const newColor = await $picker.color({ color: $color(this.controller.get(key).trim()) })
+                                        this.updateSetting(key, newColor.hexCode)
+                                        if (events) eval(`(()=>{return ${events}})()`)
+                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor.hexCode)
                                     } else {
-                                        color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
-                                    }
-                                    let navButtons = [
-                                        {
-                                            type: "button",
-                                            props: {
-                                                symbol: "checkmark",
-                                                tintColor: this.textColor,
-                                                bgcolor: $color("clear")
-                                            },
-                                            layout: make => {
-                                                make.right.inset(10)
-                                                make.size.equalTo(20)
-                                            },
-                                            events: {
-                                                tapped: () => {
-                                                    let rgb = palette.rgb
-                                                    let newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
-                                                    this.updateSetting(key, newColor)
-                                                    if (events) eval(`(()=>{return ${events}})()`)
-                                                    $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor)
-                                                    $ui.pop()
+                                        const Palette = (this.controller.kernel.getPlugin("palette").plugin)
+                                        let palette = new Palette()
+                                        let color = this.controller.get(key).trim()
+                                        if (typeof color === "string" && color !== "") {
+                                            color = $color(color)
+                                        } else {
+                                            color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
+                                        }
+                                        let navButtons = [
+                                            {
+                                                type: "button",
+                                                props: {
+                                                    symbol: "checkmark",
+                                                    tintColor: this.textColor,
+                                                    bgcolor: $color("clear")
+                                                },
+                                                layout: make => {
+                                                    make.right.inset(10)
+                                                    make.size.equalTo(20)
+                                                },
+                                                events: {
+                                                    tapped: () => {
+                                                        let rgb = palette.rgb
+                                                        let newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
+                                                        this.updateSetting(key, newColor)
+                                                        if (events) eval(`(()=>{return ${events}})()`)
+                                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor)
+                                                        $ui.pop()
+                                                    }
                                                 }
                                             }
-                                        }
-                                    ]
-                                    palette.setRGB(color.components.red, color.components.green, color.components.blue)
-                                    let views = [palette.getView()]
-                                    this.push(views, $l10n("BACK"), navButtons)
+                                        ]
+                                        palette.setRGB(color.components.red, color.components.green, color.components.blue)
+                                        let views = [palette.getView()]
+                                        this.push(views, $l10n("BACK"), navButtons)
+                                    }
                                 }
                             },
                             layout: (make, view) => {
@@ -687,6 +694,68 @@ class View extends BaseView {
                             }
                         }
                     ],
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
+    createDate(key, icon, title, mode = 2, events) {
+        let id = `setting-date-${this.dataCenter.get("name")}-${key}`
+        const getFormatDate = date => {
+            let str = ""
+            if (typeof date === "number") date = new Date(date)
+            switch (mode) {
+                case 0:
+                    str = date.toLocaleTimeString()
+                    break
+                case 1:
+                    str = date.toLocaleDateString()
+                    break
+                case 2:
+                    str = date.toLocaleString()
+                    break
+            }
+            return str
+        }
+        return {
+            type: "view",
+            props: { id: `${id}-date` },
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [{
+                        type: "label",
+                        props: {
+                            id: `${id}-label`,
+                            color: $color("secondaryText"),
+                            text: this.controller.get(key) ? getFormatDate(this.controller.get(key)) : "None"
+                        },
+                        layout: (make, view) => {
+                            make.right.inset(0)
+                            make.height.equalTo(view.super)
+
+                        }
+                    }],
+                    events: {
+                        tapped: async () => {
+                            const date = await $picker.date({
+                                props: {
+                                    mode: mode,
+                                    date: this.controller.get(key)
+                                }
+                            })
+                            if (events) eval(`(()=>{return ${events}})()`)
+                            this.updateSetting(key, date.getTime())
+                            $(`${id}-label`).text = getFormatDate(date)
+                        }
+                    },
                     layout: (make, view) => {
                         make.right.inset(15)
                         make.height.equalTo(50)
@@ -880,6 +949,9 @@ class View extends BaseView {
                             item.items = eval(`(()=>{return ${item.items}})()`)
                         }
                         row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
+                        break
+                    case "date":
+                        row = this.createDate(item.key, item.icon, $l10n(item.title), item.mode, item.events)
                         break
                     default:
                         continue
