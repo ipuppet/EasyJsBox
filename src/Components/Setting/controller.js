@@ -41,7 +41,7 @@ class Controller extends BaseController {
         this.setting = {}
         let user = {}
         if ($file.exists(this.path)) {
-            user = JSON.parse($file.read(this.path))
+            user = JSON.parse($file.read(this.path).string)
         }
         for (let section of this.struct) {
             for (let item of section.items) {
