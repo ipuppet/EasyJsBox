@@ -4,6 +4,7 @@ const DataCenter = require("./Foundation/data-center")
 
 class Kernel {
     constructor() {
+        this.startTime = new Date()
         this.path = {
             components: "./Components/"
         }
