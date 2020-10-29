@@ -5,7 +5,7 @@ class Controller extends BaseController {
         this.setPath(settintPath, savePath)
         this.loadConfig()
         // 默认读取"/config.json"中的内容
-        info = info ? info : JSON.parse($file.read("/config.json"))["info"]
+        info = info ? info : JSON.parse($file.read("/config.json").string)["info"]
         this.view.setInfo(info)
         // 是否全屏显示
         this.dataCenter.set("secondaryPage", false)
@@ -52,7 +52,7 @@ class Controller extends BaseController {
 
     setPath(settintPath, savePath) {
         this.path = savePath
-        this.struct = JSON.parse($file.read(settintPath))
+        this.struct = JSON.parse($file.read(settintPath).string)
     }
 
     get(key) {
