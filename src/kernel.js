@@ -10,6 +10,10 @@ class Kernel {
         }
         this.components = {}
         this.plugins = {}
+        if ($file.exists("/config.json")) {
+            let config = JSON.parse($file.read("/config.json").string)
+            this.name = config.info.name
+        }
     }
 
     /**
