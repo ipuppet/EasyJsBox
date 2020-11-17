@@ -744,10 +744,11 @@ class View extends BaseView {
                     }],
                     events: {
                         tapped: async () => {
+                            const settingData = this.controller.get(key)
                             const date = await $picker.date({
                                 props: {
                                     mode: mode,
-                                    date: this.controller.get(key)
+                                    date: settingData ? settingData : new Date()
                                 }
                             })
                             if (events) eval(`(()=>{return ${events}})()`)
