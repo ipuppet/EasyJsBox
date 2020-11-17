@@ -59,12 +59,21 @@ class Controller extends BaseController {
         return this.setting[key]
     }
 
+    /**
+     * 设置一个钩子，在set方法调用时触发
+     * @param {CallableFunction} hook 
+     */
+    setHook(hook) {
+        this.hook = hook
+    }
+
     set(key, value) {
         this.setting[key] = value
         $file.write({
             data: $data({ string: JSON.stringify(this.setting) }),
             path: this.path
         })
+        if (this.hook) this.hook(key, value)
         return true
     }
 }
