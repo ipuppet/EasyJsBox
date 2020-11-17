@@ -515,14 +515,17 @@ class View extends BaseView {
                             events: {
                                 tapped: () => {
                                     // 生成开始事件和结束事件动画，供函数调用
-                                    this.start = actionStart
-                                    this.cancel = actionCancel
-                                    this.done = actionDone
-                                    this.touchHighlight = touchHighlight
-                                    this.touchHighlightStart = touchHighlightStart
-                                    this.touchHighlightEnd = touchHighlightEnd
+                                    const animate = {
+                                        actionStart: actionStart,
+                                        actionCancel: actionCancel,
+                                        actionDone: actionDone,
+                                        touchHighlight: touchHighlight,
+                                        touchHighlightStart: touchHighlightStart,
+                                        touchHighlightEnd: touchHighlightEnd,
+                                        push: this.push
+                                    }
                                     // 执行代码
-                                    eval(`(()=>{return ${script}})()`)
+                                    eval(`(()=>{return ${script}(animate)})()`)
                                 }
                             },
                             layout: (make, view) => {
@@ -671,23 +674,6 @@ class View extends BaseView {
                                 color: $color("secondaryText"),
                                 id: id
                             },
-                            events: {
-                                tapped: () => {
-                                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
-                                    $ui.menu({
-                                        items: items,
-                                        handler: (title, idx) => {
-                                            let value = withTitle ? [idx, title] : idx
-                                            this.updateSetting(key, value)
-                                            if (events) eval(`(()=>{return ${events}})()`)
-                                            $(id).text = $l10n(title)
-                                        },
-                                        finished: () => {
-                                            $(`${id}-line`).bgcolor = $color("clear")
-                                        }
-                                    })
-                                }
-                            },
                             layout: (make, view) => {
                                 make.right.inset(0)
                                 make.height.equalTo(view.super)
@@ -701,6 +687,28 @@ class View extends BaseView {
                     }
                 }
             ],
+            events: {
+                tapped: () => {
+                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
+                    $ui.menu({
+                        items: items,
+                        handler: (title, idx) => {
+                            let value = withTitle ? [idx, title] : idx
+                            this.updateSetting(key, value)
+                            if (events) eval(`(()=>{return ${events}})()`)
+                            $(id).text = $l10n(title)
+                        },
+                        finished: () => {
+                            $ui.animate({
+                                duration: 0.2,
+                                animation: () => {
+                                    $(`${id}-line`).bgcolor = $color("clear")
+                                }
+                            })
+                        }
+                    })
+                }
+            },
             layout: $layout.fill
         }
     }
