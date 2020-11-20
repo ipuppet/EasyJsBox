@@ -1,43 +1,35 @@
 const BaseController = require("../../Foundation/controller")
 
 class Controller extends BaseController {
-    init(settintPath = "/setting.json", savePath = "/assets/setting.json", info) {
-        this.setPath(settintPath, savePath)
-        this.loadConfig()
-        // 默认读取"/config.json"中的内容
-        info = info ? info : JSON.parse($file.read("/config.json").string)["info"]
-        this.view.setInfo(info)
+    init(args) {
+        this.path = args.savePath ? args.savePath : "/assets/setting.json"
+        this._setName(args.savePath.replace("/", "-"))
+        if (args.struct) {
+            this.struct = args.struct
+        } else {
+            if (!args.structPath) args.structPath = "/setting.json"
+            this.struct = JSON.parse($file.read(args.structPath).string)
+        }
+        this._loadConfig()
+        // 从"/config.json"中读取内容
+        this.view.setInfo(JSON.parse($file.read("/config.json").string)["info"])
         // 是否全屏显示
         this.dataCenter.set("secondaryPage", false)
         // 注册调色板插件
-        this.kernel.registerPlugin("palette")
-        this.setName(settintPath.replace("/", "-"))
+        if (typeof $picker.color !== "function")
+            this.kernel.registerPlugin("palette")
         return this
-    }
-
-    /**
-     * 是否全屏显示
-     * @param {Boolean} secondaryPage 
-     */
-    isSecondaryPage(secondaryPage, pop) {
-        this.dataCenter.set("secondaryPage", secondaryPage)
-        if (secondaryPage)
-            this.dataCenter.set("pop", pop)
-    }
-
-    setFooter(footer) {
-        this.dataCenter.set("footer", footer)
     }
 
     /**
      * 设置一个独一无二的名字
      * @param {String} name 名字
      */
-    setName(name) {
+    _setName(name) {
         this.dataCenter.set("name", name)
     }
 
-    loadConfig() {
+    _loadConfig() {
         this.setting = {}
         let user = {}
         if ($file.exists(this.path)) {
@@ -50,9 +42,18 @@ class Controller extends BaseController {
         }
     }
 
-    setPath(settintPath, savePath) {
-        this.path = savePath
-        this.struct = JSON.parse($file.read(settintPath).string)
+    /**
+     * 是否是二级页面
+     * @param {Boolean} secondaryPage 
+     */
+    isSecondaryPage(secondaryPage, pop) {
+        this.dataCenter.set("secondaryPage", secondaryPage)
+        if (secondaryPage)
+            this.dataCenter.set("pop", pop)
+    }
+
+    setFooter(footer) {
+        this.dataCenter.set("footer", footer)
     }
 
     get(key) {

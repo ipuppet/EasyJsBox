@@ -18,16 +18,20 @@ class Kernel {
 
     /**
      * 注册组件
-     * @param {String} component 组件名
+     * @param {*} component 组件名
+     * @param {Object} args 参数
      */
-    _registerComponent(component, name = null) {
-        if (!name) name = component
+    _registerComponent(component, args = {}) {
+        let name
+        if (typeof args === "string") name = args
+        else if (args.name) name = args.name
+        else name = component
         let View = require(`${this.path.components}${component}/view`)
         let Controller = require(`${this.path.components}${component}/controller`)
         // 新实例
         let view = new View(this)
         let controller = new Controller(this)
-        // 相互注入
+        // 关联view和controller
         view.setController(controller)
         controller.setView(view)
         // 加载数据中心
@@ -36,7 +40,7 @@ class Kernel {
         controller.setDataCenter(dataCenter)
         // 初始化
         view.init()
-        controller.init()
+        controller.init(args)
         // 注册到kernel
         this.components[name] = {
             view: view,

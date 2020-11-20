@@ -851,7 +851,7 @@ class View extends BaseView {
                     }
                 ]
             }
-        return this.standardList(header, footer, this.getSections())
+        return this.defaultList(header, footer, this.getSections())
     }
 
     getSections() {
@@ -1034,7 +1034,7 @@ class View extends BaseView {
      * @param {*} data
      * @param {*} events
      */
-    standardList(header, footer, data, events = {}) {
+    defaultList(header, footer, data, events = {}) {
         let indicatorInsetBottom = this.dataCenter.get("secondaryPage") ? 0 : 50
         return [
             {
@@ -1060,7 +1060,7 @@ class View extends BaseView {
                             },
                             events: Object.assign({
                                 didScroll: sender => {
-                                    // 全屏显示视图则关闭动画
+                                    // 若设置了显示为二级页面则关闭动画
                                     if (this.dataCenter.get("secondaryPage")) {
                                         return
                                     }
