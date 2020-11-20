@@ -2,13 +2,14 @@ const BaseController = require("../../Foundation/controller")
 
 class Controller extends BaseController {
     init(args) {
-        this.path = args.savePath ? args.savePath : "/assets/setting.json"
-        this._setName(args.savePath.replace("/", "-"))
-        if (args.struct) {
-            this.struct = args.struct
+        super.init(args)
+        this.args.savePath = this.args.savePath ? this.args.savePath : "/assets/setting.json"
+        this._setName(this.args.savePath.replace("/", "-"))
+        if (this.args.struct) {
+            this.struct = this.args.struct
         } else {
-            if (!args.structPath) args.structPath = "/setting.json"
-            this.struct = JSON.parse($file.read(args.structPath).string)
+            if (!this.args.structPath) this.args.structPath = "/setting.json"
+            this.struct = JSON.parse($file.read(this.args.structPath).string)
         }
         this._loadConfig()
         // 从"/config.json"中读取内容
@@ -32,8 +33,8 @@ class Controller extends BaseController {
     _loadConfig() {
         this.setting = {}
         let user = {}
-        if ($file.exists(this.path)) {
-            user = JSON.parse($file.read(this.path).string)
+        if ($file.exists(this.args.savePath)) {
+            user = JSON.parse($file.read(this.args.savePath).string)
         }
         for (let section of this.struct) {
             for (let item of section.items) {
@@ -72,7 +73,7 @@ class Controller extends BaseController {
         this.setting[key] = value
         $file.write({
             data: $data({ string: JSON.stringify(this.setting) }),
-            path: this.path
+            path: this.args.savePath
         })
         if (this.hook) this.hook(key, value)
         return true
