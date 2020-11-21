@@ -653,6 +653,7 @@ class View extends BaseView {
     }
 
     createMenu(key, icon, title, items, events, withTitle) {
+        console.log(items)
         let id = `setting-menu-${this.dataCenter.get("name")}-${key}`
         return {
             type: "view",
@@ -950,7 +951,7 @@ class View extends BaseView {
                                 "title": "README",
                                 "type": "script",
                                 "key": "calendar",
-                                "value": "this.controller.readme()"
+                                "value": "this.controller.readme"
                             }
                          */
                         row = this.createScript(item.key, item.icon, $l10n(item.title), value)
@@ -998,12 +999,12 @@ class View extends BaseView {
                                 "title": "RIGHT",
                                 "type": "menu",
                                 "key": "right",
-                                "items": "this.controller.getMenu()",
+                                "items": "this.controller.getMenu",
                                 "value": 0
                             }
                          */
                         if (typeof item.items === "string") {
-                            item.items = eval(`(()=>{return ${item.items}})()`)
+                            item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
                         row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
                         break
