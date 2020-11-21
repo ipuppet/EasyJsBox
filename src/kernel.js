@@ -8,12 +8,19 @@ class Kernel {
         this.path = {
             components: "./Components/"
         }
+        this.version = VERSION
         this.components = {}
         this.plugins = {}
         if ($file.exists("/config.json")) {
             let config = JSON.parse($file.read("/config.json").string)
             this.name = config.info.name
         }
+        this.loadUIKit()
+    }
+
+    loadUIKit() {
+        const BaseView = require("./Foundation/view")
+        this.UIKit = new BaseView()
     }
 
     /**

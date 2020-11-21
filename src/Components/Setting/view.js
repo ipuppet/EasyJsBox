@@ -825,7 +825,7 @@ class View extends BaseView {
         }
     }
 
-    getViews() {
+    getView() {
         let header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         let footer = this.dataCenter.get("footer")
         if (!footer)

@@ -11,6 +11,10 @@ class BaseController {
         this.view = view
     }
 
+    getView() {
+        return this.view.getView()
+    }
+
     setDataCenter(dataCenter) {
         this.dataCenter = dataCenter
     }
