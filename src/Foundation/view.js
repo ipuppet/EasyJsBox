@@ -4,6 +4,7 @@ class BaseView {
         // 通用样式
         this.blurStyle = $blurStyle.thinMaterial
         this.textColor = $color("primaryText", "secondaryText")
+        this.linkColor = $color("systemLink")
     }
 
     init() { }
@@ -55,51 +56,20 @@ class BaseView {
 
     /**
      * 重新设计$ui.push()
-     * @param {*} views 视图
-     * @param {*} parentTitle 上级目录名称，显示在返回按钮旁边
-     * @param {*} navButtons 右侧按钮，需要自己调整位置
+     * @param {Array} views 视图
+     * @param {String} title 标题
+     * @param {String} parentTitle 上级目录名称，显示在返回按钮旁边
+     * @param {Array} navButtons 右侧按钮，需要自己调整位置
+     * @param {CallableFunction} disappeared 页面消失时触犯函数
      */
-    push(views, parentTitle = $l10n("BACK"), navButtons = [], disappeared = undefined) {
-        navButtons = navButtons.concat([
-            {
-                type: "button",
-                props: {
-                    symbol: "chevron.left",
-                    tintColor: this.textColor,
-                    bgcolor: $color("clear")
-                },
-                layout: make => {
-                    make.left.inset(10)
-                    make.size.equalTo(30)
-                }
-            },
-            {
-                type: "label",
-                props: {
-                    text: parentTitle,
-                    textColor: this.textColor,
-                    font: $font(18)
-                },
-                layout: (make, view) => {
-                    make.height.equalTo(view.prev)
-                    make.left.equalTo(view.prev.right)
-                }
-            },
-            {
-                type: "view",
-                props: {
-                    bgolor: $color("blue")
-                },
-                layout: (make, view) => {
-                    make.height.equalTo(view.prev)
-                    make.width.equalTo(view.prev).offset(20)
-                    make.left.inset(10)
-                },
-                events: {
-                    tapped: () => { $ui.pop() }
-                }
-            }
-        ])
+    push(args) {
+        const navTop = 45,
+            view = args.view,
+            title = args.title !== undefined ? args.title : "",
+            parent = args.parent !== undefined ? args.parent : $l10n("BACK"),
+            navButtons = args.navButtons !== undefined ? args.navButtons : [],
+            hasTopOffset = args.hasTopOffset !== undefined ? args.hasTopOffset : true,
+            disappeared = args.disappeared !== undefined ? args.disappeared : undefined
         $ui.push({
             props: {
                 navBarHidden: true,
@@ -116,28 +86,72 @@ class BaseView {
             views: [
                 {
                     type: "view",
-                    props: { clipsToBounds: true },
-                    layout: $layout.fillSafeArea,
+                    views: view,
+                    layout: hasTopOffset ? (make, view) => {
+                        make.top.inset(navTop)
+                        make.bottom.width.equalTo(view.super)
+                    } : $layout.fill
+                },
+                {
+                    type: "view",
+                    layout: (make, view) => {
+                        make.left.top.right.inset(0)
+                        make.bottom.equalTo(view.super.safeAreaTop).offset(navTop)
+                    },
                     views: [
                         {
-                            type: "view",
-                            views: navButtons,
+                            type: "blur",
+                            props: { style: this.blurStyle },
+                            layout: $layout.fill
+                        },
+                        {
+                            type: "canvas",
                             layout: (make, view) => {
-                                make.top.inset(20)
-                                make.width.equalTo(view.super)
-                                make.height.equalTo(20)
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
+                            },
+                            events: {
+                                draw: (view, ctx) => {
+                                    let width = view.frame.width
+                                    let scale = $device.info.screen.scale
+                                    ctx.strokeColor = $color("gray")
+                                    ctx.setLineWidth(1 / scale)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(width, 0)
+                                    ctx.strokePath()
+                                }
+                            }
+                        },
+                        { // 返回按钮
+                            type: "button",
+                            props: {
+                                bgcolor: $color("clear"),
+                                symbol: "chevron.left",
+                                tintColor: this.linkColor,
+                                title: ` ${parent}`,
+                                titleColor: this.linkColor,
+                                font: $font("bold", 16)
+                            },
+                            layout: (make, view) => {
+                                make.left.inset(10)
+                                make.centerY.equalTo(view.super)
+                            },
+                            events: {
+                                tapped: () => { $ui.pop() }
                             }
                         },
                         {
-                            type: "view",
-                            views: views,
+                            type: "label",
+                            props: {
+                                text: title,
+                                font: $font("bold", 17)
+                            },
                             layout: (make, view) => {
-                                make.top.equalTo(view.prev).offset(40)
-                                make.width.equalTo(view.super)
-                                make.bottom.equalTo(view.super.safeAreaBottom)
+                                make.center.equalTo(view.super)
                             }
                         }
-                    ]
+                    ].concat(navButtons)
                 }
             ]
         })

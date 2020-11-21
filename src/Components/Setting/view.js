@@ -521,8 +521,7 @@ class View extends BaseView {
                                         actionDone: actionDone,
                                         touchHighlight: touchHighlight,
                                         touchHighlightStart: touchHighlightStart,
-                                        touchHighlightEnd: touchHighlightEnd,
-                                        push: this.push
+                                        touchHighlightEnd: touchHighlightEnd
                                     }
                                     // 执行代码
                                     eval(`(()=>{return ${script}(animate)})()`)
@@ -631,7 +630,7 @@ class View extends BaseView {
                                         ]
                                         palette.setRGB(color.components.red, color.components.green, color.components.blue)
                                         let views = [palette.getView()]
-                                        this.push(views, $l10n("BACK"), navButtons)
+                                        this.push(views, $l10n("COLOR"), $l10n("BACK"), navButtons)
                                     }
                                 }
                             },
@@ -1114,6 +1113,7 @@ class View extends BaseView {
                         type: "view",
                         props: {
                             id: header.info.id + "-header",
+                            hidden: this.dataCenter.get("secondaryPage") ? true : false,
                             alpha: this.dataCenter.get("secondaryPage") ? 1 : 0
                         },
                         layout: (make, view) => {
