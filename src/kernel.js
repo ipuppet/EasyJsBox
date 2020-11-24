@@ -131,6 +131,8 @@ class Kernel {
                 type: "view",
                 props: {
                     navBarHidden: true,
+                    titleColor: $color("primaryText"),
+                    barColor: $color("primarySurface"),
                     statusBarStyle: 0
                 },
                 layout: $layout.fill,
