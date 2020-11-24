@@ -56,11 +56,15 @@ class BaseView {
 
     /**
      * 重新设计$ui.push()
-     * @param {Array} views 视图
-     * @param {String} title 标题
-     * @param {String} parentTitle 上级目录名称，显示在返回按钮旁边
-     * @param {Array} navButtons 右侧按钮，需要自己调整位置
-     * @param {CallableFunction} disappeared 页面消失时触犯函数
+     * @param {Object} args 参数
+     * {
+            view: [],
+            title: "",
+            parent: "",
+            navButtons: [],
+            hasTopOffset: true,
+            disappeared: () => { },
+        }
      */
     push(args) {
         const navTop = 45,
