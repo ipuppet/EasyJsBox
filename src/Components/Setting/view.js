@@ -653,7 +653,6 @@ class View extends BaseView {
     }
 
     createMenu(key, icon, title, items, events, withTitle) {
-        console.log(items)
         let id = `setting-menu-${this.dataCenter.get("name")}-${key}`
         return {
             type: "view",
