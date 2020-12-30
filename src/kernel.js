@@ -3,16 +3,19 @@ const VERSION = "0.0.1"
 const DataCenter = require("./Foundation/data-center")
 
 class Kernel {
-    constructor() {
+    constructor(rootPath) {
         this.startTime = new Date()
         this.path = {
-            components: "./Components/"
+            root: rootPath ? rootPath : "/EasyJsBox"
         }
+        Object.assign(this.path, {
+            components: `${this.path.root}/src/Components`
+        })
         this.version = VERSION
         this.components = {}
         this.plugins = {}
         if ($file.exists("/config.json")) {
-            let config = JSON.parse($file.read("/config.json").string)
+            const config = JSON.parse($file.read("/config.json").string)
             this.name = config.info.name
         }
         this.loadUIKit()
@@ -25,36 +28,36 @@ class Kernel {
 
     /**
      * 注册组件
-     * @param {*} component 组件名
+     * @param {String} component 组件名
      * @param {Object} args 参数
      */
     _registerComponent(component, args = {}) {
-        let name
-        if (typeof args === "string") name = args
-        else if (args.name) name = args.name
-        else name = component
-        let View = require(`${this.path.components}${component}/view`)
-        let Controller = require(`${this.path.components}${component}/controller`)
+        if (typeof args !== "object") {
+            args = { name: args }
+        } else if (!args.name)
+            args.name = component
+        const View = require(`${this.path.components}/${component}/view`)
+        const Controller = require(`${this.path.components}/${component}/controller`)
         // 新实例
-        let view = new View(this)
-        let controller = new Controller(this)
+        const view = new View(this)
+        const controller = new Controller(this)
         // 关联view和controller
         view.setController(controller)
         controller.setView(view)
         // 加载数据中心
-        let dataCenter = new DataCenter()
+        const dataCenter = new DataCenter()
         view.setDataCenter(dataCenter)
         controller.setDataCenter(dataCenter)
         // 初始化
         view.init()
         controller.init(args)
         // 注册到kernel
-        this.components[name] = {
+        this.components[args.name] = {
             view: view,
             controller: controller,
             dataCenter: dataCenter
         }
-        return this.components[name]
+        return this.components[args.name]
     }
 
     /**
@@ -80,7 +83,7 @@ class Kernel {
      * @param {String} plugin 
      */
     registerPlugin(plugin) {
-        let { Plugin, VERSION } = require(`./Plugins/${plugin}`)
+        const { Plugin, VERSION } = require(`./Plugins/${plugin}`)
         this.plugins[plugin] = {
             plugin: Plugin,
             version: VERSION
