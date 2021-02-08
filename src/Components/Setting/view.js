@@ -780,6 +780,8 @@ class View extends BaseView {
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
                 if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
+                // 更新标题值
+                item.title = $l10n(item.title)
                 switch (item.type) {
                     case "switch":
                         /**
@@ -794,7 +796,7 @@ class View extends BaseView {
                                 "value": true
                             }
                          */
-                        row = this.createSwitch(item.key, item.icon, $l10n(item.title), item.events)
+                        row = this.createSwitch(item.key, item.icon, item.title, item.events)
                         break
                     case "stepper":
                         /**
@@ -811,7 +813,7 @@ class View extends BaseView {
                                 "value": 10
                             }
                          */
-                        row = this.createStepper(item.key, item.icon, $l10n(item.title), item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
+                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
                         break
                     case "string":
                         /**
@@ -826,7 +828,7 @@ class View extends BaseView {
                                 "value": ""
                             }
                          */
-                        row = this.createString(item.key, item.icon, $l10n(item.title), item.events)
+                        row = this.createString(item.key, item.icon, item.title, item.events)
                         break
                     case "number":
                         /**
@@ -841,7 +843,7 @@ class View extends BaseView {
                                 "value": 10
                             }
                          */
-                        row = this.createNumber(item.key, item.icon, $l10n(item.title), item.events)
+                        row = this.createNumber(item.key, item.icon, item.title, item.events)
                         break
                     case "info":
                         /**
@@ -856,7 +858,7 @@ class View extends BaseView {
                                 "value": "this.controller.readme()"
                             }
                          */
-                        row = this.createInfo(item.icon, $l10n(item.title), value)
+                        row = this.createInfo(item.icon, item.title, value)
                         break
                     case "script":
                         /**
@@ -871,7 +873,7 @@ class View extends BaseView {
                                 "value": "this.controller.readme"
                             }
                          */
-                        row = this.createScript(item.key, item.icon, $l10n(item.title), value)
+                        row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
                         /**
@@ -890,7 +892,7 @@ class View extends BaseView {
                                 "value": 0
                             }
                          */
-                        row = this.createTab(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
+                        row = this.createTab(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
                         break
                     case "color":
                         /**
@@ -905,7 +907,7 @@ class View extends BaseView {
                                 "value": "orange"
                             }
                          */
-                        row = this.createColor(item.key, item.icon, $l10n(item.title), item.events)
+                        row = this.createColor(item.key, item.icon, item.title, item.events)
                         break
                     case "menu":
                         /**
@@ -923,13 +925,13 @@ class View extends BaseView {
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
-                        row = this.createMenu(item.key, item.icon, $l10n(item.title), item.items, item.events, item.withTitle)
+                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
                         break
                     case "date":
-                        row = this.createDate(item.key, item.icon, $l10n(item.title), item.mode, item.events)
+                        row = this.createDate(item.key, item.icon, item.title, item.mode, item.events)
                         break
                     case "input":
-                        row = this.createInput(item.key, item.icon, $l10n(item.title), item.events)
+                        row = this.createInput(item.key, item.icon, item.title, item.events)
                         break
                     default:
                         continue
