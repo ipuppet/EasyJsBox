@@ -31,7 +31,7 @@ class Kernel {
      * @param {String} component 组件名
      * @param {Object} args 参数
      */
-    _registerComponent(component, args = {}) {
+    registerComponent(component, args = {}) {
         if (typeof args !== "object") {
             args = { name: args }
         } else if (!args.name)
@@ -64,9 +64,9 @@ class Kernel {
      * 批量注册组件
      * @param {Array} components 包含组件名的数组
      */
-    _registerComponents(components) {
+    registerComponents(components) {
         for (let component of components) {
-            this._registerComponent(component)
+            this.registerComponent(component)
         }
     }
 
@@ -114,7 +114,7 @@ class Kernel {
      * @return {CallableFunction} 返回值为匿名函数，调用该函数开始渲染页面
      */
     render(pages, menus) {
-        this._registerComponents([
+        this.registerComponents([
             "Loading",
             "Menu",
             "Page"
