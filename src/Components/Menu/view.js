@@ -9,8 +9,8 @@ class View extends BaseView {
         this.menuLayout = { // menu layout
             menuItem: (make, view) => {
                 make.size.equalTo(50)
-                let length = this.dataCenter.get("menus").length
-                let spacing = (this.getMenuWidth() - length * 50) / (length + 1)
+                const length = this.dataCenter.get("menus").length
+                const spacing = (this.getMenuWidth() - length * 50) / (length + 1)
                 if (view.prev) {
                     make.left.equalTo(view.prev.right).offset(spacing)
                 } else {
@@ -20,7 +20,7 @@ class View extends BaseView {
             menuBar: (make, view) => {
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(this.getMenuWidth())
-                let isLargeScreen = this.isLargeScreen()
+                const isLargeScreen = this.isLargeScreen()
                 make.top.equalTo(view.super.safeAreaBottom).offset(-50)
                 make.bottom.equalTo(view.super)
                 $("menu").cornerRadius = isLargeScreen ? 10 : 0
@@ -56,7 +56,7 @@ class View extends BaseView {
                 this.dataCenter.get("menus")[i].icon = [this.dataCenter.get("menus")[i].icon[0], this.dataCenter.get("menus")[i].icon[0]]
             }
             // menu模板
-            let menu = {
+            const menu = {
                 info: {
                     index: i,
                     icon: {
