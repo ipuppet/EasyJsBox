@@ -77,9 +77,9 @@ class View extends BaseView {
     }
 
     createInfo(icon, title, value) {
-        let isArray = Array.isArray(value)
-        let text = isArray ? value[0] : value
-        let moreInfo = isArray ? value[1] : value
+        const isArray = Array.isArray(value)
+        const text = isArray ? value[0] : value
+        const moreInfo = isArray ? value[1] : value
         return {
             type: "view",
             views: [
@@ -247,7 +247,7 @@ class View extends BaseView {
                                 placeholder: title,
                                 handler: (text) => {
                                     const isNumber = (str) => {
-                                        let reg = /^[0-9]+.?[0-9]*$/
+                                        const reg = /^[0-9]+.?[0-9]*$/
                                         return reg.test(str)
                                     }
                                     if (text === "" || !isNumber(text)) {
@@ -320,11 +320,11 @@ class View extends BaseView {
     }
 
     createScript(key, icon, title, script) {
-        let id = `script-${this.dataCenter.get("name")}-${key}`
-        let touchHighlightStart = () => {
+        const id = `script-${this.dataCenter.get("name")}-${key}`
+        const touchHighlightStart = () => {
             $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
         }
-        let touchHighlightEnd = (duration = 0.2) => {
+        const touchHighlightEnd = (duration = 0.2) => {
             $ui.animate({
                 duration: duration,
                 animation: () => {
@@ -332,25 +332,25 @@ class View extends BaseView {
                 }
             })
         }
-        let touchHighlight = () => {
+        const touchHighlight = () => {
             touchHighlightStart()
             touchHighlightEnd(0.5)
         }
-        let actionStart = () => {
+        const actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
             $(`${id}-spinner`).alpha = 1
             touchHighlightStart()
         }
-        let actionCancel = () => {
+        const actionCancel = () => {
             $(id).alpha = 1
             $(`${id}-spinner`).alpha = 0
             touchHighlightEnd()
         }
-        let actionDone = (status = true, message = $l10n("ERROR")) => {
+        const actionDone = (status = true, message = $l10n("ERROR")) => {
             $(`${id}-spinner`).alpha = 0
             touchHighlightEnd()
-            let button = $(id)
+            const button = $(id)
             if (!status) { // 失败
                 $ui.toast(message)
                 button.alpha = 1
@@ -472,7 +472,7 @@ class View extends BaseView {
                     },
                     events: {
                         changed: (sender) => {
-                            let value = withTitle ? [sender.index, title] : sender.index
+                            const value = withTitle ? [sender.index, title] : sender.index
                             this.updateSetting(key, value)
                             if (events) eval(`(()=>{return ${events}})()`)
                         }
@@ -517,7 +517,7 @@ class View extends BaseView {
                                         $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor.hexCode)
                                     } else {
                                         const Palette = (this.controller.kernel.getPlugin("palette").plugin)
-                                        let palette = new Palette()
+                                        const palette = new Palette()
                                         let color = this.controller.get(key).trim()
                                         if (typeof color === "string" && color !== "") {
                                             color = $color(color)
@@ -538,8 +538,8 @@ class View extends BaseView {
                                                 },
                                                 events: {
                                                     tapped: () => {
-                                                        let rgb = palette.rgb
-                                                        let newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
+                                                        const rgb = palette.rgb
+                                                        const newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
                                                         this.updateSetting(key, newColor)
                                                         if (events) eval(`(()=>{return ${events}})()`)
                                                         $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor)
@@ -549,8 +549,7 @@ class View extends BaseView {
                                             }
                                         ]
                                         palette.setRGB(color.components.red, color.components.green, color.components.blue)
-                                        let views = [palette.getView()]
-                                        this.push(views, $l10n("COLOR"), $l10n("BACK"), navButtons)
+                                        this.push([palette.getView()], $l10n("COLOR"), $l10n("BACK"), navButtons)
                                     }
                                 }
                             },
@@ -571,7 +570,7 @@ class View extends BaseView {
     }
 
     createMenu(key, icon, title, items, events, withTitle) {
-        let id = `setting-menu-${this.dataCenter.get("name")}-${key}`
+        const id = `setting-menu-${this.dataCenter.get("name")}-${key}`
         return {
             type: "view",
             props: { id: `${id}-line` },
@@ -584,7 +583,7 @@ class View extends BaseView {
                             type: "label",
                             props: {
                                 text: withTitle ? items[(() => {
-                                    let value = this.controller.get(key)
+                                    const value = this.controller.get(key)
                                     if (typeof value === "object") return value[0]
                                     else return value
                                 })()] : items[this.controller.get(key)],
@@ -610,7 +609,7 @@ class View extends BaseView {
                     $ui.menu({
                         items: items,
                         handler: (title, idx) => {
-                            let value = withTitle ? [idx, title] : idx
+                            const value = withTitle ? [idx, title] : idx
                             this.updateSetting(key, value)
                             if (events) eval(`(()=>{return ${events}})()`)
                             $(id).text = $l10n(title)
@@ -631,7 +630,7 @@ class View extends BaseView {
     }
 
     createDate(key, icon, title, mode = 2, events) {
-        let id = `setting-date-${this.dataCenter.get("name")}-${key}`
+        const id = `setting-date-${this.dataCenter.get("name")}-${key}`
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -693,7 +692,7 @@ class View extends BaseView {
     }
 
     createInput(key, icon, title, events) {
-        let id = `setting-input-${this.dataCenter.get("name")}-${key}`
+        const id = `setting-input-${this.dataCenter.get("name")}-${key}`
         return {
             type: "view",
             views: [
@@ -743,31 +742,29 @@ class View extends BaseView {
     }
 
     getView() {
-        let header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
-        let footer = this.dataCenter.get("footer")
-        if (!footer)
-            footer = {
-                type: "view",
-                props: { height: 130 },
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            font: $font(14),
-                            text: `${$l10n("VERSION")} ${this.info.version} © ${this.info.author}`,
-                            textColor: $color({
-                                light: "#C0C0C0",
-                                dark: "#545454"
-                            }),
-                            align: $align.center
-                        },
-                        layout: make => {
-                            make.left.right.inset(0)
-                            make.top.inset(10)
-                        }
+        const header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
+        const footer = this.dataCenter.get("footer") ?? {
+            type: "view",
+            props: { height: 130 },
+            views: [
+                {
+                    type: "label",
+                    props: {
+                        font: $font(14),
+                        text: `${$l10n("VERSION")} ${this.info.version} © ${this.info.author}`,
+                        textColor: $color({
+                            light: "#C0C0C0",
+                            dark: "#545454"
+                        }),
+                        align: $align.center
+                    },
+                    layout: make => {
+                        make.left.right.inset(0)
+                        make.top.inset(10)
                     }
-                ]
-            }
+                }
+            ]
+        }
         return this.defaultList(header, footer, this.getSections())
     }
 
@@ -776,7 +773,7 @@ class View extends BaseView {
         for (let section of this.controller.struct) {
             let rows = []
             for (let item of section.items) {
-                let value = this.controller.get(item.key)
+                const value = this.controller.get(item.key)
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
                 if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
@@ -954,7 +951,7 @@ class View extends BaseView {
      * @param {*} events
      */
     defaultList(header, footer, data, events = {}) {
-        let indicatorInsetBottom = this.dataCenter.get("secondaryPage") ? 0 : 50
+        const indicatorInsetBottom = this.dataCenter.get("secondaryPage") ? 0 : 50
         return [
             {
                 type: "view",
@@ -1055,8 +1052,8 @@ class View extends BaseView {
                                 },
                                 events: {
                                     draw: (view, ctx) => {
-                                        let width = view.frame.width
-                                        let scale = $device.info.screen.scale
+                                        const width = view.frame.width
+                                        const scale = $device.info.screen.scale
                                         ctx.strokeColor = $color("gray")
                                         ctx.setLineWidth(1 / scale)
                                         ctx.moveToPoint(0, 0)
