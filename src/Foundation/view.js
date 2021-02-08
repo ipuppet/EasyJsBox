@@ -174,7 +174,7 @@ class BaseView {
      * 用于创建一个靠右侧按钮（自动布局）
      * @param {String} id 不可重复
      * @param {String} symbol symbol图标（目前只用symbol）
-     * @param {CallableFunction} tapped 按钮点击事件，会传入两个函数，start()和done(status, message)
+     * @param {CallableFunction} tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
      *     调用 start() 表明按钮被点击，准备开始动画
      *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
      *                 若第一个参数传出false则表示运行出错
