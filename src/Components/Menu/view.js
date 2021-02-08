@@ -4,7 +4,8 @@ class View extends BaseView {
     init() {
         this.dataCenter.set("itemIdPrefix", "menu-item-")
         this.dataCenter.set("id", "menu")
-        this.selected = 0 // 当前菜单
+        // 从Page组件获取当前应该设置的菜单索引
+        this.selected = this.kernel.getComponent("Page").dataCenter.get("selectedPage") // 当前菜单
         this.menuLayout = { // menu layout
             menuItem: (make, view) => {
                 make.size.equalTo(50)
