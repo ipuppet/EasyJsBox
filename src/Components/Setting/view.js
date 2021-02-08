@@ -496,8 +496,18 @@ class View extends BaseView {
                             props: {
                                 id: `setting-${this.dataCenter.get("name")}-color-${key}`,
                                 bgcolor: $color(this.controller.get(key)),
-                                circular: true
+                                circular: true,
+                                borderWidth: 1,
+                                borderColor: $color("#e3e3e3")
                             },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.right.inset(15)
+                                make.size.equalTo(20)
+                            }
+                        },
+                        { // 用来监听点击事件，增大可点击面积
+                            type: "view",
                             events: {
                                 tapped: async () => {
                                     if (typeof $picker.color === "function") {
@@ -545,14 +555,12 @@ class View extends BaseView {
                                 }
                             },
                             layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(20)
+                                make.height.width.equalTo(view.super.height)
                             }
                         }
                     ],
                     layout: (make, view) => {
-                        make.right.inset(15)
                         make.height.equalTo(50)
                         make.width.equalTo(view.super)
                     }
