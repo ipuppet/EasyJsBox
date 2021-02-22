@@ -6,8 +6,9 @@ class DataCenter {
         this.data[key] = value
     }
 
-    get(key) {
-        return this.data[key]
+    get(key, _default) {
+        const res = this.data[key]
+        return res === undefined ? _default : res
     }
 }
 

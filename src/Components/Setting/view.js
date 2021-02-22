@@ -743,7 +743,7 @@ class View extends BaseView {
 
     getView() {
         const header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
-        const footer = this.dataCenter.get("footer") ?? {
+        const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
             views: [
@@ -764,7 +764,7 @@ class View extends BaseView {
                     }
                 }
             ]
-        }
+        })
         return this.defaultList(header, footer, this.getSections())
     }
 
