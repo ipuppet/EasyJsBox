@@ -33,12 +33,20 @@ class Controller extends BaseController {
     _loadConfig() {
         this.setting = {}
         let user = {}
+        const exclude = [
+            "script", // script 类型永远使用setting结构文件内的值
+            "info"
+        ]
         if ($file.exists(this.args.savePath)) {
             user = JSON.parse($file.read(this.args.savePath).string)
         }
         for (let section of this.struct) {
             for (let item of section.items) {
-                this.setting[item.key] = item.key in user ? user[item.key] : item.value
+                if (exclude.indexOf(item.type) < 0) {
+                    this.setting[item.key] = item.key in user ? user[item.key] : item.value
+                } else { // 被排除的项目直接赋值
+                    this.setting[item.key] = item.value
+                }
             }
         }
     }
