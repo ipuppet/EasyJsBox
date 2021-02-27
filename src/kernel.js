@@ -4,7 +4,7 @@ const DataCenter = require("./Foundation/data-center")
 
 class Kernel {
     constructor(rootPath) {
-        this.startTime = new Date()
+        this.startTime = Date.now()
         this.path = {
             root: rootPath ? rootPath : "/EasyJsBox"
         }

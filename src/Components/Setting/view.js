@@ -672,7 +672,7 @@ class View extends BaseView {
                             const date = await $picker.date({
                                 props: {
                                     mode: mode,
-                                    date: settingData ? settingData : new Date()
+                                    date: settingData ? settingData : Date.now()
                                 }
                             })
                             if (events) eval(`(()=>{return ${events}})()`)
