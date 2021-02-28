@@ -82,6 +82,9 @@ class BaseView {
             events: {
                 disappeared: () => {
                     if (disappeared !== undefined) disappeared()
+                },
+                dealloc: () => {
+                    if (disappeared !== undefined) disappeared()
                 }
             },
             views: [
@@ -256,8 +259,12 @@ class BaseView {
                         bgcolor: $color("clear")
                     },
                     events: {
-                        tapped: () => {
-                            tapped(actionStart, actionDone, actionCancel)
+                        tapped: sender => {
+                            tapped({
+                                start: actionStart,
+                                done: actionDone,
+                                cancel: actionCancel
+                            }, sender)
                         }
                     },
                     layout: $layout.fill
