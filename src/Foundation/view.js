@@ -5,6 +5,13 @@ class BaseView {
         this.blurStyle = $blurStyle.thinMaterial
         this.textColor = $color("primaryText", "secondaryText")
         this.linkColor = $color("systemLink")
+        // 本地化
+        this.kernel.l10n("zh-Hans", {
+            "DONE": "完成"
+        })
+        this.kernel.l10n("en", {
+            "DONE": "Done"
+        })
     }
 
     init() { }
@@ -54,11 +61,97 @@ class BaseView {
         }
     }
 
+    pushPageSheet(args) {
+        const UIModalPresentationStyle = {
+            automatic: -2,
+            pageSheet: 1,
+            formSheet: 2,
+            fullScreen: 0,
+            currentContext: 3,
+            custom: 4,
+            overFullScreen: 5,
+            overCurrentContext: 6,
+            popover: 7,
+            none: -1
+        }
+        const { width, height } = $device.info.screen
+        const rootViewController = $objc("UIApplication").$sharedApplication().$keyWindow().$rootViewController()
+        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
+        const PSViewController = $objc("UIViewController").invoke("alloc.init")
+        const PSViewControllerView = PSViewController.$view()
+        {
+            PSViewControllerView.$setBackgroundColor($color("primarySurface"))
+            PSViewControllerView.$addSubview(UIView)
+            PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
+        }
+        const present = () => $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
+        const dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        const add = view => PSViewControllerView.jsValue().add(view)
+        add({ // nav
+            type: "view",
+            props: {
+                //bgcolor: $color("blue")
+            },
+            layout: (make, view) => {
+                make.height.equalTo(50)
+                make.top.width.equalTo(view.super)
+            },
+            views: [
+                { // blur
+                    type: "blur",
+                    props: { style: this.blurStyle },
+                    layout: $layout.fill
+                },
+                { // canvas
+                    type: "canvas",
+                    layout: (make, view) => {
+                        make.top.equalTo(view.prev.bottom)
+                        make.height.equalTo(1 / $device.info.screen.scale)
+                        make.left.right.inset(0)
+                    },
+                    events: {
+                        draw: (view, ctx) => {
+                            let width = view.frame.width
+                            let scale = $device.info.screen.scale
+                            ctx.strokeColor = $color("gray")
+                            ctx.setLineWidth(1 / scale)
+                            ctx.moveToPoint(0, 0)
+                            ctx.addLineToPoint(width, 0)
+                            ctx.strokePath()
+                        }
+                    }
+                },
+                { // 完成按钮
+                    type: "button",
+                    layout: (make, view) => {
+                        make.centerY.height.equalTo(view.super)
+                        make.centerY.equalTo(view.super).offset(5)
+                        make.left.inset(15)
+                    },
+                    props: {
+                        title: $l10n("DONE"),
+                        bgcolor: $color("clear"),
+                        font: $font(16),
+                        titleColor: $color("systemLink")
+                    },
+                    events: {
+                        tapped: () => {
+                            dismiss()
+                            if (args.dismiss) args.dismiss()
+                        }
+                    }
+                }
+            ].concat(args.navButtons)
+        })
+        args.views.forEach(view => add(view))
+        present()
+    }
+
     /**
      * 重新设计$ui.push()
      * @param {Object} args 参数
      * {
-            view: [],
+            views: [],
             title: "",
             parent: "",
             navButtons: [],
@@ -68,7 +161,7 @@ class BaseView {
      */
     push(args) {
         const navTop = 45,
-            view = args.view,
+            views = args.views,
             title = args.title !== undefined ? args.title : "",
             parent = args.parent !== undefined ? args.parent : $l10n("BACK"),
             navButtons = args.navButtons !== undefined ? args.navButtons : [{}, {}],
@@ -87,7 +180,7 @@ class BaseView {
             views: [
                 {
                     type: "view",
-                    views: view,
+                    views: views,
                     layout: hasTopOffset ? (make, view) => {
                         make.top.equalTo(view.super.safeAreaTop).offset(navTop)
                         make.bottom.width.equalTo(view.super)
