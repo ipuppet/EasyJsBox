@@ -1,4 +1,4 @@
-const VERSION = "0.1.0"
+const VERSION = "0.2.0"
 
 const DataCenter = require("./Foundation/data-center")
 
@@ -21,9 +21,15 @@ class Kernel {
         this.loadUIKit()
     }
 
+    l10n(language, content) {
+        const strings = $app.strings
+        strings[language] = Object.assign(content, $app.strings[language])
+        $app.strings = strings
+    }
+
     loadUIKit() {
         const BaseView = require("./Foundation/view")
-        this.UIKit = new BaseView()
+        this.UIKit = new BaseView(this)
     }
 
     /**
