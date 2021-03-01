@@ -62,6 +62,12 @@ class BaseView {
     }
 
     pushPageSheet(args) {
+        const navTop = 50,
+            views = args.views,
+            title = args.title !== undefined ? args.title : "",
+            navButtons = args.navButtons !== undefined ? args.navButtons : [],
+            topOffset = args.topOffset !== undefined ? args.topOffset : true,
+            done = args.done !== undefined ? args.done : undefined
         const UIModalPresentationStyle = {
             automatic: -2,
             pageSheet: 1,
@@ -75,7 +81,6 @@ class BaseView {
             none: -1
         }
         const { width, height } = $device.info.screen
-        const rootViewController = $objc("UIApplication").$sharedApplication().$keyWindow().$rootViewController()
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
         const PSViewController = $objc("UIViewController").invoke("alloc.init")
         const PSViewControllerView = PSViewController.$view()
@@ -87,63 +92,86 @@ class BaseView {
         const present = () => $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
         const dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
         const add = view => PSViewControllerView.jsValue().add(view)
-        add({ // nav
+        add({
             type: "view",
-            props: {
-                //bgcolor: $color("blue")
-            },
-            layout: (make, view) => {
-                make.height.equalTo(50)
-                make.top.width.equalTo(view.super)
-            },
+            layout: $layout.fill,
             views: [
-                { // blur
-                    type: "blur",
-                    props: { style: this.blurStyle },
-                    layout: $layout.fill
+                {
+                    type: "view",
+                    views: views,
+                    layout: topOffset ? (make, view) => {
+                        make.top.equalTo(view.super.safeAreaTop).offset(navTop)
+                        make.bottom.width.equalTo(view.super)
+                    } : $layout.fill
                 },
-                { // canvas
-                    type: "canvas",
-                    layout: (make, view) => {
-                        make.top.equalTo(view.prev.bottom)
-                        make.height.equalTo(1 / $device.info.screen.scale)
-                        make.left.right.inset(0)
-                    },
-                    events: {
-                        draw: (view, ctx) => {
-                            const width = view.frame.width
-                            const scale = $device.info.screen.scale
-                            ctx.strokeColor = $color("gray")
-                            ctx.setLineWidth(1 / scale)
-                            ctx.moveToPoint(0, 0)
-                            ctx.addLineToPoint(width, 0)
-                            ctx.strokePath()
-                        }
-                    }
-                },
-                { // 完成按钮
-                    type: "button",
-                    layout: (make, view) => {
-                        make.centerY.height.equalTo(view.super)
-                        make.centerY.equalTo(view.super).offset(5)
-                        make.left.inset(15)
-                    },
+                { // nav
+                    type: "view",
                     props: {
-                        title: $l10n("DONE"),
-                        bgcolor: $color("clear"),
-                        font: $font(16),
-                        titleColor: $color("systemLink")
+                        //bgcolor: $color("blue")
                     },
-                    events: {
-                        tapped: () => {
-                            dismiss()
-                            if (args.dismiss) args.dismiss()
+                    layout: (make, view) => {
+                        make.height.equalTo(navTop)
+                        make.top.width.equalTo(view.super)
+                    },
+                    views: [
+                        { // blur
+                            type: "blur",
+                            props: { style: this.blurStyle },
+                            layout: $layout.fill
+                        },
+                        { // canvas
+                            type: "canvas",
+                            layout: (make, view) => {
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
+                            },
+                            events: {
+                                draw: (view, ctx) => {
+                                    const width = view.frame.width
+                                    const scale = $device.info.screen.scale
+                                    ctx.strokeColor = $color("gray")
+                                    ctx.setLineWidth(1 / scale)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(width, 0)
+                                    ctx.strokePath()
+                                }
+                            }
+                        },
+                        { // 完成按钮
+                            type: "button",
+                            layout: (make, view) => {
+                                make.centerY.height.equalTo(view.super)
+                                make.centerY.equalTo(view.super).offset(5)
+                                make.left.inset(15)
+                            },
+                            props: {
+                                title: $l10n("DONE"),
+                                bgcolor: $color("clear"),
+                                font: $font(16),
+                                titleColor: $color("systemLink")
+                            },
+                            events: {
+                                tapped: () => {
+                                    dismiss()
+                                    if (done) done()
+                                }
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                text: title,
+                                font: $font("bold", 17)
+                            },
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                            }
                         }
-                    }
+                    ].concat(navButtons)
                 }
-            ].concat(args.navButtons)
+            ]
         })
-        args.views.forEach(view => add(view))
         present()
     }
 
@@ -155,7 +183,7 @@ class BaseView {
             title: "",
             parent: "",
             navButtons: [],
-            hasTopOffset: true,
+            topOffset: true, // 这样会导致nav的磨砂效果消失，因为视图不会被nav遮挡
             disappeared: () => { },
         }
      */
@@ -164,8 +192,8 @@ class BaseView {
             views = args.views,
             title = args.title !== undefined ? args.title : "",
             parent = args.parent !== undefined ? args.parent : $l10n("BACK"),
-            navButtons = args.navButtons !== undefined ? args.navButtons : [{}, {}],
-            hasTopOffset = args.hasTopOffset !== undefined ? args.hasTopOffset : true,
+            navButtons = args.navButtons !== undefined ? args.navButtons : [],
+            topOffset = args.topOffset !== undefined ? args.topOffset : true,
             disappeared = args.disappeared !== undefined ? args.disappeared : undefined
         $ui.push({
             props: {
@@ -181,7 +209,7 @@ class BaseView {
                 {
                     type: "view",
                     views: views,
-                    layout: hasTopOffset ? (make, view) => {
+                    layout: topOffset ? (make, view) => {
                         make.top.equalTo(view.super.safeAreaTop).offset(navTop)
                         make.bottom.width.equalTo(view.super)
                     } : $layout.fill
