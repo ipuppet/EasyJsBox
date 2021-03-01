@@ -524,7 +524,7 @@ class View extends BaseView {
                                         } else {
                                             color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
                                         }
-                                        let navButtons = [
+                                        const navButtons = [
                                             {
                                                 type: "button",
                                                 props: {
@@ -769,9 +769,9 @@ class View extends BaseView {
     }
 
     getSections() {
-        let sections = []
+        const sections = []
         for (let section of this.controller.struct) {
-            let rows = []
+            const rows = []
             for (let item of section.items) {
                 const value = this.controller.get(item.key)
                 let row = null

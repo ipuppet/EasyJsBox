@@ -111,8 +111,8 @@ class BaseView {
                     },
                     events: {
                         draw: (view, ctx) => {
-                            let width = view.frame.width
-                            let scale = $device.info.screen.scale
+                            const width = view.frame.width
+                            const scale = $device.info.screen.scale
                             ctx.strokeColor = $color("gray")
                             ctx.setLineWidth(1 / scale)
                             ctx.moveToPoint(0, 0)
@@ -207,8 +207,8 @@ class BaseView {
                             },
                             events: {
                                 draw: (view, ctx) => {
-                                    let width = view.frame.width
-                                    let scale = $device.info.screen.scale
+                                    const width = view.frame.width
+                                    const scale = $device.info.screen.scale
                                     ctx.strokeColor = $color("gray")
                                     ctx.setLineWidth(1 / scale)
                                     ctx.moveToPoint(0, 0)
@@ -281,7 +281,7 @@ class BaseView {
     navButton(id, symbol, tapped, hidden) {
         const actionStart = () => {
             // 隐藏button，显示spinner
-            let button = $(id)
+            const button = $(id)
             button.alpha = 0
             button.hidden = true
             $("spinner-" + id).alpha = 1
@@ -289,7 +289,7 @@ class BaseView {
 
         const actionDone = (status = true, message = $l10n("ERROR")) => {
             $("spinner-" + id).alpha = 0
-            let button = $(id)
+            const button = $(id)
             button.hidden = false
             if (!status) { // 失败
                 $ui.toast(message)
@@ -330,7 +330,7 @@ class BaseView {
 
         const actionCancel = () => {
             $("spinner-" + id).alpha = 0
-            let button = $(id)
+            const button = $(id)
             button.alpha = 1
             button.hidden = false
         }
