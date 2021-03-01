@@ -142,7 +142,6 @@ class BaseView {
                             type: "button",
                             layout: (make, view) => {
                                 make.centerY.height.equalTo(view.super)
-                                make.centerY.equalTo(view.super).offset(5)
                                 make.left.inset(15)
                             },
                             props: {
