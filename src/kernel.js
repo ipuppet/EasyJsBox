@@ -489,8 +489,6 @@ class Kernel {
             return this.getComponent(args.name)
         args._name = component // 组件名称
         const { Controller, View } = require(`${this.path.components}/${component}`)
-        //const Controller = require(`${this.path.components}/${component}/controller`)
-        //const View = require(`${this.path.components}/${component}/view`)
         // 新实例
         const dataCenter = new DataCenter()
         const controller = new Controller({ kernel: this, args, dataCenter })
