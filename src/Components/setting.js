@@ -1,7 +1,153 @@
-const BaseView = require("../../Foundation/view")
+class Controller {
+    constructor(data) {
+        Object.assign(this, data)
+        this.args.savePath = this.args.savePath ? this.args.savePath : "/assets/setting.json"
+        this._setName(this.args.savePath.replace("/", "-"))
+        if (this.args.struct) {
+            this.struct = this.args.struct
+        } else {
+            if (!this.args.structPath) this.args.structPath = "/setting.json"
+            this.struct = JSON.parse($file.read(this.args.structPath).string)
+        }
+        this._loadConfig()
+        // 是否全屏显示
+        this.dataCenter.set("secondaryPage", false)
+        // 注册调色板插件
+        if (typeof $picker.color !== "function")
+            this.kernel.registerPlugin("palette")
+        // l10n
+        this.loadL10n()
+    }
 
-class View extends BaseView {
-    init() {
+    loadL10n() {
+        this.kernel.l10n("zh-Hans", `
+        "OK" = "好";
+        "CANCEL" = "取消";
+        "CLEAR" = "清除";
+        "BACK" = "返回";
+        "ERROR" = "发生错误";
+        "SUCCESS" = "成功";
+        "INVALID_VALUE" = "非法参数";
+        
+        "SETTING" = "设置";
+        "GENERAL" = "一般";
+        "ADVANCED" = "高级";
+        "TIPS" = "小贴士";
+        "COLOR" = "颜色";
+        "COPY" = "复制";
+        "COPY_SUCCESS" = "复制成功";
+        
+        "JSBOX_ICON" = "JSBox 内置图标";
+        "SF_SYMBOLS" = "SF Symbols";
+        "IMAGE_BASE64" = "图片/ base64";
+        
+        "ABOUT" = "关于";
+        "VERSION" = "Version";
+        "AUTHOR" = "作者";
+        "AT_BOTTOM" = "已经到底啦~";
+        `)
+        this.kernel.l10n("en", `
+        "OK" = "Ok";
+        "CANCEL" = "Cancel";
+        "CLEAR" = "Clear";
+        "BACK" = "Back";
+        "ERROR" = "Error";
+        "SUCCESS" = "Success";
+        "INVALID_VALUE" = "Invalid value";
+
+        "SETTING" = "Setting";
+        "GENERAL" = "General";
+        "ADVANCED" = "Advanced";
+        "TIPS" = "Tips";
+        "COLOR" = "Color";
+        "COPY" = "Copy";
+        "COPY_SUCCESS" = "Copy success";
+
+        "JSBOX_ICON" = "JSBox in app icon";
+        "SF_SYMBOLS" = "SF Symbols";
+        "IMAGE_BASE64" = "Image/base64";
+
+        "ABOUT" = "About";
+        "VERSION" = "Version";
+        "AUTHOR" = "Author";
+        "AT_BOTTOM" = "It's the end~";
+        `)
+    }
+
+    getView() {
+        return this.view.getView()
+    }
+
+    /**
+     * 设置一个独一无二的名字，防止多个setting冲突
+     * @param {String} name 名字
+     */
+    _setName(name) {
+        this.dataCenter.set("name", name)
+    }
+
+    _loadConfig() {
+        this.setting = {}
+        let user = {}
+        const exclude = [
+            "script", // script 类型永远使用setting结构文件内的值
+            "info"
+        ]
+        if ($file.exists(this.args.savePath)) {
+            user = JSON.parse($file.read(this.args.savePath).string)
+        }
+        for (let section of this.struct) {
+            for (let item of section.items) {
+                if (exclude.indexOf(item.type) < 0) {
+                    this.setting[item.key] = item.key in user ? user[item.key] : item.value
+                } else { // 被排除的项目直接赋值
+                    this.setting[item.key] = item.value
+                }
+            }
+        }
+    }
+
+    /**
+     * 是否是二级页面
+     * @param {Boolean} secondaryPage 
+     */
+    isSecondaryPage(secondaryPage, pop) {
+        this.dataCenter.set("secondaryPage", secondaryPage)
+        if (secondaryPage)
+            this.dataCenter.set("pop", pop)
+    }
+
+    setFooter(footer) {
+        this.dataCenter.set("footer", footer)
+    }
+
+    get(key) {
+        return this.setting[key]
+    }
+
+    /**
+     * 设置一个钩子，在set方法调用时触发
+     * @param {CallableFunction} hook 
+     */
+    setHook(hook) {
+        this.hook = hook
+    }
+
+    set(key, value) {
+        this.setting[key] = value
+        $file.write({
+            data: $data({ string: JSON.stringify(this.setting) }),
+            path: this.args.savePath
+        })
+        if (this.hook) this.hook(key, value)
+        return true
+    }
+}
+
+class View {
+    constructor(data) {
+        Object.assign(this, data)
+        // 样式
         this.titleSize = 35
         this.titleSizeMax = 40
         this.titleOffset = 50
@@ -9,8 +155,7 @@ class View extends BaseView {
     }
 
     setInfo(info) {
-        // 默认读取"/config.json"中的内容
-        this.info = info ? info : JSON.parse($file.read("/config.json"))["info"]
+        this.info = info
     }
 
     updateSetting(key, value) {
@@ -549,7 +694,7 @@ class View extends BaseView {
                                             }
                                         ]
                                         palette.setRGB(color.components.red, color.components.green, color.components.blue)
-                                        this.push({
+                                        this.UIKit.push({
                                             views: [palette.getView()],
                                             title: $l10n("COLOR"),
                                             navButtons: navButtons
@@ -824,7 +969,8 @@ class View extends BaseView {
     }
 
     getView() {
-        const header = this.dataCenter.get("secondaryPage") ? {} : this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
+        const info = JSON.parse($file.read("/config.json").string)["info"]
+        const header = this.dataCenter.get("secondaryPage") ? {} : this.UIKit.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
@@ -833,7 +979,7 @@ class View extends BaseView {
                     type: "label",
                     props: {
                         font: $font(14),
-                        text: `${$l10n("VERSION")} ${this.info.version} © ${this.info.author}`,
+                        text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
                         textColor: $color({
                             light: "#C0C0C0",
                             dark: "#545454"
@@ -863,144 +1009,30 @@ class View extends BaseView {
                 item.title = $l10n(item.title)
                 switch (item.type) {
                     case "switch":
-                        /**
-                         * {
-                                "icon": [
-                                    "archivebox",
-                                    "#336699"
-                                ],
-                                "title": "USE_COMPRESSED_IMAGE",
-                                "type": "switch",
-                                "key": "album.useCompressedImage",
-                                "value": true
-                            }
-                         */
                         row = this.createSwitch(item.key, item.icon, item.title, item.events)
                         break
                     case "stepper":
-                        /**
-                         * {
-                                "icon": [
-                                    "rectangle.split.3x1.fill",
-                                    "#FF6666"
-                                ],
-                                "title": "SWITCH_INTERVAL",
-                                "type": "stepper",
-                                "key": "album.switchInterval",
-                                "min": 10,
-                                "max": 60,
-                                "value": 10
-                            }
-                         */
                         row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
                         break
                     case "string":
-                        /**
-                         * {
-                                "icon": [
-                                    "link",
-                                    "#CC6699"
-                                ],
-                                "title": "URL_SCHEME",
-                                "type": "string",
-                                "key": "album.urlScheme",
-                                "value": ""
-                            }
-                         */
                         row = this.createString(item.key, item.icon, item.title, item.events)
                         break
                     case "number":
-                        /**
-                         * {
-                                "icon": [
-                                    "rectangle.split.3x1.fill",
-                                    "#FF6666"
-                                ],
-                                "title": "TIME_SPAN",
-                                "type": "number",
-                                "key": "timeSpan",
-                                "value": 10
-                            }
-                         */
                         row = this.createNumber(item.key, item.icon, item.title, item.events)
                         break
                     case "info":
-                        /**
-                         * {
-                                "icon": [
-                                    "book.fill",
-                                    "#A569BD"
-                                ],
-                                "title": "README",
-                                "type": "script",
-                                "key": "readme",
-                                "value": "this.controller.readme()"
-                            }
-                         */
                         row = this.createInfo(item.icon, item.title, value)
                         break
                     case "script":
-                        /**
-                         * {
-                                "icon": [
-                                    "book.fill",
-                                    "#A569BD"
-                                ],
-                                "title": "README",
-                                "type": "script",
-                                "key": "calendar",
-                                "value": "this.controller.readme"
-                            }
-                         */
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        /**
-                         * {
-                                "icon": [
-                                    "flag.fill",
-                                    "#FFCC00"
-                                ],
-                                "title": "FIRST_DAY_OF_WEEK",
-                                "type": "tab",
-                                "key": "calendar.firstDayOfWeek",
-                                "items": [
-                                    "_SUNDAY",
-                                    "_MONDAY"
-                                ],
-                                "value": 0
-                            }
-                         */
                         row = this.createTab(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
                         break
                     case "color":
-                        /**
-                         * {
-                                "icon": [
-                                    "wand.and.rays",
-                                    "orange"
-                                ],
-                                "title": "COLOR_TONE",
-                                "type": "color",
-                                "key": "calendar.colorTone",
-                                "value": "orange"
-                            }
-                         */
                         row = this.createColor(item.key, item.icon, item.title, item.events)
                         break
                     case "menu":
-                        /**
-                         * {
-                                "icon": [
-                                    "rectangle.3.offgrid.fill"
-                                ],
-                                "title": "RIGHT",
-                                "type": "menu",
-                                "key": "right",
-                                "items": "this.controller.getMenu",
-                                "value": 0
-                            }
-                         */
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
@@ -1167,4 +1199,4 @@ class View extends BaseView {
     }
 }
 
-module.exports = View
+module.exports = { Controller, View }

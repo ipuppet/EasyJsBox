@@ -1,11 +1,37 @@
-const BaseView = require("../../Foundation/view")
+class Controller {
+    constructor(data) {
+        Object.assign(this, data)
+        this.dataCenter.set("selectedMenu", 0)
+    }
 
-class View extends BaseView {
-    init() {
+    getView() {
+        return this.view.getView()
+    }
+
+    /**
+     * 设置切换菜单时的回调函数
+     * @param {*} callback 回调函数
+     */
+    setCallback(callback) {
+        this.callback = callback
+    }
+
+    setMenus(menus) {
+        this.dataCenter.set("menus", menus)
+    }
+
+    setSelectedMenu(selected) {
+        this.dataCenter.set("selectedMenu", selected)
+    }
+}
+
+class View {
+    constructor(data) {
+        Object.assign(this, data)
+        // init
         this.dataCenter.set("itemIdPrefix", "menu-item-")
         this.dataCenter.set("id", "menu")
-        // 从Page组件获取当前应该设置的菜单索引
-        this.selected = this.kernel.getComponent("Page").dataCenter.get("selectedPage") // 当前菜单
+        this.selected = this.dataCenter.get("selectedMenu") // 当前菜单
         this.menuLayout = { // menu layout
             menuItem: (make, view) => {
                 make.size.equalTo(50)
@@ -20,7 +46,7 @@ class View extends BaseView {
             menuBar: (make, view) => {
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(this.getMenuWidth())
-                const isLargeScreen = this.isLargeScreen()
+                const isLargeScreen = this.UIKit.isLargeScreen()
                 make.top.equalTo(view.super.safeAreaBottom).offset(-50)
                 make.bottom.equalTo(view.super)
                 $("menu").cornerRadius = isLargeScreen ? 10 : 0
@@ -40,7 +66,7 @@ class View extends BaseView {
     }
 
     getMenuWidth() {
-        return this.isLargeScreen() ? 500 : $device.info.screen.width
+        return this.UIKit.isLargeScreen() ? 500 : $device.info.screen.width
     }
 
     /**
@@ -158,7 +184,7 @@ class View extends BaseView {
                     props: {
                         id: this.dataCenter.get("id"),
                         style: this.blurStyle,
-                        cornerRadius: this.isLargeScreen() ? 10 : 0
+                        cornerRadius: this.UIKit.isLargeScreen() ? 10 : 0
                     },
                     layout: $layout.fill,
                     views: this.menuItemTemplate()
@@ -167,7 +193,7 @@ class View extends BaseView {
                     type: "canvas",
                     props: {
                         id: `${this.dataCenter.get("itemIdPrefix")}canvas`,
-                        hidden: this.isLargeScreen()
+                        hidden: this.UIKit.isLargeScreen()
                     },
                     layout: (make, view) => {
                         make.top.equalTo(view.prev.top)
@@ -191,4 +217,4 @@ class View extends BaseView {
     }
 }
 
-module.exports = View
+module.exports = { Controller, View }

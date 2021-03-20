@@ -1,7 +1,28 @@
-const BaseView = require("../../Foundation/view")
+class Controller {
+    constructor(data) {
+        Object.assign(this, data)
+    }
 
-class View extends BaseView {
-    init() {
+    getView() {
+        return this.view.getView()
+    }
+
+    setPages(pages) {
+        this.dataCenter.set("pages", pages)
+    }
+
+    /**
+     * 设置当前选中的页面
+     * @param {Number} index 页面索引
+     */
+    setSelectedPage(index) {
+        this.dataCenter.set("selectedPage", index)
+    }
+}
+
+class View {
+    constructor(data) {
+        Object.assign(this, data)
         this.dataCenter.set("selectedPage", 0)
         this.dataCenter.set("pageIdPrefix", "page-")
     }
@@ -42,4 +63,4 @@ class View extends BaseView {
     }
 }
 
-module.exports = View
+module.exports = { Controller, View }

@@ -1,7 +1,20 @@
-const BaseView = require("../../Foundation/view")
+class Controller {
+    constructor(data) {
+        Object.assign(this, data)
+    }
 
-class View extends BaseView {
-    init() {
+    start() {
+        this.view.prepare()
+    }
+
+    end() {
+        $(this.dataCenter.get("id")).remove()
+    }
+}
+
+class View {
+    constructor(data) {
+        Object.assign(this, data)
         this.dataCenter.set("id", "base-ui-prepare")
     }
 
@@ -34,4 +47,4 @@ class View extends BaseView {
     }
 }
 
-module.exports = View
+module.exports = { Controller, View }
