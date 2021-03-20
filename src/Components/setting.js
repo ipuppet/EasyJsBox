@@ -1152,7 +1152,7 @@ class View {
                     views: [
                         {
                             type: "blur",
-                            props: { style: this.blurStyle },
+                            props: { style: this.UIKit.blurStyle },
                             layout: $layout.fill
                         },
                         {

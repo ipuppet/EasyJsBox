@@ -183,7 +183,7 @@ class View {
                     type: "blur",
                     props: {
                         id: this.dataCenter.get("id"),
-                        style: this.blurStyle,
+                        style: this.UIKit.blurStyle,
                         cornerRadius: this.UIKit.isLargeScreen() ? 10 : 0
                     },
                     layout: $layout.fill,
