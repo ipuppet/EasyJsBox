@@ -1,4 +1,6 @@
-const VERSION = "0.3.1"
+const VERSION = "0.3.2"
+const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
+const SHARED_PATH = "shared://EasyJsBox"
 
 class UIKit {
     constructor(kernel) {
@@ -424,14 +426,18 @@ class DataCenter {
 }
 
 class Kernel {
-    constructor(rootPath) {
+    constructor() {
         this.startTime = Date.now()
         this.path = {
-            root: rootPath ? rootPath : "/EasyJsBox"
+            root: ROOT_PATH,
+            components: `${ROOT_PATH}/src/Components`,
+            plugins: `${ROOT_PATH}/src/Plugins`,
+            shared: {
+                root: SHARED_PATH,
+                components: `${SHARED_PATH}/src/Components`,
+                plugins: `${SHARED_PATH}/src/Plugins`
+            }
         }
-        Object.assign(this.path, {
-            components: `${this.path.root}/src/Components`
-        })
         this.version = VERSION
         this.components = {}
         this.plugins = {}
@@ -472,6 +478,32 @@ class Kernel {
         $app.strings = strings
     }
 
+    getExtFile(path, sharedPath) {
+        const copyFile = () => {
+            $file.copy({
+                src: sharedPath,
+                dst: path
+            })
+        }
+        if (!$file.exists(path)) { // 从 shared 复制
+            if ($file.exists(sharedPath)) {
+                copyFile()
+            } else {
+                return false
+            }
+        } else { // 检查更新
+            if ($app.env !== $env.widget) {
+                const { VERSION } = require(path)
+                if ($file.exists(sharedPath)) {
+                    const SHARED_VERSION = eval($file.read(sharedPath).string).VERSION
+                    if (isOutdated(VERSION, SHARED_VERSION)) {
+                        copyFile()
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * 注册组件
      * @param {String} component 组件名
@@ -488,7 +520,10 @@ class Kernel {
         if (this.hasComponent(args.name))
             return this.getComponent(args.name)
         args._name = component // 组件名称
-        const { Controller, View } = require(`${this.path.components}/${component}`)
+        const componentPath = `${this.path.components}/${component}.js`
+        const sharedComponentPath = `${this.path.shared.components}/${component}.js`
+        this.getExtFile(componentPath, sharedComponentPath)
+        const { Controller, View } = require(componentPath)
         // 新实例
         const dataCenter = new DataCenter()
         const controller = new Controller({ kernel: this, args, dataCenter })
@@ -534,7 +569,10 @@ class Kernel {
      * @param {String} plugin 
      */
     registerPlugin(plugin) {
-        const { Plugin, VERSION } = require(`./Plugins/${plugin}`)
+        const pluginPath = `${this.path.plugins}/${plugin}.js`
+        const sharedPluginPath = `${this.path.shared.plugins}/${plugin}.js`
+        this.getExtFile(pluginPath, sharedPluginPath)
+        const { Plugin, VERSION } = require(pluginPath)
         this.plugins[plugin] = {
             plugin: Plugin,
             version: VERSION
@@ -621,4 +659,47 @@ class Kernel {
     }
 }
 
-module.exports = { Kernel, VERSION }
+/**
+ * 检查版本号是否是过期版本
+ * @param {String} thisVersion 当前版本号
+ * @param {String} version 待检查版本号
+ * @returns 过期则返回 true
+ */
+function isOutdated(thisVersion, version) {
+    // TODO 检查版本号
+    return thisVersion !== version
+}
+
+function init() {
+    const copyFile = () => {
+        // 清除旧文件
+        $file.delete(ROOT_PATH)
+        // 创建结构
+        JSON.parse($file.read(`${SHARED_PATH}/structure.json`).string).forEach(dir => {
+            $file.mkdir(`${ROOT_PATH}${dir}`)
+        })
+        // 复制 kernel
+        $file.copy({
+            src: `${SHARED_PATH}/src/kernel.js`,
+            dst: `${ROOT_PATH}/src/kernel.js`
+        })
+        // 复制证书文件
+        $file.copy({
+            src: `${SHARED_PATH}/LICENSE`,
+            dst: `${ROOT_PATH}/LICENSE`
+        })
+    }
+    if ($file.exists(ROOT_PATH)) {
+        // 不在 widget 中运行且 SHARED_PATH 目录存在则检查更新
+        if ($file.exists(SHARED_PATH) && $app.env !== $env.widget) {
+            const SHARED_VERSION = eval($file.read(`${SHARED_PATH}/src/kernel.js`).string).VERSION
+            if (isOutdated(VERSION, SHARED_VERSION)) {
+                copyFile()
+            }
+        }
+    } else {
+        copyFile()
+    }
+}
+
+module.exports = { Kernel, VERSION, SHARED_PATH, init }
