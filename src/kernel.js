@@ -1,4 +1,4 @@
-const VERSION = "0.3.2"
+const VERSION = "0.3.4"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -24,10 +24,26 @@ class UIKit {
     }
 
     /**
+     * 获取Window大小
+     * @returns 
+     */
+    getWindowSize() {
+        return $objc("UIWindow").$keyWindow().jsValue().size
+    }
+
+    /**
      * 是否属于大屏设备
      */
     isLargeScreen() {
-        return $device.info.screen.width > 500
+        return $device.isIpad || $device.isIpadPro
+    }
+
+    /**
+     * 判断是否是分屏模式
+     * @returns {Boolean}
+     */
+    isSplitScreenMode() {
+        return $device.info.screen.width !== this.getWindowSize().width
     }
 
     /**
@@ -666,6 +682,7 @@ class Kernel {
  * @returns 过期则返回 true
  */
 function isOutdated(thisVersion, version) {
+    if (version.indexOf("dev") > -1) return true
     // TODO 检查版本号
     return thisVersion !== version
 }
@@ -673,7 +690,8 @@ function isOutdated(thisVersion, version) {
 function init() {
     const copyFile = () => {
         // 清除旧文件
-        $file.delete(ROOT_PATH)
+        $file.delete(`${ROOT_PATH}/src/kernel.js`)
+        $file.delete(`${ROOT_PATH}/LICENSE`)
         // 创建结构
         JSON.parse($file.read(`${SHARED_PATH}/structure.json`).string).forEach(dir => {
             $file.mkdir(`${ROOT_PATH}${dir}`)
