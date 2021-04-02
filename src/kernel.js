@@ -1,4 +1,4 @@
-const VERSION = "0.3.4"
+const VERSION = "0.3.5"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -421,6 +421,27 @@ class UIKit {
                     make.right.equalTo(view.prev.left)
                 } else {
                     make.right.inset(0)
+                }
+            }
+        }
+    }
+
+    underline() {
+        return { // canvas
+            type: "canvas",
+            layout: (make, view) => {
+                if (view.prev === undefined) return false
+                make.top.equalTo(view.prev.bottom)
+                make.height.equalTo(1 / $device.info.screen.scale)
+                make.left.right.inset(0)
+            },
+            events: {
+                draw: (view, ctx) => {
+                    ctx.strokeColor = $color("separatorColor")
+                    ctx.setLineWidth(1)
+                    ctx.moveToPoint(0, 0)
+                    ctx.addLineToPoint(view.frame.width, 0)
+                    ctx.strokePath()
                 }
             }
         }
