@@ -1,33 +1,41 @@
-const BaseView = require("../../Foundation/view")
+class Controller {
+    constructor(data) {
+        Object.assign(this, data)
+        this.dataCenter.set("selectedMenu", 0)
+    }
 
-class View extends BaseView {
-    init() {
+    getView() {
+        return this.view.getView()
+    }
+
+    /**
+     * 设置切换菜单时的回调函数
+     * @param {*} callback 回调函数
+     */
+    setCallback(callback) {
+        this.callback = callback
+    }
+
+    setMenus(menus) {
+        this.dataCenter.set("menus", menus)
+    }
+
+    setSelectedMenu(selected) {
+        this.dataCenter.set("selectedMenu", selected)
+    }
+
+    setWidth(width) {
+        this.dataCenter.set("width", width)
+    }
+}
+
+class View {
+    constructor(data) {
+        Object.assign(this, data)
+        // init
         this.dataCenter.set("itemIdPrefix", "menu-item-")
         this.dataCenter.set("id", "menu")
-        // 从Page组件获取当前应该设置的菜单索引
-        this.selected = this.kernel.getComponent("Page").dataCenter.get("selectedPage") // 当前菜单
-        this.menuLayout = { // menu layout
-            menuItem: (make, view) => {
-                make.size.equalTo(50)
-                const length = this.dataCenter.get("menus").length
-                const spacing = (this.getMenuWidth() - length * 50) / (length + 1)
-                if (view.prev) {
-                    make.left.equalTo(view.prev.right).offset(spacing)
-                } else {
-                    make.left.inset(spacing)
-                }
-            },
-            menuBar: (make, view) => {
-                make.centerX.equalTo(view.super)
-                make.width.equalTo(this.getMenuWidth())
-                const isLargeScreen = this.isLargeScreen()
-                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
-                make.bottom.equalTo(view.super)
-                $("menu").cornerRadius = isLargeScreen ? 10 : 0
-                if ($(`${this.dataCenter.get("itemIdPrefix")}canvas`))
-                    $(`${this.dataCenter.get("itemIdPrefix")}canvas`).hidden = isLargeScreen
-            }
-        }
+        this.selected = this.dataCenter.get("selectedMenu") // 当前菜单
     }
 
     /**
@@ -40,7 +48,8 @@ class View extends BaseView {
     }
 
     getMenuWidth() {
-        return this.isLargeScreen() ? 500 : $device.info.screen.width
+        const windowWidth = this.UIKit.getWindowSize().width
+        return this.dataCenter.get("width", windowWidth)
     }
 
     /**
@@ -115,7 +124,7 @@ class View extends BaseView {
                         }
                     }
                 ],
-                layout: this.menuLayout.menuItem,
+                layout: $layout.fill,
                 events: {
                     tapped: sender => {
                         if (this.selected === sender.info.index) return
@@ -151,24 +160,36 @@ class View extends BaseView {
     getView() {
         return {
             type: "view",
-            layout: this.menuLayout.menuBar,
+            props: { id: "easyjsbox-menu" },
+            layout: (make, view) => {
+                make.centerX.equalTo(view.super)
+                make.width.equalTo(view.super)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
+                make.bottom.equalTo(view.super)
+            },
             views: [
                 {
                     type: "blur",
                     props: {
-                        id: this.dataCenter.get("id"),
-                        style: this.blurStyle,
-                        cornerRadius: this.isLargeScreen() ? 10 : 0
+                        style: this.UIKit.blurStyle
                     },
                     layout: $layout.fill,
-                    views: this.menuItemTemplate()
+                    views: [{
+                        type: "stack",
+                        layout: $layout.fillSafeArea,
+                        props: {
+                            id: this.dataCenter.get("id"),
+                            axis: $stackViewAxis.horizontal,
+                            distribution: $stackViewDistribution.fillEqually,
+                            spacing: 0,
+                            stack: {
+                                views: this.menuItemTemplate()
+                            }
+                        }
+                    }]
                 },
                 {// 菜单栏上方灰色横线
                     type: "canvas",
-                    props: {
-                        id: `${this.dataCenter.get("itemIdPrefix")}canvas`,
-                        hidden: this.isLargeScreen()
-                    },
                     layout: (make, view) => {
                         make.top.equalTo(view.prev.top)
                         make.height.equalTo(1 / $device.info.screen.scale)
@@ -176,12 +197,10 @@ class View extends BaseView {
                     },
                     events: {
                         draw: (view, ctx) => {
-                            const width = view.frame.width
-                            const scale = $device.info.screen.scale
                             ctx.strokeColor = $color("gray")
-                            ctx.setLineWidth(1 / scale)
+                            ctx.setLineWidth(1 / $device.info.screen.scale)
                             ctx.moveToPoint(0, 0)
-                            ctx.addLineToPoint(width, 0)
+                            ctx.addLineToPoint(view.frame.width, 0)
                             ctx.strokePath()
                         }
                     }
@@ -191,4 +210,4 @@ class View extends BaseView {
     }
 }
 
-module.exports = View
+module.exports = { Controller, View, VERSION: "1.0.1" }

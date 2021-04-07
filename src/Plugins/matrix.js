@@ -1,5 +1,3 @@
-const VERSION = "1.0.0"
-
 class Matrix {
     constructor() {
         this.indexFlag = 1
@@ -98,6 +96,6 @@ class Matrix {
 }
 
 module.exports = {
-    VERSION: VERSION,
+    VERSION: "1.0.0",
     Plugin: Matrix
 }
