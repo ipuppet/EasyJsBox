@@ -1,4 +1,4 @@
-const VERSION = "0.3.5"
+const VERSION = "0.3.6"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -322,8 +322,10 @@ class UIKit {
      *          if(upload(data)) { done() }
      *          else { done(false, "Upload Error!") }
      *      }
+     * @param {Boolean} hidden 是否隐藏
+     * @param {String} alignRight 是否向右对齐，false 则向左对齐
      */
-    navButton(id, symbol, tapped, hidden) {
+    navButton(id, symbol, tapped, hidden, alignRight = true) {
         const actionStart = () => {
             // 隐藏button，显示spinner
             const button = $(id)
@@ -391,6 +393,8 @@ class UIKit {
                         hidden: hidden,
                         tintColor: this.textColor,
                         symbol: symbol,
+                        contentEdgeInsets: $insets(0, 0, 0, 0),
+                        imageEdgeInsets: $insets(0, 0, 0, 0),
                         bgcolor: $color("clear")
                     },
                     events: {
@@ -418,9 +422,11 @@ class UIKit {
                 make.height.equalTo(view.super)
                 make.width.equalTo(40)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    make.right.equalTo(view.prev.left)
+                    if (alignRight) make.right.equalTo(view.prev.left)
+                    else make.left.equalTo(view.prev.right)
                 } else {
-                    make.right.inset(0)
+                    if (alignRight) make.right.inset(0)
+                    else make.left.inset(0)
                 }
             }
         }
