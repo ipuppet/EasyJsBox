@@ -3,11 +3,11 @@ class Controller {
         Object.assign(this, data)
         this.args.savePath = this.args.savePath ? this.args.savePath : "/assets/setting.json"
         this._setName(this.args.savePath.replace("/", "-"))
-        if (this.args.struct) {
-            this.struct = this.args.struct
+        if (this.args.structure) {
+            this.structure = this.args.structure
         } else {
-            if (!this.args.structPath) this.args.structPath = "/setting.json"
-            this.struct = JSON.parse($file.read(this.args.structPath).string)
+            if (!this.args.structurePath) this.args.structurePath = "/setting.json"
+            this.structure = JSON.parse($file.read(this.args.structurePath).string)
         }
         this._loadConfig()
         // 是否全屏显示
@@ -96,7 +96,7 @@ class Controller {
         if ($file.exists(this.args.savePath)) {
             user = JSON.parse($file.read(this.args.savePath).string)
         }
-        for (let section of this.struct) {
+        for (let section of this.structure) {
             for (let item of section.items) {
                 if (exclude.indexOf(item.type) < 0) {
                     this.setting[item.key] = item.key in user ? user[item.key] : item.value
@@ -145,6 +145,11 @@ class Controller {
 }
 
 class View {
+    /**
+     * 
+     * @param {Object} data 
+     * data { UIKit: this.UIKit, dataCenter }
+     */
     constructor(data) {
         Object.assign(this, data)
         // 样式
@@ -968,9 +973,46 @@ class View {
         }
     }
 
+    createChild(key, icon, title, children) {
+        const id = `setting-child-${this.dataCenter.get("name")}-${key}`
+        return {
+            type: "view",
+            layout: $layout.fill,
+            views: [
+                this.createLineLabel(title, icon),
+                {// 仅用于显示图片
+                    type: "image",
+                    props: {
+                        symbol: "chevron.right",
+                        tintColor: $color("secondaryText")
+                    },
+                    layout: (make, view) => {
+                        make.centerY.equalTo(view.super)
+                        make.right.inset(15)
+                        make.size.equalTo(15)
+                    }
+                }
+            ],
+            props: { id: id },
+            events: {
+                tapped: () => {
+                    this.UIKit.push({
+                        title: title,
+                        topOffset: false,
+                        views: this.defaultList({
+                            tupe: "view",
+                            props: { height: 60 }
+                        }, {}, this.getSections(children), {}, true)
+                    })
+                }
+            }
+        }
+    }
+
     getView() {
+        const secondaryPage = this.dataCenter.get("secondaryPage")
         const info = JSON.parse($file.read("/config.json").string)["info"]
-        const header = this.dataCenter.get("secondaryPage") ? {} : this.UIKit.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
+        const header = secondaryPage ? {} : this.UIKit.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
@@ -993,12 +1035,12 @@ class View {
                 }
             ]
         })
-        return this.defaultList(header, footer, this.getSections())
+        return this.defaultList(header, footer, this.getSections(this.controller.structure), {}, secondaryPage)
     }
 
-    getSections() {
+    getSections(structure) {
         const sections = []
-        for (let section of this.controller.struct) {
+        for (let section of structure) {
             const rows = []
             for (let item of section.items) {
                 const value = this.controller.get(item.key)
@@ -1047,13 +1089,16 @@ class View {
                     case "icon":
                         row = this.createIcon(item.key, item.icon, item.title, item.events)
                         break
+                    case "child":
+                        row = this.createChild(item.key, item.icon, item.title, item.children)
+                        break
                     default:
                         continue
                 }
                 rows.push(row)
             }
             sections.push({
-                title: $l10n(section.title),
+                title: $l10n(section.title ?? ""),
                 rows: rows
             })
         }
@@ -1067,8 +1112,8 @@ class View {
      * @param {*} data
      * @param {*} events
      */
-    defaultList(header, footer, data, events = {}) {
-        const secondaryPage = this.dataCenter.get("secondaryPage")
+    defaultList(header, footer, data, events = {}, secondaryPage) {
+        if (secondaryPage === undefined) secondaryPage = this.dataCenter.get("secondaryPage")
         return [
             {
                 type: "view",
@@ -1088,6 +1133,7 @@ class View {
                                 rowHeight: 50,
                                 indicatorInsets: $insets(50, 0, secondaryPage ? 0 : 50, 0),
                                 header: header,
+                                sectionTitleHeight: 30,
                                 footer: footer,
                                 data: data
                             },
@@ -1199,4 +1245,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.0" }
+module.exports = { Controller, View, VERSION: "1.0.1" }
