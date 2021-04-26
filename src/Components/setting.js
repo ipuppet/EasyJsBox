@@ -1,8 +1,8 @@
 class Controller {
     constructor(data) {
         Object.assign(this, data)
-        this.args.savePath = this.args.savePath ? this.args.savePath : "/assets/setting.json"
-        this._setName(this.args.savePath.replace("/", "-"))
+        this.args.savePath = this.args.savePath ?? "/assets/setting.json"
+        this._setName(this.args.name ?? this.args.savePath.replace("/", "-"))
         if (this.args.structure) {
             this.structure = this.args.structure
         } else {
@@ -10,6 +10,8 @@ class Controller {
             this.structure = JSON.parse($file.read(this.args.structurePath).string)
         }
         this._loadConfig()
+        // 判断 section 是否带有标题
+        this.dataCenter.set("hasSectionTitle", this.structure[0]["title"] ? true : false)
         // 是否全屏显示
         this.dataCenter.set("secondaryPage", false)
         // 注册调色板插件
@@ -96,15 +98,23 @@ class Controller {
         if ($file.exists(this.args.savePath)) {
             user = JSON.parse($file.read(this.args.savePath).string)
         }
-        for (let section of this.structure) {
-            for (let item of section.items) {
-                if (exclude.indexOf(item.type) < 0) {
-                    this.setting[item.key] = item.key in user ? user[item.key] : item.value
-                } else { // 被排除的项目直接赋值
-                    this.setting[item.key] = item.value
+        function setValue(structure) {
+            const setting = {}
+            for (let section of structure) {
+                for (let item of section.items) {
+                    if (item.type === "child") {
+                        const child = setValue(item.children)
+                        Object.assign(setting, child)
+                    } else if (exclude.indexOf(item.type) < 0) {
+                        setting[item.key] = item.key in user ? user[item.key] : item.value
+                    } else { // 被排除的项目直接赋值
+                        setting[item.key] = item.value
+                    }
                 }
             }
+            return setting
         }
+        this.setting = setValue(this.structure)
     }
 
     /**
@@ -139,7 +149,7 @@ class Controller {
             data: $data({ string: JSON.stringify(this.setting) }),
             path: this.args.savePath
         })
-        if (this.hook) this.hook(key, value)
+        if (typeof this.hook === "function") this.hook(key, value)
         return true
     }
 }
@@ -1012,7 +1022,11 @@ class View {
     getView() {
         const secondaryPage = this.dataCenter.get("secondaryPage")
         const info = JSON.parse($file.read("/config.json").string)["info"]
-        const header = secondaryPage ? {} : this.UIKit.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
+        const header = secondaryPage ? {} : this.UIKit.headerTitle(
+            `setting-title-${this.dataCenter.get("name")}`,
+            $l10n("SETTING"),
+            this.dataCenter.get("hasSectionTitle") ? 90 : 110
+        )
         const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
@@ -1114,135 +1128,130 @@ class View {
      */
     defaultList(header, footer, data, events = {}, secondaryPage) {
         if (secondaryPage === undefined) secondaryPage = this.dataCenter.get("secondaryPage")
-        return [
-            {
+        return [{
+            type: "view",
+            props: { bgcolor: $color("insetGroupedBackground") },
+            views: [{
                 type: "view",
-                props: { bgcolor: $color("insetGroupedBackground") },
-                views: [
-                    {
-                        type: "view",
-                        layout: (make, view) => {
-                            make.top.left.right.equalTo(view.super.safeArea)
-                            make.bottom.inset(0)
-                        },
-                        views: [{
-                            type: "list",
-                            props: {
-                                style: 2,
-                                separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                                rowHeight: 50,
-                                indicatorInsets: $insets(50, 0, secondaryPage ? 0 : 50, 0),
-                                header: header,
-                                sectionTitleHeight: 30,
-                                footer: footer,
-                                data: data
-                            },
-                            events: Object.assign(secondaryPage ? {} : { // 若设置了显示为二级页面则不监听
-                                didScroll: sender => {
-                                    // 下拉放大字体
-                                    if (sender.contentOffset.y <= this.topOffset) {
-                                        let size = 35 - sender.contentOffset.y * 0.04
-                                        if (size > this.titleSizeMax)
-                                            size = this.titleSizeMax
-                                        $(header.info.id).font = $font("bold", size)
-                                    }
-                                    // 顶部信息栏
-                                    if (sender.contentOffset.y >= 5) {
-                                        $ui.animate({
-                                            duration: 0.2,
-                                            animation: () => {
-                                                $(header.info.id + "-header").alpha = 1
-                                            }
-                                        })
-                                        if (sender.contentOffset.y > 40) {
-                                            $ui.animate({
-                                                duration: 0.2,
-                                                animation: () => {
-                                                    $(header.info.id + "-header-title").alpha = 1
-                                                    $(header.info.id).alpha = 0
-                                                }
-                                            })
-                                        } else {
-                                            $ui.animate({
-                                                duration: 0.2,
-                                                animation: () => {
-                                                    $(header.info.id + "-header-title").alpha = 0
-                                                    $(header.info.id).alpha = 1
-                                                }
-                                            })
-                                        }
-                                    } else if (sender.contentOffset.y < 5) {
-                                        $ui.animate({
-                                            duration: 0.2,
-                                            animation: () => {
-                                                $(header.info.id + "-header").alpha = 0
-
-                                            }
-                                        })
-                                    }
-                                }
-                            }, events),
-                            layout: $layout.fill
-                        }]
-                    }
-                ].concat(secondaryPage ? [] : {// 顶部bar，用于显示 设置 字样
-                    type: "view",
+                layout: (make, view) => {
+                    make.top.left.right.equalTo(view.super.safeArea)
+                    make.bottom.inset(0)
+                },
+                views: [{
+                    type: "list",
                     props: {
-                        id: header.info.id + "-header",
-                        alpha: 0
+                        style: 2,
+                        separatorInset: $insets(0, 50, 0, 10), // 分割线边距
+                        rowHeight: 50,
+                        indicatorInsets: $insets(50, 0, secondaryPage ? 0 : 50, 0),
+                        header: header,
+                        footer: footer,
+                        data: data
                     },
-                    layout: (make, view) => {
-                        make.left.top.right.inset(0)
-                        make.bottom.equalTo(view.super.safeAreaTop).offset(45)
-                    },
-                    views: [
-                        {
-                            type: "blur",
-                            props: { style: this.UIKit.blurStyle },
-                            layout: $layout.fill
-                        },
-                        {
-                            type: "canvas",
-                            layout: (make, view) => {
-                                make.top.equalTo(view.prev.bottom)
-                                make.height.equalTo(1 / $device.info.screen.scale)
-                                make.left.right.inset(0)
-                            },
-                            events: {
-                                draw: (view, ctx) => {
-                                    const width = view.frame.width
-                                    const scale = $device.info.screen.scale
-                                    ctx.strokeColor = $color("gray")
-                                    ctx.setLineWidth(1 / scale)
-                                    ctx.moveToPoint(0, 0)
-                                    ctx.addLineToPoint(width, 0)
-                                    ctx.strokePath()
-                                }
+                    events: Object.assign(secondaryPage ? {} : { // 若设置了显示为二级页面则不监听
+                        didScroll: sender => {
+                            // 下拉放大字体
+                            if (sender.contentOffset.y <= this.topOffset) {
+                                let size = 35 - sender.contentOffset.y * 0.04
+                                if (size > this.titleSizeMax)
+                                    size = this.titleSizeMax
+                                $(header.info.id).font = $font("bold", size)
                             }
-                        },
-                        { // 标题
-                            type: "label",
-                            props: {
-                                id: header.info.id + "-header-title",
-                                alpha: 0,
-                                text: header.info.title,
-                                font: $font("bold", 17),
-                                align: $align.center,
-                                bgcolor: $color("clear"),
-                                textColor: this.textColor
-                            },
-                            layout: (make, view) => {
-                                make.left.right.inset(0)
-                                make.top.equalTo(view.super.safeAreaTop)
-                                make.bottom.equalTo(view.super)
+                            // 顶部信息栏
+                            if (sender.contentOffset.y >= 5) {
+                                $ui.animate({
+                                    duration: 0.2,
+                                    animation: () => {
+                                        $(header.info.id + "-header").alpha = 1
+                                    }
+                                })
+                                if (sender.contentOffset.y > 40) {
+                                    $ui.animate({
+                                        duration: 0.2,
+                                        animation: () => {
+                                            $(header.info.id + "-header-title").alpha = 1
+                                            $(header.info.id).alpha = 0
+                                        }
+                                    })
+                                } else {
+                                    $ui.animate({
+                                        duration: 0.2,
+                                        animation: () => {
+                                            $(header.info.id + "-header-title").alpha = 0
+                                            $(header.info.id).alpha = 1
+                                        }
+                                    })
+                                }
+                            } else if (sender.contentOffset.y < 5) {
+                                $ui.animate({
+                                    duration: 0.2,
+                                    animation: () => {
+                                        $(header.info.id + "-header").alpha = 0
+
+                                    }
+                                })
                             }
                         }
-                    ]
-                }),
-                layout: $layout.fill
-            }
-        ]
+                    }, events),
+                    layout: $layout.fill
+                }]
+            }].concat(secondaryPage ? [] : {// 顶部bar，用于显示 设置 字样
+                type: "view",
+                props: {
+                    id: header.info.id + "-header",
+                    alpha: 0
+                },
+                layout: (make, view) => {
+                    make.left.top.right.inset(0)
+                    make.bottom.equalTo(view.super.safeAreaTop).offset(45)
+                },
+                views: [
+                    {
+                        type: "blur",
+                        props: { style: this.UIKit.blurStyle },
+                        layout: $layout.fill
+                    },
+                    {
+                        type: "canvas",
+                        layout: (make, view) => {
+                            make.top.equalTo(view.prev.bottom)
+                            make.height.equalTo(1 / $device.info.screen.scale)
+                            make.left.right.inset(0)
+                        },
+                        events: {
+                            draw: (view, ctx) => {
+                                const width = view.frame.width
+                                const scale = $device.info.screen.scale
+                                ctx.strokeColor = $color("gray")
+                                ctx.setLineWidth(1 / scale)
+                                ctx.moveToPoint(0, 0)
+                                ctx.addLineToPoint(width, 0)
+                                ctx.strokePath()
+                            }
+                        }
+                    },
+                    { // 标题
+                        type: "label",
+                        props: {
+                            id: header.info.id + "-header-title",
+                            alpha: 0,
+                            text: header.info.title,
+                            font: $font("bold", 17),
+                            align: $align.center,
+                            bgcolor: $color("clear"),
+                            textColor: this.textColor
+                        },
+                        layout: (make, view) => {
+                            make.left.right.inset(0)
+                            make.top.equalTo(view.super.safeAreaTop)
+                            make.bottom.equalTo(view.super)
+                        }
+                    }
+                ]
+            }),
+            layout: $layout.fill
+        }]
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.1" }
+module.exports = { Controller, View, VERSION: "1.0.2" }
