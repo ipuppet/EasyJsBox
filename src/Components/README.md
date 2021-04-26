@@ -23,8 +23,8 @@
     const MySetting = kernel.registerComponent("Setting", {
         name: "MySetting",
         savePath: "/assets/setting.json", // 数据文件保存路径，其中的数据优先级将高于 `settintPath` 中的默认数据。
-        struct: "", // 设置页面的结构，设置此属性时 `structPath` 将失效
-        structPath: "/setting.json" // 存放设置页面结构数据的 `.json` 文件
+        structure: "", // 设置页面的结构，设置此属性时 `structurePath` 将失效
+        structurePath: "/setting.json" // 存放设置页面结构数据的 `.json` 文件
     })
     const MySettingController = MySetting.controller
     // 或 通过 `getComponent(component)` 获取：
@@ -54,7 +54,7 @@
 - `setFooter(footer)`  
 用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号。(作者和版本号将从根目录的 `config.js` 获取)
 
-### Struct
+### Structure
 
 > 组件提供的设置项类型
 
