@@ -985,9 +985,21 @@ class View {
 
     createChild(key, icon, title, children) {
         const id = `setting-child-${this.dataCenter.get("name")}-${key}`
+        const touchHighlightStart = () => {
+            $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
+        }
+        const touchHighlightEnd = (duration = 0.2) => {
+            $ui.animate({
+                duration: duration,
+                animation: () => {
+                    $(`${id}-line`).bgcolor = $color("clear")
+                }
+            })
+        }
         return {
             type: "view",
             layout: $layout.fill,
+            props: { id: `${id}-line` },
             views: [
                 this.createLineLabel(title, icon),
                 {// 仅用于显示图片
@@ -1003,16 +1015,20 @@ class View {
                     }
                 }
             ],
-            props: { id: id },
             events: {
                 tapped: () => {
-                    this.UIKit.push({
-                        title: title,
-                        topOffset: false,
-                        views: this.defaultList({
-                            tupe: "view",
-                            props: { height: 60 }
-                        }, {}, this.getSections(children), {}, true)
+                    // highlight
+                    touchHighlightStart()
+                    touchHighlightEnd(0.5)
+                    setTimeout(() => {
+                        this.UIKit.push({
+                            title: title,
+                            topOffset: false,
+                            views: this.defaultList({
+                                tupe: "view",
+                                props: { height: 60 }
+                            }, {}, this.getSections(children), {}, true)
+                        })
                     })
                 }
             }
@@ -1254,4 +1270,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.2" }
+module.exports = { Controller, View, VERSION: "1.0.3" }
