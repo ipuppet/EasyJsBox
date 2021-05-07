@@ -135,6 +135,12 @@ class Controller {
         return this.setting[key]
     }
 
+    getColor(color) {
+        return typeof color === "string"
+            ? $color(color)
+            : $rgba(color.red, color.green, color.blue, color.alpha)
+    }
+
     /**
      * 设置一个钩子，在set方法调用时触发
      * @param {CallableFunction} hook 
@@ -649,12 +655,6 @@ class View {
     }
 
     createColor(key, icon, title, events) {
-        const getColor = () => {
-            const color = this.controller.get(key)
-            return typeof color === "string"
-                ? $color(color)
-                : $rgba(color.red, color.green, color.blue, color.alpha)
-        }
         return {
             type: "view",
             views: [
@@ -666,7 +666,7 @@ class View {
                             type: "view",
                             props: {
                                 id: `setting-${this.dataCenter.get("name")}-color-${key}`,
-                                bgcolor: getColor(),
+                                bgcolor: this.controller.getColor(this.controller.get(key)),
                                 circular: true,
                                 borderWidth: 1,
                                 borderColor: $color("#e3e3e3")
@@ -682,7 +682,7 @@ class View {
                             events: {
                                 tapped: async () => {
                                     if (typeof $picker.color === "function") {
-                                        const color = await $picker.color({ color: getColor() })
+                                        const color = await $picker.color({ color: this.controller.getColor(this.controller.get(key)) })
                                         this.updateSetting(key, color.components)
                                         if (events) eval(`(()=>{return ${events}})()`)
                                         $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $rgba(
