@@ -143,7 +143,12 @@ class Controller {
         this.hook = hook
     }
 
+    print(className, funcName, message) {
+        this.kernel.print(`Components[${this.dataCenter.get("name")}] ${className}::${funcName} ${message}`)
+    }
+
     set(key, value) {
+        this.print("Controller", "set", `${key}->${value}`)
         this.setting[key] = value
         $file.write({
             data: $data({ string: JSON.stringify(this.setting) }),
@@ -644,6 +649,12 @@ class View {
     }
 
     createColor(key, icon, title, events) {
+        const getColor = () => {
+            const color = this.controller.get(key)
+            return typeof color === "string"
+                ? $color(color)
+                : $rgba(color.red, color.green, color.blue, color.alpha)
+        }
         return {
             type: "view",
             views: [
@@ -655,7 +666,7 @@ class View {
                             type: "view",
                             props: {
                                 id: `setting-${this.dataCenter.get("name")}-color-${key}`,
-                                bgcolor: $color(this.controller.get(key)),
+                                bgcolor: getColor(),
                                 circular: true,
                                 borderWidth: 1,
                                 borderColor: $color("#e3e3e3")
@@ -671,10 +682,15 @@ class View {
                             events: {
                                 tapped: async () => {
                                     if (typeof $picker.color === "function") {
-                                        const newColor = await $picker.color({ color: $color(this.controller.get(key).trim()) })
-                                        this.updateSetting(key, newColor.hexCode)
+                                        const color = await $picker.color({ color: getColor() })
+                                        this.updateSetting(key, color.components)
                                         if (events) eval(`(()=>{return ${events}})()`)
-                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor.hexCode)
+                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $rgba(
+                                            color.components.red,
+                                            color.components.green,
+                                            color.components.blue,
+                                            color.components.alpha
+                                        )
                                     } else {
                                         const Palette = this.controller.kernel.getPlugin("palette").plugin
                                         const palette = new Palette()
@@ -1270,4 +1286,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.3" }
+module.exports = { Controller, View, VERSION: "1.0.4" }
