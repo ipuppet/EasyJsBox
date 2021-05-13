@@ -1,4 +1,4 @@
-const VERSION = "0.3.6.1"
+const VERSION = "0.3.7"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -543,6 +543,23 @@ class Kernel {
                     }
                 }
             }
+        }
+    }
+
+    debug(print) {
+        this.debugMode = true
+        if (typeof print === "function") {
+            this.debugPrint = print
+        }
+        this.print("You are running EasyJsBox in debug mode.")
+    }
+
+    print(message) {
+        if (!this.debugMode) return
+        if (typeof this.debugPrint === "function") {
+            this.debugPrint(message)
+        } else {
+            console.log(message)
         }
     }
 
