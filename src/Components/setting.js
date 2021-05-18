@@ -1301,4 +1301,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.5.dev" }
+module.exports = { Controller, View, VERSION: "1.0.5" }
