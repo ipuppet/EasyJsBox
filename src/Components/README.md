@@ -22,7 +22,7 @@
     const kernel = new Kernel()
     const MySetting = kernel.registerComponent("Setting", {
         name: "MySetting",
-        savePath: "/assets/setting.json", // 数据文件保存路径，其中的数据优先级将高于 `settintPath` 中的默认数据。
+        savePath: "/storage/setting.json", // 数据文件保存路径，其中的数据优先级将高于 `settintPath` 中的默认数据。
         structure: "", // 设置页面的结构，设置此属性时 `structurePath` 将失效
         structurePath: "/setting.json" // 存放设置页面结构数据的 `.json` 文件
     })

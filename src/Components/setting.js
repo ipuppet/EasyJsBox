@@ -1,7 +1,19 @@
 class Controller {
     constructor(data) {
         Object.assign(this, data)
-        this.args.savePath = this.args.savePath ?? "/assets/setting.json"
+        this.args.savePath = this.args.savePath ?? (() => {
+            if (!$file.exists("/storage")) {
+                $file.mkdir("/storage")
+            }
+            // TODO 兼容旧数据，于未来删除
+            if($file.exists("/assets/setting.json")){
+                $file.move({
+                    src: "/assets/setting.json",
+                    dst: "/storage/setting.json"
+                })
+            }
+            return "/storage/setting.json"
+        })()
         this._setName(this.args.name ?? this.args.savePath.replace("/", "-"))
         if (this.args.structure) {
             this.structure = this.args.structure
@@ -131,8 +143,11 @@ class Controller {
         this.dataCenter.set("footer", footer)
     }
 
-    get(key) {
-        return this.setting[key]
+    get(key, _default = null) {
+        if (Object.prototype.hasOwnProperty.call(this.setting, key))
+            return this.setting[key]
+        else
+            return _default
     }
 
     getColor(color) {
@@ -1286,4 +1301,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.4" }
+module.exports = { Controller, View, VERSION: "1.0.5" }
