@@ -1,4 +1,4 @@
-const VERSION = "0.3.7"
+const VERSION = "0.3.8"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -461,9 +461,11 @@ class DataCenter {
         this.data[key] = value
     }
 
-    get(key, _default) {
-        const res = this.data[key]
-        return res === undefined ? _default : res
+    get(key, _default = null) {
+        if (Object.prototype.hasOwnProperty.call(this.data, key))
+            return this.data[key]
+        else
+            return _default
     }
 }
 
