@@ -59,18 +59,19 @@ class View {
         const views = []
         for (let i = 0; i < this.dataCenter.get("menus").length; i++) {
             // 整理menus 格式化单个icon和多个icon的menu
-            if (typeof this.dataCenter.get("menus")[i].icon !== "object") {
-                this.dataCenter.get("menus")[i].icon = [this.dataCenter.get("menus")[i].icon, this.dataCenter.get("menus")[i].icon]
-            } else if (this.dataCenter.get("menus")[i].icon.length === 1) {
-                this.dataCenter.get("menus")[i].icon = [this.dataCenter.get("menus")[i].icon[0], this.dataCenter.get("menus")[i].icon[0]]
+            const menu = this.dataCenter.get("menus")[i]
+            if (typeof menu.icon !== "object") {
+                menu.icon = [menu.icon, menu.icon]
+            } else if (menu.icon.length === 1) {
+                menu.icon = [menu.icon[0], menu.icon[0]]
             }
             // menu模板
-            const menu = {
+            const menuTemplate = {
                 info: {
                     index: i,
                     icon: {
                         id: `${this.dataCenter.get("itemIdPrefix")}icon-${i}`,
-                        icon: this.dataCenter.get("menus")[i].icon,
+                        icon: menu.icon,
                         tintColor: ["lightGray", "systemLink"]
                     },
                     title: {
@@ -80,25 +81,25 @@ class View {
                 },
                 icon: {
                     id: `${this.dataCenter.get("itemIdPrefix")}icon-${i}`,
-                    image: $image(this.dataCenter.get("menus")[i].icon[0]),
+                    image: $image(menu.icon[0]),
                     tintColor: $color("lightGray")
                 },
                 title: {
                     id: `${this.dataCenter.get("itemIdPrefix")}title-${i}`,
-                    text: this.dataCenter.get("menus")[i].title,
+                    text: menu.title,
                     textColor: $color("lightGray")
                 }
             }
             // 当前菜单
             if (this.selected === i) {
-                menu.icon.image = $image(this.dataCenter.get("menus")[i].icon[1])
-                menu.icon.tintColor = $color("systemLink")
-                menu.title.textColor = $color("systemLink")
+                menuTemplate.icon.image = $image(menu.icon[1])
+                menuTemplate.icon.tintColor = $color("systemLink")
+                menuTemplate.title.textColor = $color("systemLink")
             }
             views.push({
                 type: "view",
                 props: {
-                    info: menu.info,
+                    info: menuTemplate.info,
                     id: `${this.dataCenter.get("itemIdPrefix")}${i}`
                 },
                 views: [
@@ -106,7 +107,7 @@ class View {
                         type: "image",
                         props: Object.assign({
                             bgcolor: $color("clear")
-                        }, menu.icon),
+                        }, menuTemplate.icon),
                         layout: (make, view) => {
                             make.centerX.equalTo(view.super)
                             make.size.equalTo(25)
@@ -117,7 +118,7 @@ class View {
                         type: "label",
                         props: Object.assign({
                             font: $font(10)
-                        }, menu.title),
+                        }, menuTemplate.title),
                         layout: (make, view) => {
                             make.centerX.equalTo(view.prev)
                             make.bottom.inset(5)
@@ -125,7 +126,7 @@ class View {
                     }
                 ],
                 layout: $layout.fill,
-                events: {
+                events: Object.assign({
                     tapped: sender => {
                         if (this.selected === sender.info.index) return
                         // menu动画
@@ -151,7 +152,9 @@ class View {
                         // 更新selected值
                         this.selected = sender.info.index
                     }
-                }
+                }, typeof menu.doubleTapped === "function" ? {
+                    doubleTapped: () => menu.doubleTapped()
+                } : {})
             })
         }
         return views
@@ -210,4 +213,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.1" }
+module.exports = { Controller, View, VERSION: "1.0.2" }
