@@ -137,7 +137,7 @@ class UIKit {
                         indicatorInsets: $insets(50, 0, largeTitle ? 50 : 0, 0),
                         footer: footer,
                         data: data
-                    }, largeTitle ? header : {}),
+                    }, largeTitle ? { header: header } : this.isLargeTitle && !largeTitle ? { header: {} } : {}),
                     events: Object.assign(largeTitle ? {
                         didScroll: sender => {
                             // 下拉放大字体
@@ -840,17 +840,12 @@ class Kernel {
         $ui.render({
             type: "view",
             props: Object.assign({
-                titleColor: $color("#FFFFFF"),
                 title: this.UIKit.title ?? this.name,
-                navButtons: this.UIKit.navButtons
+                navButtons: this.UIKit.navButtons ?? []
             }, props),
             layout: $layout.fill,
             views: views,
-            events: Object.assign({
-                ready: () => {
-                    this.components.loading.controller.end()
-                }
-            }, events)
+            events: events
         })
     }
 
@@ -874,23 +869,22 @@ class Kernel {
         // 注入页面和菜单
         this.components.page.controller.setPages(pages)
         this.components.menu.controller.setMenus(menus)
-        const props = {
-            navBarHidden: true,
-            titleColor: $color("primaryText"),
-            barColor: $color("primarySurface"),
-            statusBarStyle: 0
-        }
         return () => {
             this.UIRender(
                 [
                     this.components.page.view.getView(),
                     this.components.menu.view.getView()
                 ],
-                Object.assign({
-                    title: this.UIKit.title ?? this.name,
-                    navButtons: this.UIKit.navButtons
-                }, props),
                 {
+                    navBarHidden: true,
+                    titleColor: $color("primaryText"),
+                    barColor: $color("primarySurface"),
+                    statusBarStyle: 0
+                },
+                {
+                    ready: () => {
+                        this.components.loading.controller.end()
+                    },
                     layoutSubviews: () => {
                         if (!this.orientation) {
                             this.orientation = $device.info.screen.orientation
