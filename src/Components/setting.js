@@ -1127,7 +1127,7 @@ class View {
             footer,
             this.getSections(this.controller.structure), // data
             {}, // events
-            !this.UIKit.isLargeTitle ? false : this.dataCenter.get("largeTitle")
+            this.UIKit.isLargeTitle ? this.dataCenter.get("largeTitle") : false
         )
     }
 }
