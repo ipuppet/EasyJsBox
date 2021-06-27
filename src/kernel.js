@@ -1,4 +1,4 @@
-const VERSION = "0.3.10"
+const VERSION = "0.3.9"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -24,7 +24,7 @@ class UIKit {
     }
 
     isUIKitNavButton(button) {
-        if (button?.props?.id) {
+        if (button.hasOwnProperty("props") && button.props.hasOwnProperty("id")) {
             return true
         }
         return false
