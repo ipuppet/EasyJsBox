@@ -6,12 +6,13 @@ class Controller {
                 $file.mkdir("/storage")
             }
             // TODO 兼容旧数据，于未来删除
-            if($file.exists("/assets/setting.json")){
+            if ($file.exists("/assets/setting.json")) {
                 $file.move({
                     src: "/assets/setting.json",
                     dst: "/storage/setting.json"
                 })
             }
+            // 兼容旧数据，于未来删除
             return "/storage/setting.json"
         })()
         this._setName(this.args.name ?? this.args.savePath.replace("/", "-"))
@@ -24,11 +25,8 @@ class Controller {
         this._loadConfig()
         // 判断 section 是否带有标题
         this.dataCenter.set("hasSectionTitle", this.structure[0]["title"] ? true : false)
-        // 是否全屏显示
-        this.dataCenter.set("secondaryPage", false)
-        // 注册调色板插件
-        if (typeof $picker.color !== "function")
-            this.kernel.registerPlugin("palette")
+        // 是否模拟大标题样式
+        this.dataCenter.set("largeTitle", true)
         // l10n
         this.loadL10n()
     }
@@ -130,13 +128,16 @@ class Controller {
     }
 
     /**
-     * 是否是二级页面
-     * @param {Boolean} secondaryPage 
+     * 设置 pop 事件回调
+     * @param {Function} pop 
      */
-    isSecondaryPage(secondaryPage, pop) {
-        this.dataCenter.set("secondaryPage", secondaryPage)
-        if (secondaryPage)
-            this.dataCenter.set("pop", pop)
+    setPopEvent(pop) {
+        this.setLargeTitle(true)
+        this.dataCenter.set("pop", pop)
+    }
+
+    setLargeTitle(largeTitle) {
+        this.dataCenter.set("largeTitle", largeTitle)
     }
 
     setFooter(footer) {
@@ -696,56 +697,15 @@ class View {
                             type: "view",
                             events: {
                                 tapped: async () => {
-                                    if (typeof $picker.color === "function") {
-                                        const color = await $picker.color({ color: this.controller.getColor(this.controller.get(key)) })
-                                        this.updateSetting(key, color.components)
-                                        if (events) eval(`(()=>{return ${events}})()`)
-                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $rgba(
-                                            color.components.red,
-                                            color.components.green,
-                                            color.components.blue,
-                                            color.components.alpha
-                                        )
-                                    } else {
-                                        const Palette = this.controller.kernel.getPlugin("palette").plugin
-                                        const palette = new Palette()
-                                        let color = this.controller.get(key).trim()
-                                        if (typeof color === "string" && color !== "") {
-                                            color = $color(color)
-                                        } else {
-                                            color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
-                                        }
-                                        const navButtons = [
-                                            {
-                                                type: "button",
-                                                props: {
-                                                    symbol: "checkmark",
-                                                    tintColor: this.textColor,
-                                                    bgcolor: $color("clear")
-                                                },
-                                                layout: make => {
-                                                    make.right.inset(10)
-                                                    make.size.equalTo(20)
-                                                },
-                                                events: {
-                                                    tapped: () => {
-                                                        const rgb = palette.rgb
-                                                        const newColor = Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
-                                                        this.updateSetting(key, newColor)
-                                                        if (events) eval(`(()=>{return ${events}})()`)
-                                                        $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor)
-                                                        $ui.pop()
-                                                    }
-                                                }
-                                            }
-                                        ]
-                                        palette.setRGB(color.components.red, color.components.green, color.components.blue)
-                                        this.UIKit.push({
-                                            views: [palette.getView()],
-                                            title: $l10n("COLOR"),
-                                            navButtons: navButtons
-                                        })
-                                    }
+                                    const color = await $picker.color({ color: this.controller.getColor(this.controller.get(key)) })
+                                    this.updateSetting(key, color.components)
+                                    if (events) eval(`(()=>{return ${events}})()`)
+                                    $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $rgba(
+                                        color.components.red,
+                                        color.components.green,
+                                        color.components.blue,
+                                        color.components.alpha
+                                    )
                                 }
                             },
                             layout: (make, view) => {
@@ -1066,39 +1026,6 @@ class View {
         }
     }
 
-    getView() {
-        const secondaryPage = this.dataCenter.get("secondaryPage")
-        const info = JSON.parse($file.read("/config.json").string)["info"]
-        const header = secondaryPage ? {} : this.UIKit.headerTitle(
-            `setting-title-${this.dataCenter.get("name")}`,
-            $l10n("SETTING"),
-            this.dataCenter.get("hasSectionTitle") ? 90 : 110
-        )
-        const footer = this.dataCenter.get("footer", {
-            type: "view",
-            props: { height: 130 },
-            views: [
-                {
-                    type: "label",
-                    props: {
-                        font: $font(14),
-                        text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
-                        textColor: $color({
-                            light: "#C0C0C0",
-                            dark: "#545454"
-                        }),
-                        align: $align.center
-                    },
-                    layout: make => {
-                        make.left.right.inset(0)
-                        make.top.inset(10)
-                    }
-                }
-            ]
-        })
-        return this.defaultList(header, footer, this.getSections(this.controller.structure), {}, secondaryPage)
-    }
-
     getSections(structure) {
         const sections = []
         for (let section of structure) {
@@ -1166,139 +1093,43 @@ class View {
         return sections
     }
 
-    /**
-     * 标准列表视图
-     * @param {Object} header 该对象中需要包含一个标题label的id和title (info: { id: id, title: title }) 供动画使用
-     * @param {*} footer 视图对象
-     * @param {*} data
-     * @param {*} events
-     */
-    defaultList(header, footer, data, events = {}, secondaryPage) {
-        if (secondaryPage === undefined) secondaryPage = this.dataCenter.get("secondaryPage")
-        return [{
+    getView() {
+        const info = JSON.parse($file.read("/config.json").string)["info"]
+        const header = this.UIKit.headerTitle(
+            `setting-title-${this.dataCenter.get("name")}`,
+            $l10n("SETTING"),
+            this.dataCenter.get("hasSectionTitle") ? 90 : 110
+        )
+        const footer = this.dataCenter.get("footer", {
             type: "view",
-            props: { bgcolor: $color("insetGroupedBackground") },
-            views: [{
-                type: "view",
-                layout: (make, view) => {
-                    make.top.left.right.equalTo(view.super.safeArea)
-                    make.bottom.inset(0)
-                },
-                views: [{
-                    type: "list",
+            props: { height: 130 },
+            views: [
+                {
+                    type: "label",
                     props: {
-                        style: 2,
-                        separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                        rowHeight: 50,
-                        indicatorInsets: $insets(50, 0, secondaryPage ? 0 : 50, 0),
-                        header: header,
-                        footer: footer,
-                        data: data
+                        font: $font(14),
+                        text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                        textColor: $color({
+                            light: "#C0C0C0",
+                            dark: "#545454"
+                        }),
+                        align: $align.center
                     },
-                    events: Object.assign(secondaryPage ? {} : { // 若设置了显示为二级页面则不监听
-                        didScroll: sender => {
-                            // 下拉放大字体
-                            if (sender.contentOffset.y <= this.topOffset) {
-                                let size = 35 - sender.contentOffset.y * 0.04
-                                if (size > this.titleSizeMax)
-                                    size = this.titleSizeMax
-                                $(header.info.id).font = $font("bold", size)
-                            }
-                            // 顶部信息栏
-                            if (sender.contentOffset.y >= 5) {
-                                $ui.animate({
-                                    duration: 0.2,
-                                    animation: () => {
-                                        $(header.info.id + "-header").alpha = 1
-                                    }
-                                })
-                                if (sender.contentOffset.y > 40) {
-                                    $ui.animate({
-                                        duration: 0.2,
-                                        animation: () => {
-                                            $(header.info.id + "-header-title").alpha = 1
-                                            $(header.info.id).alpha = 0
-                                        }
-                                    })
-                                } else {
-                                    $ui.animate({
-                                        duration: 0.2,
-                                        animation: () => {
-                                            $(header.info.id + "-header-title").alpha = 0
-                                            $(header.info.id).alpha = 1
-                                        }
-                                    })
-                                }
-                            } else if (sender.contentOffset.y < 5) {
-                                $ui.animate({
-                                    duration: 0.2,
-                                    animation: () => {
-                                        $(header.info.id + "-header").alpha = 0
-
-                                    }
-                                })
-                            }
-                        }
-                    }, events),
-                    layout: $layout.fill
-                }]
-            }].concat(secondaryPage ? [] : {// 顶部bar，用于显示 设置 字样
-                type: "view",
-                props: {
-                    id: header.info.id + "-header",
-                    alpha: 0
-                },
-                layout: (make, view) => {
-                    make.left.top.right.inset(0)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(45)
-                },
-                views: [
-                    {
-                        type: "blur",
-                        props: { style: this.UIKit.blurStyle },
-                        layout: $layout.fill
-                    },
-                    {
-                        type: "canvas",
-                        layout: (make, view) => {
-                            make.top.equalTo(view.prev.bottom)
-                            make.height.equalTo(1 / $device.info.screen.scale)
-                            make.left.right.inset(0)
-                        },
-                        events: {
-                            draw: (view, ctx) => {
-                                const width = view.frame.width
-                                const scale = $device.info.screen.scale
-                                ctx.strokeColor = $color("gray")
-                                ctx.setLineWidth(1 / scale)
-                                ctx.moveToPoint(0, 0)
-                                ctx.addLineToPoint(width, 0)
-                                ctx.strokePath()
-                            }
-                        }
-                    },
-                    { // 标题
-                        type: "label",
-                        props: {
-                            id: header.info.id + "-header-title",
-                            alpha: 0,
-                            text: header.info.title,
-                            font: $font("bold", 17),
-                            align: $align.center,
-                            bgcolor: $color("clear"),
-                            textColor: this.textColor
-                        },
-                        layout: (make, view) => {
-                            make.left.right.inset(0)
-                            make.top.equalTo(view.super.safeAreaTop)
-                            make.bottom.equalTo(view.super)
-                        }
+                    layout: make => {
+                        make.left.right.inset(0)
+                        make.top.inset(10)
                     }
-                ]
-            }),
-            layout: $layout.fill
-        }]
+                }
+            ]
+        })
+        return this.UIKit.defaultList(
+            header,
+            footer,
+            this.getSections(this.controller.structure), // data
+            {}, // events
+            !this.UIKit.isLargeTitle ? false : this.dataCenter.get("largeTitle")
+        )
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.5" }
+module.exports = { Controller, View, VERSION: "1.0.6" }
