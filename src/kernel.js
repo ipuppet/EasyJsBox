@@ -120,8 +120,12 @@ class UIKit {
      * @param {*} events
      */
     defaultList(header, footer, data, events = {}, largeTitle) {
+        // 样式
+        const titleSizeMax = 40
+        const topOffset = -10
         return [{
             type: "view",
+            props: { bgcolor: $color("insetGroupedBackground") },
             views: [{
                 type: "view",
                 layout: (make, view) => {
@@ -140,15 +144,8 @@ class UIKit {
                     }, largeTitle ? { header: header } : this.isLargeTitle && !largeTitle ? { header: {} } : {}),
                     events: Object.assign(largeTitle ? {
                         didScroll: sender => {
-                            // 下拉放大字体
-                            if (sender.contentOffset.y <= this.topOffset) {
-                                let size = 35 - sender.contentOffset.y * 0.04
-                                if (size > this.titleSizeMax)
-                                    size = this.titleSizeMax
-                                $(header.info.id).font = $font("bold", size)
-                            }
                             // 顶部信息栏
-                            if (sender.contentOffset.y >= 5) {
+                            if (sender.contentOffset.y > 5) {
                                 $ui.animate({
                                     duration: 0.2,
                                     animation: () => {
@@ -172,7 +169,15 @@ class UIKit {
                                         }
                                     })
                                 }
-                            } else if (sender.contentOffset.y < 5) {
+                            } else {
+                                // 下拉放大字体
+                                if (sender.contentOffset.y <= topOffset) {
+                                    let size = 35 - sender.contentOffset.y * 0.04
+                                    if (size > titleSizeMax)
+                                        size = titleSizeMax
+                                    $(header.info.id).font = $font("bold", size)
+                                }
+                                // 隐藏 navBar
                                 $ui.animate({
                                     duration: 0.2,
                                     animation: () => {

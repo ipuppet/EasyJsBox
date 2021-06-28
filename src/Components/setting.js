@@ -189,11 +189,6 @@ class View {
      */
     constructor(data) {
         Object.assign(this, data)
-        // 样式
-        this.titleSize = 35
-        this.titleSizeMax = 40
-        this.titleOffset = 50
-        this.topOffset = -10
     }
 
     setInfo(info) {
