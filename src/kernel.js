@@ -379,7 +379,7 @@ class UIKit {
             statusBarStyle = args.statusBarStyle === undefined ? 0 : args.statusBarStyle,
             title = args.title ?? (this.isLargeTitle ? "" : this.kernel.name),
             parent = args.parent ?? $l10n("BACK"),
-            navButtons = args.navButtons ?? [],
+            navButtons = args.navButtons ?? [{ title: "" }],
             topOffset = !this.isLargeTitle ? false : args.topOffset ?? true,
             bgcolor = args.bgcolor ?? "primarySurface",
             disappeared = args.disappeared
