@@ -1,0 +1,55 @@
+[
+    {
+        "title": "GENERAL",
+        "items": [
+            {
+                "icon": [
+                    "tag.fill",
+                    "#9B59B6"
+                ],
+                "title": "TIPS",
+                "type": "script",
+                "key": "tips",
+                "value": "this.controller.tips"
+            }
+        ]
+    },
+    {
+        "title": "ABOUT",
+        "items": [
+            {
+                "icon": [
+                    "/assets/icon/github.com.jpeg",
+                    "white"
+                ],
+                "title": "Github",
+                "type": "info",
+                "key": "github",
+                "value": "https://github.com/ipuppet/EasyWidget"
+            },
+            {
+                "icon": [
+                    "person.fill",
+                    "#FF9900"
+                ],
+                "title": "AUTHOR",
+                "type": "info",
+                "key": "author",
+                "value": [
+                    "ipuppet",
+                    "https://blog.ipuppet.cn"
+                ]
+            },
+            {
+                "icon": [
+                    "book.fill",
+                    "#A569BD"
+                ],
+                "title": "README",
+                "type": "script",
+                "key": "readme",
+                "value": "this.controller.readme"
+            }
+        ]
+    }
+]
