@@ -1010,10 +1010,13 @@ class View {
                         this.UIKit.push({
                             title: title,
                             topOffset: false,
-                            views: this.defaultList({
-                                tupe: "view",
-                                props: { height: 60 }
-                            }, {}, this.getSections(children), {}, true)
+                            views: this.UIKit.defaultList(
+                                this.getSections(children),
+                                {
+                                    type: "view",
+                                    props: { height: 80 }
+                                }, {}, {}, false
+                            )
                         })
                     })
                 }
@@ -1118,13 +1121,13 @@ class View {
             ]
         })
         return this.UIKit.defaultList(
+            this.getSections(this.controller.structure), // data
             header,
             footer,
-            this.getSections(this.controller.structure), // data
             {}, // events
             this.UIKit.isLargeTitle ? this.dataCenter.get("largeTitle") : false
         )
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.6" }
+module.exports = { Controller, View, VERSION: "1.0.7" }

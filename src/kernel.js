@@ -1,4 +1,4 @@
-const VERSION = "0.3.9"
+const VERSION = "0.3.10"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -119,7 +119,7 @@ class UIKit {
      * @param {*} data
      * @param {*} events
      */
-    defaultList(header, footer, data, events = {}, largeTitle) {
+    defaultList(data, header = {}, footer = {}, events = {}, largeTitle) {
         // 样式
         const titleSizeMax = 40
         const topOffset = -10
@@ -141,7 +141,7 @@ class UIKit {
                         indicatorInsets: $insets(50, 0, largeTitle ? 50 : 0, 0),
                         footer: footer,
                         data: data
-                    }, largeTitle ? { header: header } : this.isLargeTitle && !largeTitle ? { header: {} } : {}),
+                    }, largeTitle ? { header: header } : this.isLargeTitle && !largeTitle ? { header: header } : {}),
                     events: Object.assign(largeTitle ? {
                         didScroll: sender => {
                             // 顶部信息栏
