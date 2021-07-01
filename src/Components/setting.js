@@ -5,14 +5,6 @@ class Controller {
             if (!$file.exists("/storage")) {
                 $file.mkdir("/storage")
             }
-            // TODO 兼容旧数据，于未来删除
-            if ($file.exists("/assets/setting.json")) {
-                $file.move({
-                    src: "/assets/setting.json",
-                    dst: "/storage/setting.json"
-                })
-            }
-            // 兼容旧数据，于未来删除
             return "/storage/setting.json"
         })()
         this._setName(this.args.name ?? this.args.savePath.replace("/", "-"))
@@ -25,8 +17,8 @@ class Controller {
         this._loadConfig()
         // 判断 section 是否带有标题
         this.dataCenter.set("hasSectionTitle", this.structure[0]["title"] ? true : false)
-        // 是否模拟大标题样式
-        this.dataCenter.set("largeTitle", true)
+        // 是否是子页面
+        this.dataCenter.set("childPage", false)
         // l10n
         this.loadL10n()
     }
@@ -132,12 +124,12 @@ class Controller {
      * @param {Function} pop 
      */
     setPopEvent(pop) {
-        this.setLargeTitle(true)
+        this.setChildPage(true)
         this.dataCenter.set("pop", pop)
     }
 
-    setLargeTitle(largeTitle) {
-        this.dataCenter.set("largeTitle", largeTitle)
+    setChildPage(childPage) {
+        this.dataCenter.set("childPage", childPage)
     }
 
     setFooter(footer) {
@@ -1015,7 +1007,7 @@ class View {
                                 {
                                     type: "view",
                                     props: { height: 80 }
-                                }, {}, {}, false
+                                }, {}, {}, true
                             )
                         })
                     })
@@ -1092,12 +1084,16 @@ class View {
     }
 
     getView() {
+        const childPage = this.dataCenter.get("childPage")
+        const hasSectionTitle = this.dataCenter.get("hasSectionTitle")
         const info = JSON.parse($file.read("/config.json").string)["info"]
-        const header = this.UIKit.headerTitle(
-            `setting-title-${this.dataCenter.get("name")}`,
-            $l10n("SETTING"),
-            this.dataCenter.get("hasSectionTitle") ? 90 : 110
-        )
+        const header = childPage
+            ? hasSectionTitle && this.UIKit.isLargeTitle ? { type: "view" } : null
+            : this.UIKit.headerTitle(
+                `setting-title-${this.dataCenter.get("name")}`,
+                $l10n("SETTING"),
+                hasSectionTitle ? 90 : 110
+            )
         const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
@@ -1125,9 +1121,9 @@ class View {
             header,
             footer,
             {}, // events
-            this.UIKit.isLargeTitle ? this.dataCenter.get("largeTitle") : false
+            childPage
         )
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.7" }
+module.exports = { Controller, View, VERSION: "1.0.8" }
