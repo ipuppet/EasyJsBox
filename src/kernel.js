@@ -1,4 +1,4 @@
-const VERSION = "0.3.10"
+const VERSION = "0.3.11"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -118,8 +118,9 @@ class UIKit {
      * @param {*} footer 视图对象
      * @param {*} data
      * @param {*} events
+     * @param {*} childPage 是否是子页面
      */
-    defaultList(data, header = {}, footer = {}, events = {}, largeTitle) {
+    defaultList(data, header = {}, footer = {}, events = {}, childPage) {
         // 样式
         const titleSizeMax = 40
         const topOffset = -10
@@ -138,11 +139,11 @@ class UIKit {
                         style: 2,
                         separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                         rowHeight: 50,
-                        indicatorInsets: $insets(50, 0, largeTitle ? 50 : 0, 0),
+                        indicatorInsets: $insets(50, 0, childPage ? 50 : 0, 0),
                         footer: footer,
                         data: data
-                    }, largeTitle ? { header: header } : this.isLargeTitle && !largeTitle ? { header: header } : {}),
-                    events: Object.assign(largeTitle ? {
+                    }, childPage ? header ? { header: header } : {} : { header: header }),
+                    events: Object.assign(this.isLargeTitle && !childPage ? {
                         didScroll: sender => {
                             // 顶部信息栏
                             if (sender.contentOffset.y > 5) {
@@ -190,7 +191,7 @@ class UIKit {
                     } : {}, events),
                     layout: $layout.fill
                 }]
-            }].concat(largeTitle ? {// 顶部bar，用于显示 设置 字样
+            }].concat(this.isLargeTitle && !childPage ? {// 顶部bar，用于显示 设置 字样
                 type: "view",
                 props: {
                     id: header.info.id + "-header",
