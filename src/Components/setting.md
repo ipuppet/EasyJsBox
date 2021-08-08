@@ -226,3 +226,25 @@
         "value": "plus"
     }
     ```
+
+- child
+    ```json
+    {
+        "icon": [
+            "rectangle.3.offgrid.fill"
+        ],
+        "title": "CHILD",
+        "type": "child",
+        "key": "child",
+        "children": [
+            {
+                "title": "Section 1",
+                "items": []
+            },
+            {
+                "title": "Section 2",
+                "items": []
+            }
+        ]
+    }
+    ```
