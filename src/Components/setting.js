@@ -15,12 +15,14 @@ class Controller {
             this.structure = JSON.parse($file.read(this.args.structurePath).string)
         }
         this._loadConfig()
-        // 判断 section 是否带有标题
-        this.dataCenter.set("hasSectionTitle", this.structure[0]["title"] ? true : false)
         // 是否是子页面
         this.dataCenter.set("childPage", false)
         // l10n
         this.loadL10n()
+    }
+
+    hasSectionTitle(structure) {
+        return structure[0]["title"] ? true : false
     }
 
     loadL10n() {
@@ -1002,13 +1004,7 @@ class View {
                         this.UIKit.push({
                             title: title,
                             topOffset: false,
-                            views: this.UIKit.defaultList(
-                                this.getSections(children),
-                                {
-                                    type: "view",
-                                    props: { height: 80 }
-                                }, {}, {}, true
-                            )
+                            views: this.getView(children, true)
                         })
                     })
                 }
@@ -1083,41 +1079,45 @@ class View {
         return sections
     }
 
-    getView() {
-        const childPage = this.dataCenter.get("childPage")
-        const hasSectionTitle = this.dataCenter.get("hasSectionTitle")
-        const info = JSON.parse($file.read("/config.json").string)["info"]
+    getView(structure, childPage) {
+        childPage = childPage === undefined ? this.dataCenter.get("childPage") : childPage
+        structure = structure ?? this.controller.structure
+        const hasNav = this.UIKit.isLargeTitle // 使用nav则需要与顶端保持距离，否则会被遮挡
+        const hasSectionTitle = this.controller.hasSectionTitle(structure)
         const header = childPage
-            ? hasSectionTitle && this.UIKit.isLargeTitle ? { type: "view" } : null
+            ? hasNav ? { props: { height: hasSectionTitle ? 30 : 80 } } : hasSectionTitle && this.UIKit.isLargeTitle ? { type: "view" } : null
             : this.UIKit.headerTitle(
                 `setting-title-${this.dataCenter.get("name")}`,
                 $l10n("SETTING"),
                 hasSectionTitle ? 90 : 110
             )
-        const footer = this.dataCenter.get("footer", {
-            type: "view",
-            props: { height: 130 },
-            views: [
-                {
-                    type: "label",
-                    props: {
-                        font: $font(14),
-                        text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
-                        textColor: $color({
-                            light: "#C0C0C0",
-                            dark: "#545454"
-                        }),
-                        align: $align.center
-                    },
-                    layout: make => {
-                        make.left.right.inset(0)
-                        make.top.inset(10)
+        const footer = childPage ? {} : (() => {
+            const info = JSON.parse($file.read("/config.json").string)["info"]
+            return this.dataCenter.get("footer", {
+                type: "view",
+                props: { height: 130 },
+                views: [
+                    {
+                        type: "label",
+                        props: {
+                            font: $font(14),
+                            text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                            textColor: $color({
+                                light: "#C0C0C0",
+                                dark: "#545454"
+                            }),
+                            align: $align.center
+                        },
+                        layout: make => {
+                            make.left.right.inset(0)
+                            make.top.inset(10)
+                        }
                     }
-                }
-            ]
-        })
+                ]
+            })
+        })()
         return this.UIKit.defaultList(
-            this.getSections(this.controller.structure), // data
+            this.getSections(structure), // data
             header,
             footer,
             {}, // events
@@ -1126,4 +1126,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.8" }
+module.exports = { Controller, View, VERSION: "1.0.9" }
