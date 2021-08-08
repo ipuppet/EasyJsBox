@@ -1004,7 +1004,7 @@ class View {
                         this.UIKit.push({
                             title: title,
                             topOffset: false,
-                            views: this.getView(children, true)
+                            views: this.getView(children, true, {})
                         })
                     })
                 }
@@ -1079,7 +1079,7 @@ class View {
         return sections
     }
 
-    getView(structure, childPage) {
+    getView(structure, childPage, footer) {
         childPage = childPage === undefined ? this.dataCenter.get("childPage") : childPage
         structure = structure ?? this.controller.structure
         const hasNav = this.UIKit.isLargeTitle // 使用nav则需要与顶端保持距离，否则会被遮挡
@@ -1091,9 +1091,9 @@ class View {
                 $l10n("SETTING"),
                 hasSectionTitle ? 90 : 110
             )
-        const footer = childPage ? {} : (() => {
+        footer = footer ?? this.dataCenter.get("footer", (() => {
             const info = JSON.parse($file.read("/config.json").string)["info"]
-            return this.dataCenter.get("footer", {
+            return {
                 type: "view",
                 props: { height: 130 },
                 views: [
@@ -1114,8 +1114,8 @@ class View {
                         }
                     }
                 ]
-            })
-        })()
+            }
+        })())
         return this.UIKit.defaultList(
             this.getSections(structure), // data
             header,
@@ -1126,4 +1126,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.9" }
+module.exports = { Controller, View, VERSION: "1.0.10" }
