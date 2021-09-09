@@ -360,26 +360,6 @@ class UIKit {
         return false
     }
 
-    setNavButtons(buttons) {
-        this.navButtons = []
-        buttons.forEach(button => {
-            if (this.isUIKitNavButton(button)) {
-                this.navButtons.push(this.toJSBoxNavButton(button))
-            } else {
-                this.navButtons.push(button)
-            }
-        })
-    }
-
-    toJSBoxNavButton(button) {
-        return {
-            symbol: button.views[0].props.symbol,
-            handler: sender => {
-                button.views[0].events.tapped(sender)
-            }
-        }
-    }
-
     loadL10n() {
         // pushPageSheet
         this.kernel.l10n("zh-Hans", {
@@ -555,12 +535,7 @@ class UIKit {
         $ui.push({
             props: {
                 statusBarStyle: statusBarStyle,
-                navButtons: navButtons.map(button => {
-                    if (this.isUIKitNavButton(button)) {
-                        return this.toJSBoxNavButton(button)
-                    }
-                    return button
-                }),
+                navButtons: navButtons,
                 title: title,
                 navBarHidden: this.isLargeTitle,
                 bgcolor: $color(bgcolor),
