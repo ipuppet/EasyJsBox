@@ -234,7 +234,7 @@ class View {
                     type: "label",
                     props: {
                         text: title,
-                        textColor: this.textColor,
+                        textColor: this.UIKit.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
@@ -460,7 +460,7 @@ class View {
                     props: {
                         id: key,
                         text: this.controller.get(key),
-                        textColor: this.textColor,
+                        textColor: this.UIKit.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
@@ -1082,15 +1082,7 @@ class View {
     getView(structure, childPage, footer) {
         childPage = childPage === undefined ? this.dataCenter.get("childPage") : childPage
         structure = structure ?? this.controller.structure
-        const hasNav = this.UIKit.isLargeTitle // 使用nav则需要与顶端保持距离，否则会被遮挡
         const hasSectionTitle = this.controller.hasSectionTitle(structure)
-        const header = childPage
-            ? hasNav ? { props: { height: hasSectionTitle ? 30 : 80 } } : hasSectionTitle && this.UIKit.isLargeTitle ? { type: "view" } : null
-            : this.UIKit.headerTitle(
-                `setting-title-${this.dataCenter.get("name")}`,
-                $l10n("SETTING"),
-                hasSectionTitle ? 90 : 110
-            )
         footer = footer ?? this.dataCenter.get("footer", (() => {
             const info = JSON.parse($file.read("/config.json").string)["info"]
             return {
@@ -1116,14 +1108,41 @@ class View {
                 ]
             }
         })())
-        return this.UIKit.defaultList(
-            this.getSections(structure), // data
-            header,
-            footer,
-            {}, // events
-            childPage
-        )
+        const list = [{
+            type: "list",
+            props: {
+                style: 2,
+                separatorInset: $insets(0, 50, 0, 10), // 分割线边距
+                rowHeight: 50,
+                indicatorInsets: $insets(0, 0, 0, 0),
+                footer: footer,
+                data: this.getSections(structure)
+            },
+            layout: $layout.fill
+        }]
+        if (this.UIKit.isLargeTitle) {
+            if (!childPage) {
+                const largeTitle = this.UIKit.getLargeTitle(
+                    `setting-title-${this.dataCenter.get("name")}`,
+                    $l10n("SETTING")
+                )
+                if (!hasSectionTitle) largeTitle.setHeaderHeight(110)
+                Object.assign(list[0].props, { header: largeTitle.headerTitle() })
+                list.push(largeTitle.navBarView())
+                list[0].events = { didScroll: sender => largeTitle.scrollAction(sender) }
+                list[0].props.indicatorInsets = $insets(50, 0, 50, 0)
+            } else {
+                Object.assign(list[0].props, { header: { props: { height: hasSectionTitle ? 0 : 80 } } })
+                list[0].props.indicatorInsets = $insets(50, 0, 0, 0)
+            }
+        }
+        return [{
+            type: "view",
+            props: { bgcolor: $color("insetGroupedBackground") },
+            views: list,
+            layout: $layout.fill
+        }]
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.10" }
+module.exports = { Controller, View, VERSION: "1.0.11" }
