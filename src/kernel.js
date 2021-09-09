@@ -353,11 +353,15 @@ class UIKit {
         this.title = title
     }
 
-    isUIKitNavButton(button) {
-        if (button.hasOwnProperty("props") && button.props.hasOwnProperty("id")) {
-            return true
-        }
-        return false
+    setNavButtons(buttons) {
+        this.navButtons = []
+        buttons.forEach(button => {
+            if (this.isUIKitNavButton(button)) {
+                this.navButtons.push(this.toJSBoxNavButton(button))
+            } else {
+                this.navButtons.push(button)
+            }
+        })
     }
 
     loadL10n() {
@@ -535,7 +539,12 @@ class UIKit {
         $ui.push({
             props: {
                 statusBarStyle: statusBarStyle,
-                navButtons: navButtons,
+                navButtons: navButtons.map(button => {
+                    if (this.isUIKitNavButton(button)) {
+                        return this.toJSBoxNavButton(button)
+                    }
+                    return button
+                }),
                 title: title,
                 navBarHidden: this.isLargeTitle,
                 bgcolor: $color(bgcolor),
