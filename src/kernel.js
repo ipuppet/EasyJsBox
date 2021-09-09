@@ -1,14 +1,344 @@
-const VERSION = "0.3.11"
+const VERSION = "0.3.12"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
+
+const defaultStyle = { // 通用样式
+    blurStyle: $blurStyle.thinMaterial,
+    textColor: $color("primaryText", "secondaryText"),
+    linkColor: $color("systemLink")
+}
+
+class LargeTitle {
+    constructor(id, title, rightButtons = [], leftButtons = []) {
+        this.id = id
+        this.title = title
+        this.rightButtons = rightButtons
+        this.leftButtons = leftButtons
+        this.headerHeight = 90
+        Object.assign(this, defaultStyle)
+    }
+
+    setHeaderHeight(height) {
+        this.headerHeight = height
+    }
+
+    setId(id) {
+        this.id = id
+    }
+
+    setTitle(title) {
+        this.title = title
+    }
+
+    setRightButtons(rightButtons) {
+        this.rightButtons = rightButtons
+    }
+
+    setLeftButtons(leftButtons) {
+        this.leftButtons = leftButtons
+    }
+
+    /**
+     * 用于创建一个靠右侧按钮（自动布局）
+     * @param {String} id 不可重复
+     * @param {String} symbol symbol图标（目前只用symbol）
+     * @param {CallableFunction} tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
+     *     调用 start() 表明按钮被点击，准备开始动画
+     *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
+     *                 若第一个参数传出false则表示运行出错
+     *                 第二个参数为错误原因($ui.toast(message))
+     *      调用 cancel() 表示取消操作
+     *     示例：
+     *      (start, done, cancel) => {
+     *          start()
+     *          const upload = (data) => { return false }
+     *          if(upload(data)) { done() }
+     *          else { done(false, "Upload Error!") }
+     *      }
+     * @param {Boolean} hidden 是否隐藏
+     * @param {String} alignRight 是否向右对齐，false 则向左对齐
+     */
+    navButton(id, symbol, tapped, hidden = false, alignRight = true) {
+        const actionStart = () => {
+            // 隐藏button，显示spinner
+            const button = $(id)
+            button.alpha = 0
+            button.hidden = true
+            $("spinner-" + id).alpha = 1
+        }
+
+        const actionDone = (status = true, message = $l10n("ERROR")) => {
+            $("spinner-" + id).alpha = 0
+            const button = $(id)
+            button.hidden = false
+            if (!status) { // 失败
+                $ui.toast(message)
+                button.alpha = 1
+                return
+            }
+            // 成功动画
+            button.symbol = "checkmark"
+            $ui.animate({
+                duration: 0.6,
+                animation: () => {
+                    button.alpha = 1
+                },
+                completion: () => {
+                    setTimeout(() => {
+                        $ui.animate({
+                            duration: 0.4,
+                            animation: () => {
+                                button.alpha = 0
+                            },
+                            completion: () => {
+                                button.symbol = symbol
+                                $ui.animate({
+                                    duration: 0.4,
+                                    animation: () => {
+                                        button.alpha = 1
+                                    },
+                                    completion: () => {
+                                        button.alpha = 1
+                                    }
+                                })
+                            }
+                        })
+                    }, 600)
+                }
+            })
+        }
+
+        const actionCancel = () => {
+            $("spinner-" + id).alpha = 0
+            const button = $(id)
+            button.alpha = 1
+            button.hidden = false
+        }
+
+        return {
+            type: "view",
+            props: { id: id },
+            views: [
+                {
+                    type: "button",
+                    props: {
+                        id: id,
+                        hidden: hidden,
+                        tintColor: this.textColor,
+                        symbol: symbol,
+                        contentEdgeInsets: $insets(0, 0, 0, 0),
+                        imageEdgeInsets: $insets(0, 0, 0, 0),
+                        bgcolor: $color("clear")
+                    },
+                    events: {
+                        tapped: sender => {
+                            tapped({
+                                start: actionStart,
+                                done: actionDone,
+                                cancel: actionCancel
+                            }, sender)
+                        }
+                    },
+                    layout: $layout.fill
+                },
+                {
+                    type: "spinner",
+                    props: {
+                        id: "spinner-" + id,
+                        loading: true,
+                        alpha: 0
+                    },
+                    layout: $layout.fill
+                }
+            ],
+            layout: (make, view) => {
+                make.height.equalTo(view.super)
+                make.width.equalTo(40)
+                if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
+                    if (alignRight) make.right.equalTo(view.prev.left)
+                    else make.left.equalTo(view.prev.right)
+                } else {
+                    if (alignRight) make.right.inset(0)
+                    else make.left.inset(0)
+                }
+            }
+        }
+    }
+
+    /**
+     * 页面标题
+     * @param {String} id 标题id
+     * @param {String} title 标题文本
+     * @param {Number} height 高度
+     */
+    headerTitle() {
+        return {
+            type: "view",
+            info: { id: this.id, title: this.title }, // 供动画使用
+            props: { height: this.headerHeight },
+            views: [{
+                type: "label",
+                props: {
+                    id: this.id,
+                    text: this.title,
+                    textColor: this.textColor,
+                    align: $align.left,
+                    font: $font("bold", 35),
+                    line: 1
+                },
+                layout: (make, view) => {
+                    make.left.equalTo(view.super.safeArea).offset(20)
+                    make.top.equalTo(view.super.safeAreaTop).offset(50)
+                }
+            }]
+        }
+    }
+
+    navBarView() {
+        const buttonWidth = 60
+        const rightButtonView = this.rightButtons.length > 0 ? {
+            type: "view",
+            views: [{
+                type: "view",
+                views: this.rightButtons,
+                layout: $layout.fill
+            }],
+            layout: (make, view) => {
+                make.top.equalTo(view.super.safeAreaTop)
+                make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                make.right.inset(10)
+                make.width.equalTo(this.rightButtons.length * buttonWidth)
+            }
+        } : {}
+        const leftButtonView = this.leftButtons.length > 0 ? {
+            type: "view",
+            views: [{
+                type: "view",
+                views: this.leftButtons,
+                layout: (make, view) => {
+                    make.top.equalTo(view.super.safeAreaTop)
+                    make.size.equalTo(view.super.safeArea)
+                    make.right.inset(10)
+                }
+            }],
+            layout: (make, view) => {
+                make.top.equalTo(view.super.safeAreaTop)
+                make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                make.left.right.equalTo(view.super.safeArea)
+            }
+        } : {}
+        return { // 顶部bar，用于显示 设置 字样
+            type: "view",
+            props: {
+                id: this.id + "-header",
+                alpha: 0
+            },
+            layout: (make, view) => {
+                make.left.top.right.inset(0)
+                make.bottom.equalTo(view.super.safeAreaTop).offset(45)
+            },
+            views: [
+                {
+                    type: "blur",
+                    props: { style: this.blurStyle },
+                    layout: $layout.fill
+                },
+                {
+                    type: "canvas",
+                    layout: (make, view) => {
+                        make.top.equalTo(view.prev.bottom)
+                        make.height.equalTo(1 / $device.info.screen.scale)
+                        make.left.right.inset(0)
+                    },
+                    events: {
+                        draw: (view, ctx) => {
+                            const width = view.frame.width
+                            const scale = $device.info.screen.scale
+                            ctx.strokeColor = $color("gray")
+                            ctx.setLineWidth(1 / scale)
+                            ctx.moveToPoint(0, 0)
+                            ctx.addLineToPoint(width, 0)
+                            ctx.strokePath()
+                        }
+                    }
+                },
+                { // 标题
+                    type: "label",
+                    props: {
+                        id: this.id + "-header-title",
+                        alpha: 0,
+                        text: this.title,
+                        font: $font("bold", 17),
+                        align: $align.center,
+                        bgcolor: $color("clear"),
+                        textColor: this.textColor
+                    },
+                    layout: (make, view) => {
+                        make.left.right.inset(0)
+                        make.top.equalTo(view.super.safeAreaTop)
+                        make.bottom.equalTo(view.super)
+                    }
+                }
+            ].concat(rightButtonView, leftButtonView)
+        }
+    }
+
+    scrollAction(sender) {
+        // 样式
+        const titleSizeMax = 40,
+            topOffset = -10,
+            navBarIdSuffix = "-header",
+            navTitleIdSuffix = "-header-title"
+        // 顶部信息栏
+        if (sender.contentOffset.y > 5) {
+            $ui.animate({
+                duration: 0.2,
+                animation: () => {
+                    $(this.id + navBarIdSuffix).alpha = 1
+                }
+            })
+            if (sender.contentOffset.y > 40) {
+                $ui.animate({
+                    duration: 0.2,
+                    animation: () => {
+                        $(this.id + navTitleIdSuffix).alpha = 1
+                        $(this.id).alpha = 0
+                    }
+                })
+            } else {
+                $ui.animate({
+                    duration: 0.2,
+                    animation: () => {
+                        $(this.id + navTitleIdSuffix).alpha = 0
+                        $(this.id).alpha = 1
+                    }
+                })
+            }
+        } else {
+            // 下拉放大字体
+            if (sender.contentOffset.y <= topOffset) {
+                let size = 35 - sender.contentOffset.y * 0.04
+                if (size > titleSizeMax)
+                    size = titleSizeMax
+                $(this.id).font = $font("bold", size)
+            }
+            // 隐藏 navBar
+            $ui.animate({
+                duration: 0.2,
+                animation: () => {
+                    $(this.id + navBarIdSuffix).alpha = 0
+
+                }
+            })
+        }
+    }
+}
 
 class UIKit {
     constructor(kernel) {
         this.kernel = kernel
         // 通用样式
-        this.blurStyle = $blurStyle.thinMaterial
-        this.textColor = $color("primaryText", "secondaryText")
-        this.linkColor = $color("systemLink")
+        Object.assign(this, defaultStyle)
         // 本地化
         this.loadL10n()
         this.isLargeTitle = true
@@ -83,170 +413,8 @@ class UIKit {
         return $device.info.screen.width !== this.getWindowSize().width
     }
 
-    /**
-     * 页面标题
-     * @param {String} id 标题id
-     * @param {String} title 标题文本
-     * @param {Number} height 高度
-     */
-    headerTitle(id, title, height = 90) {
-        return {
-            type: "view",
-            info: { id: id, title: title }, // 供动画使用
-            props: { height: height },
-            views: [{
-                type: "label",
-                props: {
-                    id: id,
-                    text: title,
-                    textColor: this.textColor,
-                    align: $align.left,
-                    font: $font("bold", 35),
-                    line: 1
-                },
-                layout: (make, view) => {
-                    make.left.equalTo(view.super.safeArea).offset(20)
-                    make.top.equalTo(view.super.safeAreaTop).offset(50)
-                }
-            }]
-        }
-    }
-
-    /**
-     * 标准列表视图
-     * @param {Object} header 该对象中需要包含一个标题label的id和title (info: { id: id, title: title }) 供动画使用
-     * @param {*} footer 视图对象
-     * @param {*} data
-     * @param {*} events
-     * @param {*} childPage 是否是子页面
-     */
-    defaultList(data, header = {}, footer = {}, events = {}, childPage) {
-        // 样式
-        const titleSizeMax = 40
-        const topOffset = -10
-        return [{
-            type: "view",
-            props: { bgcolor: $color("insetGroupedBackground") },
-            views: [{
-                type: "view",
-                layout: (make, view) => {
-                    make.top.left.right.equalTo(view.super.safeArea)
-                    make.bottom.inset(0)
-                },
-                views: [{
-                    type: "list",
-                    props: Object.assign({
-                        style: 2,
-                        separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                        rowHeight: 50,
-                        indicatorInsets: $insets(50, 0, childPage ? 50 : 0, 0),
-                        footer: footer,
-                        data: data
-                    }, childPage ? header ? { header: header } : {} : { header: header }),
-                    events: Object.assign(this.isLargeTitle && !childPage ? {
-                        didScroll: sender => {
-                            // 顶部信息栏
-                            if (sender.contentOffset.y > 5) {
-                                $ui.animate({
-                                    duration: 0.2,
-                                    animation: () => {
-                                        $(header.info.id + "-header").alpha = 1
-                                    }
-                                })
-                                if (sender.contentOffset.y > 40) {
-                                    $ui.animate({
-                                        duration: 0.2,
-                                        animation: () => {
-                                            $(header.info.id + "-header-title").alpha = 1
-                                            $(header.info.id).alpha = 0
-                                        }
-                                    })
-                                } else {
-                                    $ui.animate({
-                                        duration: 0.2,
-                                        animation: () => {
-                                            $(header.info.id + "-header-title").alpha = 0
-                                            $(header.info.id).alpha = 1
-                                        }
-                                    })
-                                }
-                            } else {
-                                // 下拉放大字体
-                                if (sender.contentOffset.y <= topOffset) {
-                                    let size = 35 - sender.contentOffset.y * 0.04
-                                    if (size > titleSizeMax)
-                                        size = titleSizeMax
-                                    $(header.info.id).font = $font("bold", size)
-                                }
-                                // 隐藏 navBar
-                                $ui.animate({
-                                    duration: 0.2,
-                                    animation: () => {
-                                        $(header.info.id + "-header").alpha = 0
-
-                                    }
-                                })
-                            }
-                        }
-                    } : {}, events),
-                    layout: $layout.fill
-                }]
-            }].concat(this.isLargeTitle && !childPage ? {// 顶部bar，用于显示 设置 字样
-                type: "view",
-                props: {
-                    id: header.info.id + "-header",
-                    alpha: 0
-                },
-                layout: (make, view) => {
-                    make.left.top.right.inset(0)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(45)
-                },
-                views: [
-                    {
-                        type: "blur",
-                        props: { style: this.blurStyle },
-                        layout: $layout.fill
-                    },
-                    {
-                        type: "canvas",
-                        layout: (make, view) => {
-                            make.top.equalTo(view.prev.bottom)
-                            make.height.equalTo(1 / $device.info.screen.scale)
-                            make.left.right.inset(0)
-                        },
-                        events: {
-                            draw: (view, ctx) => {
-                                const width = view.frame.width
-                                const scale = $device.info.screen.scale
-                                ctx.strokeColor = $color("gray")
-                                ctx.setLineWidth(1 / scale)
-                                ctx.moveToPoint(0, 0)
-                                ctx.addLineToPoint(width, 0)
-                                ctx.strokePath()
-                            }
-                        }
-                    },
-                    { // 标题
-                        type: "label",
-                        props: {
-                            id: header.info.id + "-header-title",
-                            alpha: 0,
-                            text: header.info.title,
-                            font: $font("bold", 17),
-                            align: $align.center,
-                            bgcolor: $color("clear"),
-                            textColor: this.textColor
-                        },
-                        layout: (make, view) => {
-                            make.left.right.inset(0)
-                            make.top.equalTo(view.super.safeAreaTop)
-                            make.bottom.equalTo(view.super)
-                        }
-                    }
-                ]
-            } : {}),
-            layout: $layout.fill
-        }]
+    getLargeTitle(id, title, rightButtons = [], leftButtons = []) {
+        return new LargeTitle(id, title, rightButtons, leftButtons)
     }
 
     pushPageSheet(args) {
@@ -485,133 +653,6 @@ class UIKit {
                 }
             ]
         })
-    }
-
-    /**
-     * 用于创建一个靠右侧按钮（自动布局）
-     * @param {String} id 不可重复
-     * @param {String} symbol symbol图标（目前只用symbol）
-     * @param {CallableFunction} tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
-     *     调用 start() 表明按钮被点击，准备开始动画
-     *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
-     *                 若第一个参数传出false则表示运行出错
-     *                 第二个参数为错误原因($ui.toast(message))
-     *      调用 cancel() 表示取消操作
-     *     示例：
-     *      (start, done, cancel) => {
-     *          start()
-     *          const upload = (data) => { return false }
-     *          if(upload(data)) { done() }
-     *          else { done(false, "Upload Error!") }
-     *      }
-     * @param {Boolean} hidden 是否隐藏
-     * @param {String} alignRight 是否向右对齐，false 则向左对齐
-     */
-    navButton(id, symbol, tapped, hidden = false, alignRight = true) {
-        const actionStart = () => {
-            // 隐藏button，显示spinner
-            const button = $(id)
-            button.alpha = 0
-            button.hidden = true
-            $("spinner-" + id).alpha = 1
-        }
-
-        const actionDone = (status = true, message = $l10n("ERROR")) => {
-            $("spinner-" + id).alpha = 0
-            const button = $(id)
-            button.hidden = false
-            if (!status) { // 失败
-                $ui.toast(message)
-                button.alpha = 1
-                return
-            }
-            // 成功动画
-            button.symbol = "checkmark"
-            $ui.animate({
-                duration: 0.6,
-                animation: () => {
-                    button.alpha = 1
-                },
-                completion: () => {
-                    setTimeout(() => {
-                        $ui.animate({
-                            duration: 0.4,
-                            animation: () => {
-                                button.alpha = 0
-                            },
-                            completion: () => {
-                                button.symbol = symbol
-                                $ui.animate({
-                                    duration: 0.4,
-                                    animation: () => {
-                                        button.alpha = 1
-                                    },
-                                    completion: () => {
-                                        button.alpha = 1
-                                    }
-                                })
-                            }
-                        })
-                    }, 600)
-                }
-            })
-        }
-
-        const actionCancel = () => {
-            $("spinner-" + id).alpha = 0
-            const button = $(id)
-            button.alpha = 1
-            button.hidden = false
-        }
-
-        return {
-            type: "view",
-            props: { id: id },
-            views: [
-                {
-                    type: "button",
-                    props: {
-                        id: id,
-                        hidden: hidden,
-                        tintColor: this.textColor,
-                        symbol: symbol,
-                        contentEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0),
-                        bgcolor: $color("clear")
-                    },
-                    events: {
-                        tapped: sender => {
-                            tapped({
-                                start: actionStart,
-                                done: actionDone,
-                                cancel: actionCancel
-                            }, sender)
-                        }
-                    },
-                    layout: $layout.fill
-                },
-                {
-                    type: "spinner",
-                    props: {
-                        id: "spinner-" + id,
-                        loading: true,
-                        alpha: 0
-                    },
-                    layout: $layout.fill
-                }
-            ],
-            layout: (make, view) => {
-                make.height.equalTo(view.super)
-                make.width.equalTo(40)
-                if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    if (alignRight) make.right.equalTo(view.prev.left)
-                    else make.left.equalTo(view.prev.right)
-                } else {
-                    if (alignRight) make.right.inset(0)
-                    else make.left.inset(0)
-                }
-            }
-        }
     }
 
     underline() {
