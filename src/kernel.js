@@ -2,20 +2,46 @@ const VERSION = "0.3.12"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
-const defaultStyle = { // 通用样式
-    blurStyle: $blurStyle.thinMaterial,
-    textColor: $color("primaryText", "secondaryText"),
-    linkColor: $color("systemLink")
+class BaseUI {
+    constructor() {
+        // 通用样式
+        this.blurStyle = $blurStyle.thinMaterial
+        this.textColor = $color("primaryText", "secondaryText")
+        this.linkColor = $color("systemLink")
+    }
+
+    underline(props = {}) {
+        return { // canvas
+            type: "canvas",
+            props: props,
+            layout: (make, view) => {
+                if (view.prev === undefined) return false
+                make.top.equalTo(view.prev.bottom)
+                make.height.equalTo(1 / $device.info.screen.scale)
+                make.left.right.inset(0)
+            },
+            events: {
+                draw: (view, ctx) => {
+                    ctx.strokeColor = $color("separatorColor")
+                    ctx.setLineWidth(1)
+                    ctx.moveToPoint(0, 0)
+                    ctx.addLineToPoint(view.frame.width, 0)
+                    ctx.strokePath()
+                }
+            }
+        }
+    }
 }
 
-class LargeTitle {
+class LargeTitle extends BaseUI {
     constructor(id, title, rightButtons = [], leftButtons = []) {
+        super()
         this.id = id
         this.title = title
         this.rightButtons = rightButtons
         this.leftButtons = leftButtons
         this.headerHeight = 90
-        Object.assign(this, defaultStyle)
+        this.hasButton = rightButtons.length || leftButtons.length
     }
 
     setHeaderHeight(height) {
@@ -32,10 +58,16 @@ class LargeTitle {
 
     setRightButtons(rightButtons) {
         this.rightButtons = rightButtons
+        this.hasButton = true
     }
 
     setLeftButtons(leftButtons) {
         this.leftButtons = leftButtons
+        this.hasButton = true
+    }
+
+    setBackgroundColor(backgroundColor) {
+        this.backgroundColor = backgroundColor
     }
 
     /**
@@ -215,53 +247,47 @@ class LargeTitle {
             views: [{
                 type: "view",
                 views: this.leftButtons,
-                layout: (make, view) => {
-                    make.top.equalTo(view.super.safeAreaTop)
-                    make.size.equalTo(view.super.safeArea)
-                    make.right.inset(10)
-                }
+                layout: $layout.fill
             }],
             layout: (make, view) => {
                 make.top.equalTo(view.super.safeAreaTop)
                 make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                make.left.right.equalTo(view.super.safeArea)
+                make.left.inset(10)
+                make.width.equalTo(this.rightButtons.length * buttonWidth)
             }
         } : {}
         return { // 顶部bar，用于显示 设置 字样
             type: "view",
             props: {
                 id: this.id + "-header",
-                alpha: 0
+                bgcolor: $color("clear")
             },
             layout: (make, view) => {
                 make.left.top.right.inset(0)
                 make.bottom.equalTo(view.super.safeAreaTop).offset(45)
             },
             views: [
-                {
+                this.backgroundColor ? {
+                    type: "view",
+                    props: {
+                        hidden: true,
+                        bgcolor: this.backgroundColor,
+                        id: this.id + "-background"
+                    },
+                    layout: $layout.fill
+                } : {
                     type: "blur",
-                    props: { style: this.blurStyle },
+                    props: {
+                        hidden: true,
+                        style: this.blurStyle,
+                        id: this.id + "-background"
+                    },
                     layout: $layout.fill
                 },
-                {
-                    type: "canvas",
-                    layout: (make, view) => {
-                        make.top.equalTo(view.prev.bottom)
-                        make.height.equalTo(1 / $device.info.screen.scale)
-                        make.left.right.inset(0)
-                    },
-                    events: {
-                        draw: (view, ctx) => {
-                            const width = view.frame.width
-                            const scale = $device.info.screen.scale
-                            ctx.strokeColor = $color("gray")
-                            ctx.setLineWidth(1 / scale)
-                            ctx.moveToPoint(0, 0)
-                            ctx.addLineToPoint(width, 0)
-                            ctx.strokePath()
-                        }
-                    }
-                },
+                this.underline({
+                    id: this.id + "-underline",
+                    alpha: 0
+                }),
                 { // 标题
                     type: "label",
                     props: {
@@ -285,16 +311,18 @@ class LargeTitle {
 
     scrollAction(sender) {
         // 样式
-        const titleSizeMax = 40,
+        const titleSizeMax = 40, // 下拉放大字体最大值
             topOffset = -10,
-            navBarIdSuffix = "-header",
+            underlineIdSuffix = "-underline",
+            backgroundIdSuffix = "-background",
             navTitleIdSuffix = "-header-title"
         // 顶部信息栏
         if (sender.contentOffset.y > 5) {
             $ui.animate({
                 duration: 0.2,
                 animation: () => {
-                    $(this.id + navBarIdSuffix).alpha = 1
+                    $(this.id + underlineIdSuffix).alpha = 1
+                    $(this.id + backgroundIdSuffix).hidden = false
                 }
             })
             if (sender.contentOffset.y > 40) {
@@ -322,25 +350,23 @@ class LargeTitle {
                     size = titleSizeMax
                 $(this.id).font = $font("bold", size)
             }
-            // 隐藏 navBar
+            // 隐藏下划线和模糊
             $ui.animate({
                 duration: 0.2,
                 animation: () => {
-                    $(this.id + navBarIdSuffix).alpha = 0
-
+                    $(this.id + underlineIdSuffix).alpha = 0
+                    $(this.id + backgroundIdSuffix).hidden = true
                 }
             })
         }
     }
 }
 
-class UIKit {
+class UIKit extends BaseUI {
     constructor(kernel) {
+        super()
         this.kernel = kernel
-        // 通用样式
-        Object.assign(this, defaultStyle)
-        // 本地化
-        this.loadL10n()
+        this.loadL10n() // 本地化
         this.isLargeTitle = true
     }
 
@@ -353,31 +379,8 @@ class UIKit {
         this.title = title
     }
 
-    isUIKitNavButton(button) {
-        if (button.hasOwnProperty("props") && button.props.hasOwnProperty("id")) {
-            return true
-        }
-        return false
-    }
-
     setNavButtons(buttons) {
-        this.navButtons = []
-        buttons.forEach(button => {
-            if (this.isUIKitNavButton(button)) {
-                this.navButtons.push(this.toJSBoxNavButton(button))
-            } else {
-                this.navButtons.push(button)
-            }
-        })
-    }
-
-    toJSBoxNavButton(button) {
-        return {
-            symbol: button.views[0].props.symbol,
-            handler: sender => {
-                button.views[0].events.tapped(sender)
-            }
-        }
+        this.navButtons = buttons
     }
 
     loadL10n() {
@@ -555,12 +558,7 @@ class UIKit {
         $ui.push({
             props: {
                 statusBarStyle: statusBarStyle,
-                navButtons: navButtons.map(button => {
-                    if (this.isUIKitNavButton(button)) {
-                        return this.toJSBoxNavButton(button)
-                    }
-                    return button
-                }),
+                navButtons: navButtons,
                 title: title,
                 navBarHidden: this.isLargeTitle,
                 bgcolor: $color(bgcolor),
@@ -653,27 +651,6 @@ class UIKit {
                 }
             ]
         })
-    }
-
-    underline() {
-        return { // canvas
-            type: "canvas",
-            layout: (make, view) => {
-                if (view.prev === undefined) return false
-                make.top.equalTo(view.prev.bottom)
-                make.height.equalTo(1 / $device.info.screen.scale)
-                make.left.right.inset(0)
-            },
-            events: {
-                draw: (view, ctx) => {
-                    ctx.strokeColor = $color("separatorColor")
-                    ctx.setLineWidth(1)
-                    ctx.moveToPoint(0, 0)
-                    ctx.addLineToPoint(view.frame.width, 0)
-                    ctx.strokePath()
-                }
-            }
-        }
     }
 }
 
