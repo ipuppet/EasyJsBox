@@ -1118,7 +1118,10 @@ class View {
                 footer: footer,
                 data: this.getSections(structure)
             },
-            layout: $layout.fill
+            layout: (make, view) => {
+                make.bottom.equalTo(view.super)
+                make.top.left.right.equalTo(view.super.safeArea)
+            }
         }]
         if (this.UIKit.isLargeTitle) {
             if (!childPage) {
@@ -1145,4 +1148,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.11" }
+module.exports = { Controller, View, VERSION: "1.0.12" }
