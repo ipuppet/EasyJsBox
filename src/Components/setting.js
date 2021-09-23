@@ -193,6 +193,40 @@ class View {
         return this.controller.set(key, value)
     }
 
+    touchHighlightStart(id) {
+        $(id).bgcolor = $color("insetGroupedBackground")
+    }
+
+    touchHighlightEnd(id, duration = 0.3) {
+        $ui.animate({
+            duration: duration,
+            animation: () => {
+                $(id).bgcolor = $color("clear")
+            }
+        })
+    }
+
+    withTouchEvents(lineId, events, withTapped = false, highlightEndDelay = 0) {
+        events = Object.assign(events, {
+            touchesBegan: () => {
+                this.touchHighlightStart(lineId)
+            },
+            touchesMoved: () => {
+                this.touchHighlightEnd(lineId, 0)
+            }
+        })
+        if (withTapped) {
+            const tapped = events.tapped
+            events.tapped = () => {
+                // highlight
+                this.touchHighlightStart(lineId)
+                setTimeout(() => this.touchHighlightEnd(lineId), highlightEndDelay * 1000)
+                if (typeof tapped === "function") tapped()
+            }
+        }
+        return events
+    }
+
     createLineLabel(title, icon) {
         if (!icon[1]) icon[1] = "#00CC00"
         if (typeof icon[1] !== "object") {
@@ -256,8 +290,10 @@ class View {
         const isArray = Array.isArray(value)
         const text = isArray ? value[0] : value
         const moreInfo = isArray ? value[1] : value
+        const lineId = `script-${this.dataCenter.get("name")}-${this.controller.kernel.uuid()}`
         return {
             type: "view",
+            props: { id: lineId },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -275,7 +311,7 @@ class View {
                 },
                 {// 监听点击动作
                     type: "view",
-                    events: {
+                    events: this.withTouchEvents(lineId, {
                         tapped: () => {
                             $ui.alert({
                                 title: title,
@@ -292,7 +328,7 @@ class View {
                                 ]
                             })
                         }
-                    },
+                    }, true),
                     layout: (make, view) => {
                         make.right.inset(0)
                         make.size.equalTo(view.super)
@@ -497,35 +533,25 @@ class View {
 
     createScript(key, icon, title, script) {
         const id = `script-${this.dataCenter.get("name")}-${key}`
-        const touchHighlightStart = () => {
-            $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
-        }
-        const touchHighlightEnd = (duration = 0.2) => {
-            $ui.animate({
-                duration: duration,
-                animation: () => {
-                    $(`${id}-line`).bgcolor = $color("clear")
-                }
-            })
-        }
+        const lineId = `${id}-line`
         const touchHighlight = () => {
-            touchHighlightStart()
-            touchHighlightEnd(0.5)
+            this.touchHighlightStart(lineId)
+            this.touchHighlightEnd(lineId)
         }
         const actionStart = () => {
             // 隐藏button，显示spinner
             $(id).alpha = 0
             $(`${id}-spinner`).alpha = 1
-            touchHighlightStart()
+            this.touchHighlightStart(lineId)
         }
         const actionCancel = () => {
             $(id).alpha = 1
             $(`${id}-spinner`).alpha = 0
-            touchHighlightEnd()
+            this.touchHighlightEnd(lineId)
         }
         const actionDone = (status = true, message = $l10n("ERROR")) => {
             $(`${id}-spinner`).alpha = 0
-            touchHighlightEnd()
+            this.touchHighlightEnd(lineId)
             const button = $(id)
             if (!status) { // 失败
                 $ui.toast(message)
@@ -565,7 +591,7 @@ class View {
         }
         return {
             type: "view",
-            props: { id: `${id}-line` },
+            props: { id: lineId },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -598,7 +624,7 @@ class View {
                         },
                         {// 覆盖在图片上监听点击动作
                             type: "view",
-                            events: {
+                            events: this.withTouchEvents(lineId, {
                                 tapped: () => {
                                     // 生成开始事件和结束事件动画，供函数调用
                                     const animate = {
@@ -606,13 +632,13 @@ class View {
                                         actionCancel: actionCancel,
                                         actionDone: actionDone,
                                         touchHighlight: touchHighlight,
-                                        touchHighlightStart: touchHighlightStart,
-                                        touchHighlightEnd: touchHighlightEnd
+                                        touchHighlightStart: () => this.touchHighlightStart(lineId),
+                                        touchHighlightEnd: () => this.touchHighlightEnd(lineId)
                                     }
                                     // 执行代码
                                     eval(`(()=>{return ${script}(animate)})()`)
                                 }
-                            },
+                            }),
                             layout: (make, view) => {
                                 make.right.inset(0)
                                 make.size.equalTo(view.super)
@@ -715,9 +741,10 @@ class View {
 
     createMenu(key, icon, title, items, events, withTitle) {
         const id = `setting-menu-${this.dataCenter.get("name")}-${key}`
+        const lineId = `${id}-line`
         return {
             type: "view",
-            props: { id: `${id}-line` },
+            props: { id: lineId },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -747,9 +774,9 @@ class View {
                     }
                 }
             ],
-            events: {
+            events: this.withTouchEvents(lineId, {
                 tapped: () => {
-                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
+                    this.touchHighlightStart(lineId)
                     $ui.menu({
                         items: items,
                         handler: (title, idx) => {
@@ -759,16 +786,11 @@ class View {
                             $(id).text = $l10n(title)
                         },
                         finished: () => {
-                            $ui.animate({
-                                duration: 0.2,
-                                animation: () => {
-                                    $(`${id}-line`).bgcolor = $color("clear")
-                                }
-                            })
+                            this.touchHighlightEnd(lineId, 0.2)
                         }
                     })
                 }
-            },
+            }),
             layout: $layout.fill
         }
     }
@@ -965,21 +987,11 @@ class View {
 
     createChild(key, icon, title, children) {
         const id = `setting-child-${this.dataCenter.get("name")}-${key}`
-        const touchHighlightStart = () => {
-            $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
-        }
-        const touchHighlightEnd = (duration = 0.2) => {
-            $ui.animate({
-                duration: duration,
-                animation: () => {
-                    $(`${id}-line`).bgcolor = $color("clear")
-                }
-            })
-        }
+        const lineId = `${id}-line`
         return {
             type: "view",
             layout: $layout.fill,
-            props: { id: `${id}-line` },
+            props: { id: lineId },
             views: [
                 this.createLineLabel(title, icon),
                 {// 仅用于显示图片
@@ -995,11 +1007,8 @@ class View {
                     }
                 }
             ],
-            events: {
+            events: this.withTouchEvents(lineId, {
                 tapped: () => {
-                    // highlight
-                    touchHighlightStart()
-                    touchHighlightEnd(0.5)
                     setTimeout(() => {
                         this.UIKit.push({
                             title: title,
@@ -1008,7 +1017,7 @@ class View {
                         })
                     })
                 }
-            }
+            }, true, 0.3)
         }
     }
 
@@ -1148,4 +1157,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.12" }
+module.exports = { Controller, View, VERSION: "1.0.13" }

@@ -1,6 +1,24 @@
-const VERSION = "0.3.12"
+const VERSION = "0.3.13"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
+
+function l10n(language, content) {
+    if (typeof content === "string") {
+        const strings = {}
+        const strArr = content.split(";")
+        strArr.forEach(line => {
+            line = line.trim()
+            if (line !== "") {
+                const kv = line.split("=")
+                strings[kv[0].trim().slice(1, -1)] = kv[1].trim().slice(1, -1)
+            }
+        })
+        content = strings
+    }
+    const strings = $app.strings
+    strings[language] = Object.assign(content, $app.strings[language])
+    $app.strings = strings
+}
 
 class BaseUI {
     constructor() {
@@ -363,9 +381,8 @@ class LargeTitle extends BaseUI {
 }
 
 class UIKit extends BaseUI {
-    constructor(kernel) {
+    constructor() {
         super()
-        this.kernel = kernel
         this.loadL10n() // 本地化
         this.isLargeTitle = true
     }
@@ -385,10 +402,10 @@ class UIKit extends BaseUI {
 
     loadL10n() {
         // pushPageSheet
-        this.kernel.l10n("zh-Hans", {
+        l10n("zh-Hans", {
             "DONE": "完成"
         })
-        this.kernel.l10n("en", {
+        l10n("en", {
             "DONE": "Done"
         })
     }
@@ -549,7 +566,7 @@ class UIKit extends BaseUI {
         const navTop = 45,
             views = args.views,
             statusBarStyle = args.statusBarStyle === undefined ? 0 : args.statusBarStyle,
-            title = args.title ?? (this.isLargeTitle ? "" : this.kernel.name),
+            title = args.title ?? "",
             parent = args.parent ?? $l10n("BACK"),
             navButtons = args.navButtons ?? [{ title: "" }],
             topOffset = !this.isLargeTitle ? false : args.topOffset ?? true,
@@ -706,21 +723,7 @@ class Kernel {
     }
 
     l10n(language, content) {
-        if (typeof content === "string") {
-            const strings = {}
-            const strArr = content.split(";")
-            strArr.forEach(line => {
-                line = line.trim()
-                if (line !== "") {
-                    const kv = line.split("=")
-                    strings[kv[0].trim().slice(1, -1)] = kv[1].trim().slice(1, -1)
-                }
-            })
-            content = strings
-        }
-        const strings = $app.strings
-        strings[language] = Object.assign(content, $app.strings[language])
-        $app.strings = strings
+        l10n(language, content)
     }
 
     getExtFile(path, sharedPath) {
