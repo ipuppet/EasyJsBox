@@ -67,7 +67,7 @@ class Controller {
         "TIPS" = "Tips";
         "COLOR" = "Color";
         "COPY" = "Copy";
-        "COPY_SUCCESS" = "Copy success";
+        "COPY_SUCCESS" = "Copide";
 
         "JSBOX_ICON" = "JSBox in app icon";
         "SF_SYMBOLS" = "SF Symbols";
