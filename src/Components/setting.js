@@ -53,7 +53,7 @@ class Controller {
         "AT_BOTTOM" = "已经到底啦~";
         `)
         this.kernel.l10n("en", `
-        "OK" = "Ok";
+        "OK" = "OK";
         "CANCEL" = "Cancel";
         "CLEAR" = "Clear";
         "BACK" = "Back";
