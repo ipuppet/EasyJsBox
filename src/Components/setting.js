@@ -41,7 +41,7 @@ class Controller {
         "TIPS" = "小贴士";
         "COLOR" = "颜色";
         "COPY" = "复制";
-        "COPY_SUCCESS" = "复制成功";
+        "COPIED" = "复制成功";
         
         "JSBOX_ICON" = "JSBox 内置图标";
         "SF_SYMBOLS" = "SF Symbols";
@@ -67,7 +67,7 @@ class Controller {
         "TIPS" = "Tips";
         "COLOR" = "Color";
         "COPY" = "Copy";
-        "COPY_SUCCESS" = "Copide";
+        "COPIED" = "Copide";
 
         "JSBOX_ICON" = "JSBox in app icon";
         "SF_SYMBOLS" = "SF Symbols";
@@ -321,7 +321,7 @@ class View {
                                         title: $l10n("COPY"),
                                         handler: () => {
                                             $clipboard.text = moreInfo
-                                            $ui.toast($l10n("COPY_SUCCESS"))
+                                            $ui.toast($l10n("COPIED"))
                                         }
                                     },
                                     { title: $l10n("OK") }
