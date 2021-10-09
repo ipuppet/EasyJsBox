@@ -25,7 +25,7 @@
                 "title": "Github",
                 "type": "info",
                 "key": "github",
-                "value": "https://github.com/ipuppet/EasyWidget"
+                "value": "https://github.com/ipuppet/EasyJsBox"
             },
             {
                 "icon": [
@@ -37,7 +37,7 @@
                 "key": "author",
                 "value": [
                     "ipuppet",
-                    "https://blog.ipuppet.cn"
+                    "https://blog.ipuppet.top"
                 ]
             },
             {

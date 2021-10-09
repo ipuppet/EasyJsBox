@@ -4,15 +4,6 @@ class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
-        this.UIKit.disableLargeTitle()
-        this.UIKit.setNavButtons([
-            this.UIKit.navButton("setting", "gear", () => {
-                this.UIKit.push({
-                    title: $l10n("SETTING"),
-                    views: this.setting.getView()
-                })
-            })
-        ])
         // 注册组件
         this.settingComponent = this.registerComponent("setting")
         this.setting = this.settingComponent.controller
@@ -60,6 +51,19 @@ module.exports = {
             })
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
+            kernel.UIKit.disableLargeTitle()
+            kernel.setting.setChildPage(true)
+            kernel.UIKit.setNavButtons([
+                {
+                    symbol: "gear",
+                    handler: () => {
+                        kernel.UIKit.push({
+                            title: $l10n("SETTING"),
+                            views: kernel.setting.getView()
+                        })
+                    }
+                }
+            ])
             const HomeUI = require("./ui/home")
             const interfaceUi = new HomeUI(kernel)
             kernel.UIRender(interfaceUi.getView())

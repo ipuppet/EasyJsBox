@@ -8,7 +8,7 @@ class HomeUI {
             type: "text",
             props: {
                 editable: false,
-                text: "Hello World!"
+                text: $l10n("HELLO_WORLD")
             },
             layout: $layout.fill
         }]

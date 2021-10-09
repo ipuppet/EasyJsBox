@@ -126,6 +126,20 @@
     ```
 
 - script
+
+    如果`value`以`this.controller`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
+
+    ```js
+    const animate = {
+        actionStart: actionStart, // 会出现加载动画
+        actionCancel: actionCancel, // 会直接恢复箭头图标
+        actionDone: actionDone, // 会出现对号，然后恢复箭头
+        touchHighlight: touchHighlight, // 被点击的一行颜色加深，然后颜色恢复
+        touchHighlightStart: () => this.touchHighlightStart(lineId), // 被点击的一行颜色加深
+        touchHighlightEnd: () => this.touchHighlightEnd(lineId) // 被点击的一行颜色恢复
+    }
+    ```
+
     ```json
     {
         "icon": [

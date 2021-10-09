@@ -41,7 +41,7 @@ class Controller {
         "TIPS" = "小贴士";
         "COLOR" = "颜色";
         "COPY" = "复制";
-        "COPY_SUCCESS" = "复制成功";
+        "COPIED" = "复制成功";
         
         "JSBOX_ICON" = "JSBox 内置图标";
         "SF_SYMBOLS" = "SF Symbols";
@@ -53,7 +53,7 @@ class Controller {
         "AT_BOTTOM" = "已经到底啦~";
         `)
         this.kernel.l10n("en", `
-        "OK" = "Ok";
+        "OK" = "OK";
         "CANCEL" = "Cancel";
         "CLEAR" = "Clear";
         "BACK" = "Back";
@@ -67,7 +67,7 @@ class Controller {
         "TIPS" = "Tips";
         "COLOR" = "Color";
         "COPY" = "Copy";
-        "COPY_SUCCESS" = "Copy success";
+        "COPIED" = "Copide";
 
         "JSBOX_ICON" = "JSBox in app icon";
         "SF_SYMBOLS" = "SF Symbols";
@@ -321,7 +321,7 @@ class View {
                                         title: $l10n("COPY"),
                                         handler: () => {
                                             $clipboard.text = moreInfo
-                                            $ui.toast($l10n("COPY_SUCCESS"))
+                                            $ui.toast($l10n("COPIED"))
                                         }
                                     },
                                     { title: $l10n("OK") }
@@ -628,15 +628,20 @@ class View {
                                 tapped: () => {
                                     // 生成开始事件和结束事件动画，供函数调用
                                     const animate = {
-                                        actionStart: actionStart,
-                                        actionCancel: actionCancel,
-                                        actionDone: actionDone,
-                                        touchHighlight: touchHighlight,
-                                        touchHighlightStart: () => this.touchHighlightStart(lineId),
-                                        touchHighlightEnd: () => this.touchHighlightEnd(lineId)
+                                        actionStart: actionStart, // 会出现加载动画
+                                        actionCancel: actionCancel, // 会直接恢复箭头图标
+                                        actionDone: actionDone, // 会出现对号，然后恢复箭头
+                                        touchHighlight: touchHighlight, // 被点击的一行颜色加深，然后颜色恢复
+                                        touchHighlightStart: () => this.touchHighlightStart(lineId), // 被点击的一行颜色加深
+                                        touchHighlightEnd: () => this.touchHighlightEnd(lineId) // 被点击的一行颜色恢复
                                     }
                                     // 执行代码
-                                    eval(`(()=>{return ${script}(animate)})()`)
+                                    if (script.startsWith("this.controller")) {
+                                        // 传递 animate 对象
+                                        eval(`(()=>{return ${script}(animate)})()`)
+                                    } else {
+                                        eval(script)
+                                    }
                                 }
                             }),
                             layout: (make, view) => {
@@ -1157,4 +1162,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.13" }
+module.exports = { Controller, View, VERSION: "1.0.14" }
