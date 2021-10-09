@@ -1,4 +1,4 @@
-const VERSION = "0.3.13"
+const VERSION = "0.3.14"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -966,6 +966,10 @@ function init() {
             src: `${SHARED_PATH}/LICENSE`,
             dst: `${ROOT_PATH}/LICENSE`
         })
+        setTimeout(() => {
+            $ui.toast("The update is successful and will restart soon")
+            setTimeout(() => $addin.restart(), 1500)
+        }, 1500)
     }
     if ($file.exists(ROOT_PATH)) {
         // 不在 widget 中运行且 SHARED_PATH 目录存在则检查更新
