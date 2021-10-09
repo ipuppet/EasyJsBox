@@ -1,7 +1,1 @@
-"ALERT_INFO" = "提示";
-"OK" = "好";
-"CANCEL" = "取消";
-"CLEAR" = "清除";
-"BACK" = "返回";
-"SUCCESS" = "成功";
-"ERROR" = "发生错误";
+"HELLO_WORLD" = "你好，世界！";
