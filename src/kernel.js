@@ -1,4 +1,4 @@
-const VERSION = "0.3.14"
+const VERSION = "0.3.15"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -20,12 +20,26 @@ function l10n(language, content) {
     $app.strings = strings
 }
 
-class BaseUI {
+class UIKit {
     constructor() {
         // 通用样式
         this.blurStyle = $blurStyle.thinMaterial
         this.textColor = $color("primaryText", "secondaryText")
         this.linkColor = $color("systemLink")
+        // 本地化
+        this.loadL10n()
+        // 隐藏 jsbox 默认 nav 栏
+        this.jsboxNavHidden = true
+    }
+
+    loadL10n() {
+        // pushPageSheet
+        l10n("zh-Hans", {
+            "DONE": "完成"
+        })
+        l10n("en", {
+            "DONE": "Done"
+        })
     }
 
     underline(props = {}) {
@@ -49,346 +63,9 @@ class BaseUI {
             }
         }
     }
-}
 
-class LargeTitle extends BaseUI {
-    constructor(id, title, rightButtons = [], leftButtons = []) {
-        super()
-        this.id = id
-        this.title = title
-        this.rightButtons = rightButtons
-        this.leftButtons = leftButtons
-        this.headerHeight = 90
-        this.hasButton = rightButtons.length || leftButtons.length
-    }
-
-    setHeaderHeight(height) {
-        this.headerHeight = height
-    }
-
-    setId(id) {
-        this.id = id
-    }
-
-    setTitle(title) {
-        this.title = title
-    }
-
-    setRightButtons(rightButtons) {
-        this.rightButtons = rightButtons
-        this.hasButton = true
-    }
-
-    setLeftButtons(leftButtons) {
-        this.leftButtons = leftButtons
-        this.hasButton = true
-    }
-
-    setBackgroundColor(backgroundColor) {
-        this.backgroundColor = backgroundColor
-    }
-
-    /**
-     * 用于创建一个靠右侧按钮（自动布局）
-     * @param {String} id 不可重复
-     * @param {String} symbol symbol图标（目前只用symbol）
-     * @param {CallableFunction} tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
-     *     调用 start() 表明按钮被点击，准备开始动画
-     *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
-     *                 若第一个参数传出false则表示运行出错
-     *                 第二个参数为错误原因($ui.toast(message))
-     *      调用 cancel() 表示取消操作
-     *     示例：
-     *      (start, done, cancel) => {
-     *          start()
-     *          const upload = (data) => { return false }
-     *          if(upload(data)) { done() }
-     *          else { done(false, "Upload Error!") }
-     *      }
-     * @param {Boolean} hidden 是否隐藏
-     * @param {String} alignRight 是否向右对齐，false 则向左对齐
-     */
-    navButton(id, symbol, tapped, hidden = false, alignRight = true) {
-        const actionStart = () => {
-            // 隐藏button，显示spinner
-            const button = $(id)
-            button.alpha = 0
-            button.hidden = true
-            $("spinner-" + id).alpha = 1
-        }
-
-        const actionDone = (status = true, message = $l10n("ERROR")) => {
-            $("spinner-" + id).alpha = 0
-            const button = $(id)
-            button.hidden = false
-            if (!status) { // 失败
-                $ui.toast(message)
-                button.alpha = 1
-                return
-            }
-            // 成功动画
-            button.symbol = "checkmark"
-            $ui.animate({
-                duration: 0.6,
-                animation: () => {
-                    button.alpha = 1
-                },
-                completion: () => {
-                    setTimeout(() => {
-                        $ui.animate({
-                            duration: 0.4,
-                            animation: () => {
-                                button.alpha = 0
-                            },
-                            completion: () => {
-                                button.symbol = symbol
-                                $ui.animate({
-                                    duration: 0.4,
-                                    animation: () => {
-                                        button.alpha = 1
-                                    },
-                                    completion: () => {
-                                        button.alpha = 1
-                                    }
-                                })
-                            }
-                        })
-                    }, 600)
-                }
-            })
-        }
-
-        const actionCancel = () => {
-            $("spinner-" + id).alpha = 0
-            const button = $(id)
-            button.alpha = 1
-            button.hidden = false
-        }
-
-        return {
-            type: "view",
-            props: { id: id },
-            views: [
-                {
-                    type: "button",
-                    props: {
-                        id: id,
-                        hidden: hidden,
-                        tintColor: this.textColor,
-                        symbol: symbol,
-                        contentEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0),
-                        bgcolor: $color("clear")
-                    },
-                    events: {
-                        tapped: sender => {
-                            tapped({
-                                start: actionStart,
-                                done: actionDone,
-                                cancel: actionCancel
-                            }, sender)
-                        }
-                    },
-                    layout: $layout.fill
-                },
-                {
-                    type: "spinner",
-                    props: {
-                        id: "spinner-" + id,
-                        loading: true,
-                        alpha: 0
-                    },
-                    layout: $layout.fill
-                }
-            ],
-            layout: (make, view) => {
-                make.height.equalTo(view.super)
-                make.width.equalTo(40)
-                if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    if (alignRight) make.right.equalTo(view.prev.left)
-                    else make.left.equalTo(view.prev.right)
-                } else {
-                    if (alignRight) make.right.inset(0)
-                    else make.left.inset(0)
-                }
-            }
-        }
-    }
-
-    /**
-     * 页面标题
-     * @param {String} id 标题id
-     * @param {String} title 标题文本
-     * @param {Number} height 高度
-     */
-    headerTitle() {
-        return {
-            type: "view",
-            info: { id: this.id, title: this.title }, // 供动画使用
-            props: { height: this.headerHeight },
-            views: [{
-                type: "label",
-                props: {
-                    id: this.id,
-                    text: this.title,
-                    textColor: this.textColor,
-                    align: $align.left,
-                    font: $font("bold", 35),
-                    line: 1
-                },
-                layout: (make, view) => {
-                    make.left.equalTo(view.super.safeArea).offset(20)
-                    make.top.equalTo(view.super.safeAreaTop).offset(50)
-                }
-            }]
-        }
-    }
-
-    navBarView() {
-        const buttonWidth = 60
-        const rightButtonView = this.rightButtons.length > 0 ? {
-            type: "view",
-            views: [{
-                type: "view",
-                views: this.rightButtons,
-                layout: $layout.fill
-            }],
-            layout: (make, view) => {
-                make.top.equalTo(view.super.safeAreaTop)
-                make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                make.right.inset(10)
-                make.width.equalTo(this.rightButtons.length * buttonWidth)
-            }
-        } : {}
-        const leftButtonView = this.leftButtons.length > 0 ? {
-            type: "view",
-            views: [{
-                type: "view",
-                views: this.leftButtons,
-                layout: $layout.fill
-            }],
-            layout: (make, view) => {
-                make.top.equalTo(view.super.safeAreaTop)
-                make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                make.left.inset(10)
-                make.width.equalTo(this.rightButtons.length * buttonWidth)
-            }
-        } : {}
-        return { // 顶部bar，用于显示 设置 字样
-            type: "view",
-            props: {
-                id: this.id + "-header",
-                bgcolor: $color("clear")
-            },
-            layout: (make, view) => {
-                make.left.top.right.inset(0)
-                make.bottom.equalTo(view.super.safeAreaTop).offset(45)
-            },
-            views: [
-                this.backgroundColor ? {
-                    type: "view",
-                    props: {
-                        hidden: true,
-                        bgcolor: this.backgroundColor,
-                        id: this.id + "-background"
-                    },
-                    layout: $layout.fill
-                } : {
-                    type: "blur",
-                    props: {
-                        hidden: true,
-                        style: this.blurStyle,
-                        id: this.id + "-background"
-                    },
-                    layout: $layout.fill
-                },
-                this.underline({
-                    id: this.id + "-underline",
-                    alpha: 0
-                }),
-                { // 标题
-                    type: "label",
-                    props: {
-                        id: this.id + "-header-title",
-                        alpha: 0,
-                        text: this.title,
-                        font: $font("bold", 17),
-                        align: $align.center,
-                        bgcolor: $color("clear"),
-                        textColor: this.textColor
-                    },
-                    layout: (make, view) => {
-                        make.left.right.inset(0)
-                        make.top.equalTo(view.super.safeAreaTop)
-                        make.bottom.equalTo(view.super)
-                    }
-                }
-            ].concat(rightButtonView, leftButtonView)
-        }
-    }
-
-    scrollAction(sender) {
-        // 样式
-        const titleSizeMax = 40, // 下拉放大字体最大值
-            topOffset = -10,
-            underlineIdSuffix = "-underline",
-            backgroundIdSuffix = "-background",
-            navTitleIdSuffix = "-header-title"
-        // 顶部信息栏
-        if (sender.contentOffset.y > 5) {
-            $ui.animate({
-                duration: 0.2,
-                animation: () => {
-                    $(this.id + underlineIdSuffix).alpha = 1
-                    $(this.id + backgroundIdSuffix).hidden = false
-                }
-            })
-            if (sender.contentOffset.y > 40) {
-                $ui.animate({
-                    duration: 0.2,
-                    animation: () => {
-                        $(this.id + navTitleIdSuffix).alpha = 1
-                        $(this.id).alpha = 0
-                    }
-                })
-            } else {
-                $ui.animate({
-                    duration: 0.2,
-                    animation: () => {
-                        $(this.id + navTitleIdSuffix).alpha = 0
-                        $(this.id).alpha = 1
-                    }
-                })
-            }
-        } else {
-            // 下拉放大字体
-            if (sender.contentOffset.y <= topOffset) {
-                let size = 35 - sender.contentOffset.y * 0.04
-                if (size > titleSizeMax)
-                    size = titleSizeMax
-                $(this.id).font = $font("bold", size)
-            }
-            // 隐藏下划线和模糊
-            $ui.animate({
-                duration: 0.2,
-                animation: () => {
-                    $(this.id + underlineIdSuffix).alpha = 0
-                    $(this.id + backgroundIdSuffix).hidden = true
-                }
-            })
-        }
-    }
-}
-
-class UIKit extends BaseUI {
-    constructor() {
-        super()
-        this.loadL10n() // 本地化
-        this.isLargeTitle = true
-    }
-
-    disableLargeTitle() {
-        this.isLargeTitle = false
+    useJsboxNav() {
+        this.jsboxNavHidden = false
     }
 
     setTitle(title) {
@@ -398,16 +75,6 @@ class UIKit extends BaseUI {
 
     setNavButtons(buttons) {
         this.navButtons = buttons
-    }
-
-    loadL10n() {
-        // pushPageSheet
-        l10n("zh-Hans", {
-            "DONE": "完成"
-        })
-        l10n("en", {
-            "DONE": "Done"
-        })
     }
 
     /**
@@ -431,10 +98,6 @@ class UIKit extends BaseUI {
      */
     isSplitScreenMode() {
         return $device.info.screen.width !== this.getWindowSize().width
-    }
-
-    getLargeTitle(id, title, rightButtons = [], leftButtons = []) {
-        return new LargeTitle(id, title, rightButtons, leftButtons)
     }
 
     pushPageSheet(args) {
@@ -487,25 +150,7 @@ class UIKit extends BaseUI {
                             props: { style: this.blurStyle },
                             layout: $layout.fill
                         },
-                        { // canvas
-                            type: "canvas",
-                            layout: (make, view) => {
-                                make.top.equalTo(view.prev.bottom)
-                                make.height.equalTo(1 / $device.info.screen.scale)
-                                make.left.right.inset(0)
-                            },
-                            events: {
-                                draw: (view, ctx) => {
-                                    const width = view.frame.width
-                                    const scale = $device.info.screen.scale
-                                    ctx.strokeColor = $color("gray")
-                                    ctx.setLineWidth(1 / scale)
-                                    ctx.moveToPoint(0, 0)
-                                    ctx.addLineToPoint(width, 0)
-                                    ctx.strokePath()
-                                }
-                            }
-                        },
+                        this.underline(),
                         { // view
                             type: "view",
                             layout: (make, view) => {
@@ -555,10 +200,12 @@ class UIKit extends BaseUI {
      * @param {Object} args 参数
      * {
             views: [],
+            statusBarStyle: statusBarStyle,
             title: "",
             parent: "",
             navButtons: [],
             topOffset: true, // 这样会导致nav的磨砂效果消失，因为视图不会被nav遮挡
+            bgcolor = "primarySurface",
             disappeared: () => { },
         }
      */
@@ -577,7 +224,7 @@ class UIKit extends BaseUI {
                 statusBarStyle: statusBarStyle,
                 navButtons: navButtons,
                 title: title,
-                navBarHidden: this.isLargeTitle,
+                navBarHidden: this.jsboxNavHidden,
                 bgcolor: $color(bgcolor),
             },
             events: {
@@ -598,7 +245,7 @@ class UIKit extends BaseUI {
                 },
                 { // 模拟大标题
                     type: "view",
-                    props: { hidden: !this.isLargeTitle },
+                    props: { hidden: !this.jsboxNavHidden },
                     layout: (make, view) => {
                         make.left.top.right.inset(0)
                         make.bottom.equalTo(view.super.safeAreaTop).offset(navTop)
@@ -609,25 +256,7 @@ class UIKit extends BaseUI {
                             props: { style: this.blurStyle },
                             layout: $layout.fill
                         },
-                        { // canvas
-                            type: "canvas",
-                            layout: (make, view) => {
-                                make.top.equalTo(view.prev.bottom)
-                                make.height.equalTo(1 / $device.info.screen.scale)
-                                make.left.right.inset(0)
-                            },
-                            events: {
-                                draw: (view, ctx) => {
-                                    const width = view.frame.width
-                                    const scale = $device.info.screen.scale
-                                    ctx.strokeColor = $color("gray")
-                                    ctx.setLineWidth(1 / scale)
-                                    ctx.moveToPoint(0, 0)
-                                    ctx.addLineToPoint(width, 0)
-                                    ctx.strokePath()
-                                }
-                            }
-                        },
+                        this.underline(),
                         {
                             type: "view",
                             layout: (make, view) => {
@@ -789,8 +418,9 @@ class Kernel {
         const sharedComponentPath = `${this.path.shared.components}/${component}.js`
         this.getExtFile(componentPath, sharedComponentPath)
         const { Controller, View } = require(componentPath)
-        // 新实例
+        // 通过 DataCenter, view 可在构造函数中获取 controller 定义的属性
         const dataCenter = new DataCenter()
+        // 新实例
         const controller = new Controller({ kernel: this, args, dataCenter })
         const view = new View({ UIKit: this.UIKit, dataCenter })
         // 关联 view 和 controller
