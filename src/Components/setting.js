@@ -173,11 +173,18 @@ class Controller {
         if (typeof this.hook === "function") this.hook(key, value)
         return true
     }
+
+    _getLargeTitle(id, title) {
+        return this.kernel.registerComponent("large-title", {
+            name: id,
+            id: id,
+            title: title
+        })
+    }
 }
 
 class View {
     /**
-     * 
      * @param {Object} data 
      * data { UIKit: this.UIKit, dataCenter }
      */
@@ -1096,7 +1103,6 @@ class View {
     getView(structure, childPage, footer) {
         childPage = childPage === undefined ? this.dataCenter.get("childPage") : childPage
         structure = structure ?? this.controller.structure
-        const hasSectionTitle = this.controller.hasSectionTitle(structure)
         footer = footer ?? this.dataCenter.get("footer", (() => {
             const info = JSON.parse($file.read("/config.json").string)["info"]
             return {
@@ -1137,16 +1143,17 @@ class View {
                 make.top.left.right.equalTo(view.super.safeArea)
             }
         }]
-        if (this.UIKit.isLargeTitle) {
+        if (this.UIKit.jsboxNavHidden) {
+            const hasSectionTitle = this.controller.hasSectionTitle(structure)
             if (!childPage) {
-                const largeTitle = this.UIKit.getLargeTitle(
+                const largeTitle = this.controller._getLargeTitle(
                     `setting-title-${this.dataCenter.get("name")}`,
                     $l10n("SETTING")
                 )
-                if (!hasSectionTitle) largeTitle.setHeaderHeight(110)
-                Object.assign(list[0].props, { header: largeTitle.headerTitle() })
-                list.push(largeTitle.navBarView())
-                list[0].events = { didScroll: sender => largeTitle.scrollAction(sender) }
+                if (!hasSectionTitle) largeTitle.controller.setHeaderHeight(110)
+                Object.assign(list[0].props, { header: largeTitle.view.headerTitle() })
+                list.push(largeTitle.view.navBarView())
+                list[0].events = { didScroll: sender => largeTitle.view.scrollAction(sender) }
                 list[0].props.indicatorInsets = $insets(50, 0, 50, 0)
             } else {
                 Object.assign(list[0].props, { header: { props: { height: hasSectionTitle ? 0 : 80 } } })
@@ -1162,4 +1169,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.14" }
+module.exports = { Controller, View, VERSION: "1.0.15" }
