@@ -1,4 +1,4 @@
-const VERSION = "0.3.15"
+const VERSION = "0.3.16"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -216,7 +216,7 @@ class UIKit {
             title = args.title ?? "",
             parent = args.parent ?? $l10n("BACK"),
             navButtons = args.navButtons ?? [{ title: "" }],
-            topOffset = !this.isLargeTitle ? false : args.topOffset ?? true,
+            topOffset = !this.jsboxNavHidden ? false : args.topOffset ?? true,
             bgcolor = args.bgcolor ?? "primarySurface",
             disappeared = args.disappeared
         $ui.push({
