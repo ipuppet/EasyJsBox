@@ -1,4 +1,4 @@
-const VERSION = "0.3.17"
+const VERSION = "0.4.0"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -356,32 +356,6 @@ class Kernel {
         l10n(language, content)
     }
 
-    getExtFile(path, sharedPath) {
-        const copyFile = () => {
-            $file.copy({
-                src: sharedPath,
-                dst: path
-            })
-        }
-        if (!$file.exists(path)) { // 从 shared 复制
-            if ($file.exists(sharedPath)) {
-                copyFile()
-            } else {
-                return false
-            }
-        } else { // 检查更新
-            if ($app.env !== $env.widget) {
-                const { VERSION } = require(path)
-                if ($file.exists(sharedPath)) {
-                    const SHARED_VERSION = eval($file.read(sharedPath).string).VERSION
-                    if (isOutdated(VERSION, SHARED_VERSION)) {
-                        copyFile()
-                    }
-                }
-            }
-        }
-    }
-
     debug(print) {
         this.debugMode = true
         if (typeof print === "function") {
@@ -416,8 +390,6 @@ class Kernel {
             return this.getComponent(args.name)
         args._name = component // 组件名称
         const componentPath = `${this.path.components}/${component}.js`
-        const sharedComponentPath = `${this.path.shared.components}/${component}.js`
-        this.getExtFile(componentPath, sharedComponentPath)
         const { Controller, View } = require(componentPath)
         // 通过 DataCenter, view 可在构造函数中获取 controller 定义的属性
         const dataCenter = new DataCenter()
@@ -466,12 +438,9 @@ class Kernel {
      */
     registerPlugin(plugin) {
         const pluginPath = `${this.path.plugins}/${plugin}.js`
-        const sharedPluginPath = `${this.path.shared.plugins}/${plugin}.js`
-        this.getExtFile(pluginPath, sharedPluginPath)
-        const { Plugin, VERSION } = require(pluginPath)
+        const { Plugin } = require(pluginPath)
         this.plugins[plugin] = {
-            plugin: Plugin,
-            version: VERSION
+            plugin: Plugin
         }
         return this.plugins[plugin].plugin
     }
@@ -581,21 +550,11 @@ function isOutdated(thisVersion, version) {
 function init() {
     const update = () => {
         // 清除旧文件
-        $file.delete(`${ROOT_PATH}/src/kernel.js`)
-        $file.delete(`${ROOT_PATH}/LICENSE`)
-        // 创建结构
-        JSON.parse($file.read(`${SHARED_PATH}/structure.json`).string).forEach(dir => {
-            $file.mkdir(`${ROOT_PATH}${dir}`)
-        })
-        // 复制 kernel
+        $file.delete(ROOT_PATH)
+        // 复制
         $file.copy({
-            src: `${SHARED_PATH}/src/kernel.js`,
-            dst: `${ROOT_PATH}/src/kernel.js`
-        })
-        // 复制证书文件
-        $file.copy({
-            src: `${SHARED_PATH}/LICENSE`,
-            dst: `${ROOT_PATH}/LICENSE`
+            src: SHARED_PATH,
+            dst: ROOT_PATH
         })
         setTimeout(() => {
             $ui.toast("The update is successful and will restart soon")
