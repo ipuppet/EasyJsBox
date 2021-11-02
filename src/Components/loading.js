@@ -47,4 +47,4 @@ class View {
     }
 }
 
-module.exports = { Controller, View, VERSION: "1.0.0" }
+module.exports = { Controller, View }

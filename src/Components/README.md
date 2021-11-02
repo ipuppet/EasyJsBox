@@ -4,7 +4,7 @@
 
 组件需要 `Controller` 、 `View` 以及 `VERSION`
 
-`module.exports = { Controller, View, VERSION: "1.0.0" }`
+`module.exports = { Controller, View }`
 
 
 待更新
