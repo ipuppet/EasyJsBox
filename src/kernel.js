@@ -1,4 +1,4 @@
-const VERSION = "0.3.16"
+const VERSION = "0.3.17"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -107,7 +107,8 @@ class UIKit {
             navButtons = args.navButtons ?? [],
             topOffset = args.topOffset ?? true,
             done = args.done,
-            doneText = args.doneText ?? $l10n("DONE")
+            doneText = args.doneText ?? $l10n("DONE"),
+            showNavBar = args.showNavBar === undefined ? true : args.showNavBar
         const UIModalPresentationStyle = { pageSheet: 1 }
         const { width, height } = $device.info.screen
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
@@ -129,7 +130,7 @@ class UIKit {
                     type: "view",
                     views: views,
                     layout: (make, view) => {
-                        if (topOffset) make.top.equalTo(view.super.safeArea).offset(navTop)
+                        if (topOffset && showNavBar) make.top.equalTo(view.super.safeArea).offset(navTop)
                         else make.top.equalTo(view.super.safeArea)
                         make.bottom.equalTo(view.super)
                         make.left.right.equalTo(view.super.safeArea)
@@ -138,7 +139,7 @@ class UIKit {
                 { // nav
                     type: "view",
                     props: {
-                        //bgcolor: $color("blue")
+                        hidden: !showNavBar
                     },
                     layout: (make, view) => {
                         make.height.equalTo(navTop)
