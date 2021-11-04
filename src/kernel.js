@@ -1,4 +1,4 @@
-const VERSION = "0.4.0"
+const VERSION = "0.4.1"
 const ROOT_PATH = "/EasyJsBox" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
@@ -561,7 +561,7 @@ function init() {
             setTimeout(() => $addin.restart(), 1500)
         }, 1500)
     }
-    if ($file.exists(ROOT_PATH)) {
+    if ($file.exists(ROOT_PATH) && $file.exists(`${ROOT_PATH}/src/kernel.js`)) {
         // 不在 widget 中运行且 SHARED_PATH 目录存在则检查更新
         if ($file.exists(SHARED_PATH) && $app.env !== $env.widget) {
             const SHARED_VERSION = eval($file.read(`${SHARED_PATH}/src/kernel.js`).string).VERSION
