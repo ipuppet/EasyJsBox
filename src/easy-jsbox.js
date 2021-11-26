@@ -38,14 +38,6 @@ function getVelueWithoutUndefined(arg, _default = null) {
     return arg
 }
 
-function blankView(views, layout = $layout.fill) {
-    return {
-        type:"view",
-        layout: layout,
-        views: views
-    }
-}
-
 class Controller {
     constructor() {
         this.events = {}
@@ -139,6 +131,56 @@ class View {
     }
 }
 
+class ContainerView extends View {
+    constructor(args = {}) {
+        super()
+        this.props = args.props ?? {}
+        this.props.id = args?.props?.id ?? this.uuid()
+        this.views = args.views ?? []
+        this.events = args.events ?? {}
+        this.layout = args.layout ?? $layout.fill
+    }
+
+    static createByViews(views) {
+        return new ContainerView({ views })
+    }
+
+    static createByContainers(containers) {
+        const views = containers.map(container => container.getView())
+        return ContainerView.createByViews(views)
+    }
+
+    setProps(props) {
+        this.props = props
+        return this
+    }
+
+    setViews(views) {
+        this.views = views
+        return this
+    }
+
+    setEvents(events) {
+        this.evevts = events
+        return this
+    }
+
+    setLayout(layout) {
+        this.layout = layout
+        return this
+    }
+
+    getView() {
+        return {
+            type: "view",
+            props: this.props,
+            views: this.views,
+            events: this.events,
+            layout: this.layout
+        }
+    }
+}
+
 class NavigationController extends Controller {
     constructor() {
         super()
@@ -171,7 +213,7 @@ class NavigationController extends Controller {
      */
     push(navigationView) {
         const parent = this.navigationViews[this.navigationViews.length - 1]
-        navigationView.navigationBar.showPopButtonView(parent?.navigationBar.title ?? $l10n("BACK"))
+        navigationView.navigationBar.addPopButton(parent?.navigationBar.title ?? $l10n("BACK"))
         this.navigationViews.push(navigationView)
         $ui.push({
             props: {
@@ -237,7 +279,7 @@ class NavigationBar extends View {
         if (!this.hasbutton) this.hasbutton = true
     }
 
-    showPopButtonView(parent) {
+    addPopButton(parent) {
         this.popButtonView = { // 返回按钮
             type: "button",
             props: {
@@ -256,7 +298,7 @@ class NavigationBar extends View {
         }
     }
 
-    hidePopButtonView() {
+    removePopButton() {
         this.popButtonView = undefined
     }
 
@@ -540,6 +582,7 @@ class NavigationBar extends View {
 class NavigationView extends View {
     constructor() {
         super()
+        this.navigationBar = new NavigationBar()
     }
 
     setNavigationBar(navigationBar) {
@@ -595,7 +638,7 @@ class NavigationView extends View {
                 this.navigationBar.getNavigationBarView()
             ]
         }
-        return blankView(views)
+        return ContainerView.createByViews(views)
     }
 }
 
@@ -714,7 +757,6 @@ class PageController extends Controller{
     constructor() {
         super()
         this.selectedPage = null
-        this.pageIdPrefix = "page-"
         this.pages = {}
     }
 
@@ -724,14 +766,12 @@ class PageController extends Controller{
 
     setPage(key, item) {
         const visibility = this.selectedPage === key
-        if (item?.type === "EasyJsBox->Page") {
+        if (item instanceof ContainerView) {
             item.setVisibility(visibility)
             this.pages[key] = item
         } else {
-            const page = new Page()
-            page.setId(`${this.pageIdPrefix}${key}`)
-                .setViews(item)
-                .setVisibility(visibility)
+            const page = new PageView()
+            page.setViews(item).setVisibility(visibility)
             this.pages[key] = page
         }
     }
@@ -747,27 +787,16 @@ class PageController extends Controller{
     }
 
     getView() {
-        return blankView(Object.values(this.pages).map(page => page.getPageView()))
+        return ContainerView.createByContainers(Object.values(this.pages))
     }
 }
 
-class Page extends View {
+class PageView extends ContainerView {
     constructor(args = {}) {
-        super()
-        this.type = "EasyJsBox->Page"
-        this.id = args.id ?? this.uuid()
-        this.views = args.views ?? []
-        this.isHorizontalSafeArea = getVelueWithoutUndefined(args.isHorizontalSafeArea, true)
-    }
-
-    setId(id) {
-        this.id = id
-        return this
-    }
-
-    setViews(views) {
-        this.views = views
-        return this
+        this.pageIdPrefix = "page-"
+        args.props ?? (args.props = {})
+        args.props.id = `${this.pageIdPrefix}${key}`
+        super(args)
     }
 
     setVisibility(visibility) {
@@ -789,21 +818,15 @@ class Page extends View {
         }
     }
 
-    getPageView() {
-        return {
-            type: "view",
-            props: {
-                id: this.id,
-                hidden: !this.visibility,
-                clipsToBounds: true
-            },
-            views: this.views,
-            layout: this._layout
-        }
+    getView() {
+        this.layout = this._layout
+        this.props.hidden = !this.visibility
+        this.props.clipsToBounds = true
+        return super.getView()
     }
 }
 
-// TODO: menu
+// TODO: menu TabBar
 
 class UIKit extends View {
     constructor() {
