@@ -151,7 +151,12 @@ class ContainerView extends View {
     }
 
     setProps(props) {
-        this.props = props
+        Object.keys(props).forEach(key => this.setProp(key, props[key]))
+        return this
+    }
+
+    setProp(key, prop) {
+        this.props[key] = prop
         return this
     }
 
@@ -161,7 +166,12 @@ class ContainerView extends View {
     }
 
     setEvents(events) {
-        this.evevts = events
+        Object.keys(events).forEach(event => this.setEvent(event, events[event]))
+        return this
+    }
+
+    setEvent(event, action) {
+        this.events[event] = action
         return this
     }
 
@@ -198,18 +208,8 @@ class NavigationController extends Controller {
     }
 
     /**
-     * 重新设计$ui.push()
-     * @param {Object} args 参数
-     * {
-            views: [],
-            statusBarStyle: statusBarStyle,
-            title: "",
-            parent: "",
-            navButtons: [],
-            topOffset: true, // 这样会导致nav的磨砂效果消失，因为视图不会被nav遮挡
-            bgcolor = "primarySurface",
-            disappeared: () => { },
-        }
+     * push新页面
+     * @param {NavigationView} navigationView 
      */
     push(navigationView) {
         const parent = this.navigationViews[this.navigationViews.length - 1]
@@ -245,42 +245,55 @@ class NavigationBar extends View {
 
     setId(id) {
         this.id = id
+        return this
     }
 
     setTitle(title) {
         this.title = title
+        return this
     }
 
     setBackgroundColor(backgroundColor) {
         this.backgroundColor = backgroundColor
+        return this
     }
 
     setLargeTitleHeight(height) {
         this.largeTitleHeight = height
+        return this
     }
 
     setRightButtons(rightButtons) {
         this.rightButtons = rightButtons
         if (!this.hasbutton) this.hasbutton = true
+        return this
     }
 
     setLeftButtons(leftButtons) {
         this.leftButtons = leftButtons
         if (!this.hasbutton) this.hasbutton = true
+        return this
     }
 
     addRightButton(id, symbol, tapped) {
         this.rightButtons.push(this.navigationBarButton(id, symbol, tapped, this.align.right))
         if (!this.hasbutton) this.hasbutton = true
+        return this
     }
 
     addLeftButton(id, symbol, tapped) {
         this.leftButtons.push(this.navigationBarButton(id, symbol, tapped, this.align.left))
         if (!this.hasbutton) this.hasbutton = true
+        return this
     }
 
-    addPopButton(parent) {
-        this.popButtonView = { // 返回按钮
+    /**
+     * 覆盖左侧按钮
+     * @param {String} parent 父页面标题，将会显示为文本按钮
+     * @param {Object} view 自定义按钮视图
+     */
+    addPopButton(parent, view) {
+        this.popButtonView = view ?? { // 返回按钮
             type: "button",
             props: {
                 bgcolor: $color("clear"),
@@ -296,17 +309,19 @@ class NavigationBar extends View {
             },
             events: { tapped: () => { $ui.pop() } }
         }
+        return this
     }
 
     removePopButton() {
         this.popButtonView = undefined
+        return this
     }
 
     /**
      * 用于创建一个靠右侧按钮（自动布局）
      * @param {String} id 不可重复
      * @param {String} symbol symbol图标（目前只用symbol）
-     * @callback tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
+     * @param {Function} tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
      *     调用 start() 表明按钮被点击，准备开始动画
      *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
      *                 若第一个参数传出false则表示运行出错
@@ -643,8 +658,7 @@ class NavigationView extends View {
 }
 
 class Sheet extends View {
-    constructor() {
-        super()
+    init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
         const { width, height } = $device.info.screen
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
@@ -658,6 +672,7 @@ class Sheet extends View {
             $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
         }
         this._dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        return this
     }
 
     /**
@@ -674,67 +689,36 @@ class Sheet extends View {
     /**
      * 为 view 添加一个 navBar
      * @param {String} title 标题
-     * @callback callback 按钮回调函数，若未定义则调用 this.dismiss()
+     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
      * @param {String} btnText 按钮显示的文字，默认为 "Done"
      * @returns this
      */
     addNavBar(title, callback, btnText = "Done") {
         if (this.view === undefined) throw "Please call setView(view) first."
-        this.view = {
-            type: "view",
-            layout: $layout.fill,
-            views: [
-                this.view,
-                { // nav
-                    type: "view",
-                    layout: (make, view) => {
-                        make.height.equalTo(50)
-                        make.top.width.equalTo(view.super)
-                    },
-                    views: [
-                        this.blurBox(),
-                        this.underline(),
-                        { // view
-                            type: "view",
-                            layout: (make, view) => {
-                                make.size.left.top.equalTo(view.super.safeArea)
-                            },
-                            views: [
-                                { // 完成按钮
-                                    type: "button",
-                                    layout: (make, view) => {
-                                        make.centerY.height.equalTo(view.super)
-                                        make.left.inset(15)
-                                    },
-                                    props: {
-                                        title: btnText,
-                                        bgcolor: $color("clear"),
-                                        font: $font(16),
-                                        titleColor: $color("systemLink")
-                                    },
-                                    events: {
-                                        tapped: () => {
-                                            if (typeof callback === "function") callback()
-                                            else this.dismiss()
-                                        }
-                                    }
-                                },
-                                {
-                                    type: "label",
-                                    props: {
-                                        text: title,
-                                        font: $font("bold", 17)
-                                    },
-                                    layout: (make, view) => {
-                                        make.center.equalTo(view.super)
-                                    }
-                                }
-                            ]
-                        }
-                    ]
+        const navigatorView = new NavigationView()
+        navigatorView.navigationBar.addPopButton("", { // 返回按钮
+            type: "button",
+            props: {
+                bgcolor: $color("clear"),
+                tintColor: this.linkColor,
+                title: btnText,
+                titleColor: this.linkColor,
+                font: $font("bold", 16)
+            },
+            layout: (make, view) => {
+                make.left.inset(15)
+                make.centerY.equalTo(view.super)
+            },
+            events: {
+                tapped: () => {
+                    this.dismiss()
+                    if (typeof callback === "function") callback()
                 }
-            ]
-        }
+            }
+        }).setTitle(title)
+        navigatorView.navigationBar.prefersLargeTitles = false
+        navigatorView.setView(this.view)
+        this.view = navigatorView.getView()
         return this
     }
 
@@ -753,55 +737,23 @@ class Sheet extends View {
     }
 }
 
-class PageController extends Controller {
-    constructor() {
-        super()
-        this.selectedPage = null
-        this.pages = {}
-    }
-
-    setPages(pages) {
-        Object.keys(pages).forEach(key => this.setPage(key, pages[key]))
-    }
-
-    setPage(key, item) {
-        const visibility = this.selectedPage === key
-        if (item instanceof ContainerView) {
-            item.setVisibility(visibility)
-            this.pages[key] = item
-        } else {
-            const page = new PageView()
-            page.setViews(item).setVisibility(visibility)
-            this.pages[key] = page
-        }
-    }
-
-    showPage(key) {
-        if (this.pages[key]) {
-            if (this.selectedPage !== null)
-                $(this.pages[this.selectedPage].id).hidden = true
-            $(this.pages[key].id).hidden = false
-            this.callEvent("onChange", this.selectedPage, key)
-            this.selectedPage = key
-        }
-    }
-
-    getView() {
-        return ContainerView.createByContainers(Object.values(this.pages))
-    }
-}
-
 class PageView extends ContainerView {
     constructor(args = {}) {
-        this.pageIdPrefix = "page-"
-        args.props ?? (args.props = {})
-        args.props.id = `${this.pageIdPrefix}${key}`
         super(args)
+        if (args.status === true) this.setActiveStatus()
     }
 
-    setVisibility(visibility) {
-        this.visibility = visibility
+    setActiveStatus() {
+        this.status = true
         return this
+    }
+
+    show() {
+        $(this.props.id).hidden = false
+    }
+
+    hide() {
+        $(this.props.id).hidden = true
     }
 
     setHorizontalSafeArea(bool) {
@@ -820,13 +772,223 @@ class PageView extends ContainerView {
 
     getView() {
         this.layout = this._layout
-        this.props.hidden = !this.visibility
         this.props.clipsToBounds = true
+        this.props.hidden = !this.status
         return super.getView()
     }
 }
 
-// TODO: menu TabBar
+class PageController extends Controller {
+    constructor() {
+        super()
+        this.selected = undefined
+        this.pages = {}
+    }
+
+    setPages(pages) {
+        Object.keys(pages).forEach(key => this.setPage(key, pages[key]))
+        return this
+    }
+
+    setPage(key, page) {
+        if (this.selected === undefined) this.selected = key
+        if (page instanceof ContainerView) {
+            this.pages[key] = page
+        } else {
+            const pageView = new PageView()
+            pageView.setViews(page)
+            this.pages[key] = pageView
+        }
+        if (this.selected === key) this.pages[key].setActiveStatus()
+        return this
+    }
+
+    switchTo(key) {
+        if (this.pages[key]) {
+            this.pages[this.selected].hide()
+            this.pages[key].show()
+            this.callEvent("onChange", this.selected, key)
+            this.selected = key
+        }
+    }
+
+    getView() {
+        return ContainerView.createByContainers(Object.values(this.pages))
+    }
+}
+
+class TabBarCellView extends ContainerView {
+    constructor(args = {}) {
+        super(args)
+        this.setIcon(args.icon)
+        this.setTitle(args.title)
+        if (args.status === true) this.setActiveStatus()
+    }
+
+    setActiveStatus() {
+        this.status = true
+        return this
+    }
+
+    setIcon(icon, tapped) {
+        // 格式化单个icon和多个icon
+        if (!tapped) tapped = icon
+        this.icon = [icon, tapped]
+        return this
+    }
+
+    setTitle(title) {
+        this.title = title
+        return this
+    }
+
+    active() {
+        $(`${this.props.id}-icon`).image = $image(this.icon[1])
+        $(`${this.props.id}-icon`).tintColor = $color("systemLink")
+        $(`${this.props.id}-title`).textColor = $color("systemLink")
+    }
+
+    inactive() {
+        $(`${this.props.id}-icon`).image = $image(this.icon[0])
+        $(`${this.props.id}-icon`).tintColor = $color("lightGray")
+        $(`${this.props.id}-title`).textColor = $color("lightGray")
+    }
+
+    getView() {
+        this.views = [
+            {
+                type: "image",
+                props: {
+                    id: `${this.props.id}-icon`,
+                    image: $image(this.status ? this.icon[1] : this.icon[0]),
+                    bgcolor: $color("clear"),
+                    tintColor: $color(this.status ? "systemLink" : "lightGray")
+                },
+                layout: (make, view) => {
+                    make.centerX.equalTo(view.super)
+                    make.size.equalTo(25)
+                    make.top.inset(7)
+                }
+            },
+            {
+                type: "label",
+                props: {
+                    id: `${this.props.id}-title`,
+                    text: this.title,
+                    font: $font(10),
+                    textColor: $color(this.status ? "systemLink" : "lightGray")
+                },
+                layout: (make, view) => {
+                    make.centerX.equalTo(view.prev)
+                    make.bottom.inset(5)
+                }
+            }
+        ]
+        return super.getView()
+    }
+}
+
+class TabBarController extends PageController {
+    constructor() {
+        super()
+        this.cells = {}
+    }
+
+    setCells(cells) {
+        Object.keys(cells).forEach(key => this.setCell(key, cells[key]))
+        return this
+    }
+
+    setCell(key, cell) {
+        if (this.selected === undefined) this.selected = key
+        if (!(cell instanceof TabBarCellView)) {
+            cell = new TabBarCellView({
+                props: { info: { key } },
+                icon: cell.icon,
+                title: cell.title,
+                status: this.selected === key
+            })
+        }
+        this.cells[key] = cell
+        return this
+    }
+
+    cellViews() {
+        const views = []
+        Object.values(this.cells).forEach(cell => {
+            cell.setEvent("tapped", sender => {
+                const key = sender.info.key
+                if (this.selected === key) return
+                // menu动画
+                $ui.animate({
+                    duration: 0.4,
+                    animation: () => {
+                        // 点击的图标
+                        cell.active()
+                    }
+                })
+                // 之前的图标
+                this.cells[this.selected].inactive()
+                // 切换页面
+                this.switchTo(key)
+            })
+            views.push(cell.getView())
+        })
+        return views
+    }
+
+    getView() {
+        const pageView = super.getView().getView()
+        const tabBarView = {
+            type: "view",
+            layout: (make, view) => {
+                make.centerX.equalTo(view.super)
+                make.width.equalTo(view.super)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
+                make.bottom.equalTo(view.super)
+            },
+            views: [
+                {
+                    type: "blur",
+                    props: {
+                        style: this.blurStyle
+                    },
+                    layout: $layout.fill,
+                    views: [{
+                        type: "stack",
+                        layout: $layout.fillSafeArea,
+                        props: {
+                            axis: $stackViewAxis.horizontal,
+                            distribution: $stackViewDistribution.fillEqually,
+                            spacing: 0,
+                            stack: {
+                                views: this.cellViews()
+                            }
+                        }
+                    }]
+                },
+                {// 菜单栏上方灰色横线
+                    type: "canvas",
+                    layout: (make, view) => {
+                        make.top.equalTo(view.prev.top)
+                        make.height.equalTo(1 / $device.info.screen.scale)
+                        make.left.right.inset(0)
+                    },
+                    events: {
+                        draw: (view, ctx) => {
+                            ctx.strokeColor = $color("gray")
+                            ctx.setLineWidth(1 / $device.info.screen.scale)
+                            ctx.moveToPoint(0, 0)
+                            ctx.addLineToPoint(view.frame.width, 0)
+                            ctx.strokePath()
+                        }
+                    }
+                }
+            ]
+        }
+        return ContainerView.createByViews([pageView, tabBarView])
+    }
+}
 
 class UIKit extends View {
     constructor() {
@@ -1102,10 +1264,12 @@ module.exports = {
     isOutdated,
     // class
     Kernel,
-    Page,
-    PageController,
-    Sheet,
     NavigationBar,
     NavigationView,
-    NavigationController
+    NavigationController,
+    Sheet,
+    PageView,
+    PageController,
+    TabBarCellView,
+    TabBarController
 }
