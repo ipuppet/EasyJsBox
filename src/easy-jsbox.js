@@ -496,9 +496,9 @@ class NavigationBar extends View {
                     },
                     layout: $layout.fill
                 } : this.blurBox({
-                        hidden: true,
-                        id: this.id + "-background"
-                    }),
+                    hidden: true,
+                    id: this.id + "-background"
+                }),
                 this.underline({
                     id: this.id + "-underline",
                     alpha: 0
@@ -528,11 +528,11 @@ class NavigationBar extends View {
         // 样式
         const titleSizeMax = 40, // 下拉放大字体最大值
             topOffset = -10,
-        // views
+            // views
             id = this.id,
             largeTitleView = $(id + "-large-title"),
             smallTitleView = $(id + "-small-title"),
-            underlineView = $(id+ "-underline"),
+            underlineView = $(id + "-underline"),
             backgroundView = $(id + "-background")
         // 顶部信息栏
         if (view.contentOffset.y > 5) {
@@ -625,7 +625,7 @@ class NavigationView extends View {
                     views: [this.view],
                     layout: (make, view) => {
                         make.left.right.bottom.equalTo(view.super)
-                        view.layout(make,view)
+                        view.layout(make, view)
                         make.top.equalTo(view.super).offset(this.navigationBar.largeTitleHeight + 15)
                     },
                     events: {
@@ -753,7 +753,7 @@ class Sheet extends View {
     }
 }
 
-class PageController extends Controller{
+class PageController extends Controller {
     constructor() {
         super()
         this.selectedPage = null
@@ -777,7 +777,7 @@ class PageController extends Controller{
     }
 
     showPage(key) {
-        if (this.pages[key]){
+        if (this.pages[key]) {
             if (this.selectedPage !== null)
                 $(this.pages[this.selectedPage].id).hidden = true
             $(this.pages[key].id).hidden = false
