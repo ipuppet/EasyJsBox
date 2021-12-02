@@ -908,12 +908,15 @@ class PageController extends Controller {
         return this
     }
 
-    initPage(height) {
+    initPage(heightOffset = 0) {
         if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
         this.view.events.didScroll = sender => this.navigationController.scrollAction(sender)
         if (!this.view.props.header) this.view.props.header = {}
         this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: height !== undefined ? height : this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            height: (this.navigationController.navigationBar.prefersLargeTitles
+                && this.navigationItem.largeTitleDisplayMode !== NavigationItem.NavigationItemLargeTitleDisplayModeNever
+                ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
+                : this.navigationController.navigationBar.navigationBarNormalHeight) - UIKit.statusBarHeight + heightOffset
         })
         this.page = PageView.createByViews([
             this.view,
@@ -2167,13 +2170,12 @@ class Setting extends Controller {
                     setTimeout(() => {
                         const pageController = new PageController()
                         pageController.navigationController.navigationBar.prefersLargeTitles = false
-
                         pageController
                             .setView(this.getListView(children))
                             .navigationItem
                             .setTitle(title)
                             .addPopButton()
-                        pageController.initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight)
+                        pageController.initPage(30)
                         this.viewController.push(pageController)
                     })
                 }
@@ -2296,7 +2298,7 @@ class Setting extends Controller {
                 .navigationItem
                 .setTitle($l10n("SETTING"))
             pageController
-                .initPage()
+                .initPage(10)
                 .page
                 .setProp("bgcolor", $color("insetGroupedBackground"))
             this.viewController.setRootPageController(pageController)
