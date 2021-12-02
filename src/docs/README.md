@@ -11,3 +11,8 @@
 
 - 从 EasyJsBoxInstaller 更新后，需要重新启动两次您的项目才可正常生效。
 - 您项目中的`main.js`可能需要参考示例项目中的内容。
+
+## 文档索引
+
+[Controller](./controller.md)
+[Setting](./setting.md)
