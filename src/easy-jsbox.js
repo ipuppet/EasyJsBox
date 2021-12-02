@@ -326,8 +326,8 @@ class Sheet extends View {
      */
     addNavBar(title, callback, btnText = "Done") {
         if (this.view === undefined) throw "Please call setView(view) first."
-        const navigatorView = new NavigationView()
-        navigatorView.navigationItem.addPopButton("", { // 返回按钮
+        const pageController = new PageController()
+        pageController.navigationItem.addPopButton("", { // 返回按钮
             type: "button",
             props: {
                 bgcolor: $color("clear"),
@@ -347,9 +347,9 @@ class Sheet extends View {
                 }
             }
         }).setTitle(title)
-        navigatorView.navigationItem.prefersLargeTitles = false
-        navigatorView.setView(this.view)
-        this.view = navigatorView.getView()
+        pageController.navigationController.navigationBar.prefersLargeTitles = false
+        pageController.setView(this.view)
+        this.view = pageController.getPage().definition
         return this
     }
 
@@ -849,20 +849,17 @@ class NavigationController extends Controller {
 class PageView extends ContainerView {
     constructor(args = {}) {
         super(args)
-        if (args.status === true) this.setActiveStatus()
-    }
-
-    setActiveStatus() {
-        this.status = true
-        return this
+        this.activeStatus = true
     }
 
     show() {
         $(this.props.id).hidden = false
+        this.activeStatus = true
     }
 
     hide() {
         $(this.props.id).hidden = true
+        this.activeStatus = false
     }
 
     setHorizontalSafeArea(bool) {
@@ -882,7 +879,7 @@ class PageView extends ContainerView {
     getView() {
         this.layout = this._layout
         this.props.clipsToBounds = true
-        this.props.hidden = !this.status
+        this.props.hidden = !this.activeStatus
         return super.getView()
     }
 }
@@ -940,12 +937,9 @@ class TabBarCellView extends ContainerView {
         this.props.id = this.id
         this.setIcon(args.icon)
         this.setTitle(args.title)
-        if (args.status === true) this.setActiveStatus()
-    }
-
-    setActiveStatus() {
-        this.status = true
-        return this
+        if (args.activeStatus !== undefined) {
+            this.activeStatus = args.activeStatus
+        }
     }
 
     setIcon(icon) {
@@ -967,12 +961,14 @@ class TabBarCellView extends ContainerView {
         $(`${this.props.id}-icon`).image = $image(this.icon[1])
         $(`${this.props.id}-icon`).tintColor = $color("systemLink")
         $(`${this.props.id}-title`).textColor = $color("systemLink")
+        this.activeStatus = true
     }
 
     inactive() {
         $(`${this.props.id}-icon`).image = $image(this.icon[0])
         $(`${this.props.id}-icon`).tintColor = $color("lightGray")
         $(`${this.props.id}-title`).textColor = $color("lightGray")
+        this.activeStatus = false
     }
 
     getView() {
@@ -981,9 +977,9 @@ class TabBarCellView extends ContainerView {
                 type: "image",
                 props: {
                     id: `${this.props.id}-icon`,
-                    image: $image(this.status ? this.icon[1] : this.icon[0]),
+                    image: $image(this.activeStatus ? this.icon[1] : this.icon[0]),
                     bgcolor: $color("clear"),
-                    tintColor: $color(this.status ? "systemLink" : "lightGray")
+                    tintColor: $color(this.activeStatus ? "systemLink" : "lightGray")
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.super)
@@ -997,7 +993,7 @@ class TabBarCellView extends ContainerView {
                     id: `${this.props.id}-title`,
                     text: this.title,
                     font: $font(10),
-                    textColor: $color(this.status ? "systemLink" : "lightGray")
+                    textColor: $color(this.activeStatus ? "systemLink" : "lightGray")
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.prev)
@@ -1034,7 +1030,7 @@ class TabBarController extends Controller {
         } else {
             this.pages[key] = PageView.createByViews(page)
         }
-        if (this.selected === key) this.pages[key].setActiveStatus()
+        if (this.selected !== key) this.pages[key].activeStatus = false
         return this
     }
 
@@ -1064,7 +1060,7 @@ class TabBarController extends Controller {
                 props: { info: { key } },
                 icon: cell.icon,
                 title: cell.title,
-                status: this.selected === key
+                activeStatus: this.selected === key
             })
         }
         this.cells[key] = cell
@@ -2177,10 +2173,7 @@ class Setting extends Controller {
                             .navigationItem
                             .setTitle(title)
                             .addPopButton()
-                        pageController
-                            .initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight)
-                            .page
-                            .setActiveStatus()
+                        pageController.initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight)
                         this.viewController.push(pageController)
                     })
                 }
