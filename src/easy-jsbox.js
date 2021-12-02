@@ -288,6 +288,86 @@ class ContainerView extends View {
     }
 }
 
+class Sheet extends View {
+    init() {
+        const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
+        const { width, height } = $device.info.screen
+        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
+        const PSViewController = $objc("UIViewController").invoke("alloc.init")
+        const PSViewControllerView = PSViewController.$view()
+        PSViewControllerView.$setBackgroundColor($color("primarySurface"))
+        PSViewControllerView.$addSubview(UIView)
+        PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
+        this._present = () => {
+            PSViewControllerView.jsValue().add(this.view)
+            $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
+        }
+        this._dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        return this
+    }
+
+    /**
+     * 设置 view
+     * @param {Object} view 视图对象
+     * @returns this
+     */
+    setView(view = {}) {
+        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
+        this.view = view
+        return this
+    }
+
+    /**
+     * 为 view 添加一个 navBar
+     * @param {String} title 标题
+     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
+     * @param {String} btnText 按钮显示的文字，默认为 "Done"
+     * @returns this
+     */
+    addNavBar(title, callback, btnText = "Done") {
+        if (this.view === undefined) throw "Please call setView(view) first."
+        const navigatorView = new NavigationView()
+        navigatorView.navigationItem.addPopButton("", { // 返回按钮
+            type: "button",
+            props: {
+                bgcolor: $color("clear"),
+                tintColor: UIKit.linkColor,
+                title: btnText,
+                titleColor: UIKit.linkColor,
+                font: $font("bold", 16)
+            },
+            layout: (make, view) => {
+                make.left.inset(15)
+                make.centerY.equalTo(view.super)
+            },
+            events: {
+                tapped: () => {
+                    this.dismiss()
+                    if (typeof callback === "function") callback()
+                }
+            }
+        }).setTitle(title)
+        navigatorView.navigationItem.prefersLargeTitles = false
+        navigatorView.setView(this.view)
+        this.view = navigatorView.getView()
+        return this
+    }
+
+    /**
+     * 弹出 Sheet
+     */
+    present() {
+        this._present()
+    }
+
+    /**
+     * 关闭 Sheet
+     */
+    dismiss() {
+        this._dismiss()
+    }
+}
+
 class NavigationBar extends View {
     constructor(args) {
         super(args)
@@ -766,86 +846,6 @@ class NavigationController extends Controller {
     }
 }
 
-class Sheet extends View {
-    init() {
-        const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
-        const { width, height } = $device.info.screen
-        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
-        const PSViewController = $objc("UIViewController").invoke("alloc.init")
-        const PSViewControllerView = PSViewController.$view()
-        PSViewControllerView.$setBackgroundColor($color("primarySurface"))
-        PSViewControllerView.$addSubview(UIView)
-        PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
-        this._present = () => {
-            PSViewControllerView.jsValue().add(this.view)
-            $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
-        }
-        this._dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
-        return this
-    }
-
-    /**
-     * 设置 view
-     * @param {Object} view 视图对象
-     * @returns this
-     */
-    setView(view = {}) {
-        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
-        this.view = view
-        return this
-    }
-
-    /**
-     * 为 view 添加一个 navBar
-     * @param {String} title 标题
-     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
-     * @param {String} btnText 按钮显示的文字，默认为 "Done"
-     * @returns this
-     */
-    addNavBar(title, callback, btnText = "Done") {
-        if (this.view === undefined) throw "Please call setView(view) first."
-        const navigatorView = new NavigationView()
-        navigatorView.navigationItem.addPopButton("", { // 返回按钮
-            type: "button",
-            props: {
-                bgcolor: $color("clear"),
-                tintColor: UIKit.linkColor,
-                title: btnText,
-                titleColor: UIKit.linkColor,
-                font: $font("bold", 16)
-            },
-            layout: (make, view) => {
-                make.left.inset(15)
-                make.centerY.equalTo(view.super)
-            },
-            events: {
-                tapped: () => {
-                    this.dismiss()
-                    if (typeof callback === "function") callback()
-                }
-            }
-        }).setTitle(title)
-        navigatorView.navigationItem.prefersLargeTitles = false
-        navigatorView.setView(this.view)
-        this.view = navigatorView.getView()
-        return this
-    }
-
-    /**
-     * 弹出 Sheet
-     */
-    present() {
-        this._present()
-    }
-
-    /**
-     * 关闭 Sheet
-     */
-    dismiss() {
-        this._dismiss()
-    }
-}
-
 class PageView extends ContainerView {
     constructor(args = {}) {
         super(args)
@@ -1125,6 +1125,45 @@ class TabBarController extends Controller {
             ]
         }
         return ContainerView.createByViews(this.pageViews().concat(tabBarView))
+    }
+}
+
+class Kernel {
+    constructor() {
+        this.startTime = Date.now()
+        this.path = {
+            root: ROOT_PATH,
+            shared: SHARED_PATH
+        }
+        this.version = VERSION
+        this.name = $addin.current.name
+        this.UIKit = new UIKit()
+        this.UIKit.setTitle(this.name)
+    }
+
+    uuid() {
+        return uuid()
+    }
+
+    l10n(language, content) {
+        l10n(language, content)
+    }
+
+    debug(print) {
+        this.debugMode = true
+        if (typeof print === "function") {
+            this.debugPrint = print
+        }
+        this.print("You are running EasyJsBox in debug mode.")
+    }
+
+    print(message) {
+        if (!this.debugMode) return
+        if (typeof this.debugPrint === "function") {
+            this.debugPrint(message)
+        } else {
+            console.log(message)
+        }
     }
 }
 
@@ -2273,45 +2312,6 @@ class Setting extends Controller {
     }
 }
 
-class Kernel {
-    constructor() {
-        this.startTime = Date.now()
-        this.path = {
-            root: ROOT_PATH,
-            shared: SHARED_PATH
-        }
-        this.version = VERSION
-        this.name = $addin.current.name
-        this.UIKit = new UIKit()
-        this.UIKit.setTitle(this.name)
-    }
-
-    uuid() {
-        return uuid()
-    }
-
-    l10n(language, content) {
-        l10n(language, content)
-    }
-
-    debug(print) {
-        this.debugMode = true
-        if (typeof print === "function") {
-            this.debugPrint = print
-        }
-        this.print("You are running EasyJsBox in debug mode.")
-    }
-
-    print(message) {
-        if (!this.debugMode) return
-        if (typeof this.debugPrint === "function") {
-            this.debugPrint(message)
-        } else {
-            console.log(message)
-        }
-    }
-}
-
 /**
  * 检查版本号是否是过期版本
  * @param {String} latestVersion 最新版本号
@@ -2358,7 +2358,12 @@ module.exports = {
     init,
     isOutdated,
     // class
+    UIKit,
+    ViewController,
+    ContainerView,
     Sheet,
+    NavigationBar,
+    BarButtonItem,
     NavigationItem,
     NavigationController,
     PageView,
