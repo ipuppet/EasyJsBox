@@ -350,7 +350,10 @@ class Sheet extends View {
             })
             .setTitle(title)
             .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-        pageController.setView(this.view)
+        pageController
+            .setView(this.view)
+            .navigationController.navigationBar
+            .withoutStatusBarHeight()
         this.view = pageController.getPage().definition
         return this
     }
@@ -374,15 +377,15 @@ class NavigationBar extends View {
     constructor(args) {
         super(args)
         this.prefersLargeTitles = true
-        if ($device.isIphoneX) {
-            this.navigationBarNormalHeight = 88
-            this.navigationBarLargeTitleHeight = 140
-        } else {
-            this.navigationBarNormalHeight = 64
-            this.navigationBarLargeTitleHeight = 116
-        }
+        this.navigationBarNormalHeight = 44
+        this.navigationBarLargeTitleHeight = 96
         this.largeTitleFontSize = 34
-        this.largeTitleTopOffset = this.navigationBarNormalHeight - UIKit.statusBarHeight
+        this.largeTitleTopOffset = this.navigationBarNormalHeight
+        this.isAddStatusBarHeight = true
+    }
+
+    withoutStatusBarHeight() {
+        this.isAddStatusBarHeight = false
     }
 
     setNavigationItem(navigationItem) {
@@ -453,7 +456,11 @@ class NavigationBar extends View {
             },
             layout: make => {
                 make.left.top.right.inset(0)
-                make.height.equalTo(this.navigationBarNormalHeight)
+                make.height.equalTo(
+                    this.isAddStatusBarHeight
+                        ? this.navigationBarNormalHeight + UIKit.statusBarHeight
+                        : this.navigationBarNormalHeight
+                )
             },
             views: [
                 this.backgroundColor ? {
@@ -945,7 +952,11 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight)
+                    make.top.equalTo(
+                        this.navigationController.navigationBar.isAddStatusBarHeight
+                            ? this.navigationController.navigationBar.navigationBarNormalHeight + UIKit.statusBarHeight
+                            : this.navigationController.navigationBar.navigationBarNormalHeight
+                    )
                 }
             } else {
                 // 修饰视图
@@ -961,7 +972,6 @@ class PageController extends Controller {
                     height: (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
                         ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
                         : this.navigationController.navigationBar.navigationBarNormalHeight)
-                        - UIKit.statusBarHeight
                         + this.navigationItem.largeTitleHeightOffset
                 })
             }
