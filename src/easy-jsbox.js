@@ -910,7 +910,11 @@ class PageController extends Controller {
 
     initPage(heightOffset = 0) {
         if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
-        this.view.events.didScroll = sender => this.navigationController.scrollAction(sender)
+        const oldScrollAction = this.view.events.didScroll
+        this.view.events.didScroll = sender => {
+            this.navigationController.scrollAction(sender)
+            if (typeof oldScrollAction === "function") oldScrollAction(sender)
+        }
         if (!this.view.props.header) this.view.props.header = {}
         this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
             height: (this.navigationController.navigationBar.prefersLargeTitles
