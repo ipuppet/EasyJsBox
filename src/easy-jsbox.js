@@ -919,7 +919,6 @@ class PageController extends Controller {
             this.navigationController.navigationBar.getLargeTitleView(),
             this.navigationController.navigationBar.getNavigationBarView()
         ])
-        this.page.setActiveStatus()
         return this
     }
 
@@ -1035,7 +1034,7 @@ class TabBarController extends Controller {
         return this
     }
 
-    switchTo(key) {
+    switchPageTo(key) {
         if (this.pages[key]) {
             this.pages[this.selected].hide()
             this.pages[key].show()
@@ -1085,15 +1084,18 @@ class TabBarController extends Controller {
                 // 之前的图标
                 this.cells[this.selected].inactive()
                 // 切换页面
-                this.switchTo(key)
+                this.switchPageTo(key)
             })
             views.push(cell.getView())
         })
         return views
     }
 
+    pageViews() {
+        return Object.values(this.pages).map(page => page.definition)
+    }
+
     generateView() {
-        const pageView = ContainerView.createByContainers(Object.values(this.pages)).definition
         const tabBarView = {
             type: "view",
             layout: (make, view) => {
@@ -1142,7 +1144,7 @@ class TabBarController extends Controller {
                 }
             ]
         }
-        return ContainerView.createByViews([pageView, tabBarView])
+        return ContainerView.createByViews(this.pageViews().concat(tabBarView))
     }
 }
 
@@ -2156,12 +2158,17 @@ class Setting extends Controller {
                     setTimeout(() => {
                         const pageController = new PageController()
                         pageController.navigationController.navigationBar.prefersLargeTitles = false
+
                         pageController
                             .setView(this.getListView(children))
                             .navigationItem
                             .setTitle(title)
                             .addPopButton()
-                        this.viewController.push(pageController.initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight))
+                        pageController
+                            .initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight)
+                            .page
+                            .setActiveStatus()
+                        this.viewController.push(pageController)
                     })
                 }
             }, true, 0.3)
