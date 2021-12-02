@@ -938,17 +938,33 @@ class PageController extends Controller {
     initPage() {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
             if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
-            const oldScrollAction = this.view.events.didScroll
-            this.view.events.didScroll = sender => {
-                this.navigationController.scrollAction(sender)
-                if (typeof oldScrollAction === "function") oldScrollAction(sender)
+            const scrollView = [
+                "list",
+                "matrix"
+            ]
+            if (scrollView.indexOf(this.view.type) === -1) {
+                this.view.layout = (make, view) => {
+                    make.bottom.left.right.equalTo(view.super)
+                    make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight)
+                }
+            } else {
+                // 修饰视图
+                this.view.layout = $layout.fill
+                if (!this.view.events) this.view.events = {}
+                const oldScrollAction = this.view.events.didScroll
+                this.view.events.didScroll = sender => {
+                    this.navigationController.scrollAction(sender)
+                    if (typeof oldScrollAction === "function") oldScrollAction(sender)
+                }
+                if (!this.view.props.header) this.view.props.header = {}
+                this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+                    height: (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
+                        ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
+                        : this.navigationController.navigationBar.navigationBarNormalHeight)
+                        - UIKit.statusBarHeight
+                        + this.navigationItem.largeTitleHeightOffset
+                })
             }
-            if (!this.view.props.header) this.view.props.header = {}
-            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-                height: (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
-                    ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
-                    : this.navigationController.navigationBar.navigationBarNormalHeight) - UIKit.statusBarHeight + this.navigationItem.largeTitleHeightOffset
-            })
             this.page = PageView.createByViews([
                 this.view,
                 this.navigationController.navigationBar.getLargeTitleView(),
