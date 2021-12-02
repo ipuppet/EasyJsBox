@@ -327,27 +327,29 @@ class Sheet extends View {
     addNavBar(title, callback, btnText = "Done") {
         if (this.view === undefined) throw "Please call setView(view) first."
         const pageController = new PageController()
-        pageController.navigationItem.addPopButton("", { // 返回按钮
-            type: "button",
-            props: {
-                bgcolor: $color("clear"),
-                tintColor: UIKit.linkColor,
-                title: btnText,
-                titleColor: UIKit.linkColor,
-                font: $font("bold", 16)
-            },
-            layout: (make, view) => {
-                make.left.inset(15)
-                make.centerY.equalTo(view.super)
-            },
-            events: {
-                tapped: () => {
-                    this.dismiss()
-                    if (typeof callback === "function") callback()
+        pageController.navigationItem
+            .addPopButton("", { // 返回按钮
+                type: "button",
+                props: {
+                    bgcolor: $color("clear"),
+                    tintColor: UIKit.linkColor,
+                    title: btnText,
+                    titleColor: UIKit.linkColor,
+                    font: $font("bold", 16)
+                },
+                layout: (make, view) => {
+                    make.left.inset(15)
+                    make.centerY.equalTo(view.super)
+                },
+                events: {
+                    tapped: () => {
+                        this.dismiss()
+                        if (typeof callback === "function") callback()
+                    }
                 }
-            }
-        }).setTitle(title)
-        pageController.navigationController.navigationBar.prefersLargeTitles = false
+            })
+            .setTitle(title)
+            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
         pageController.setView(this.view)
         this.view = pageController.getPage().definition
         return this
@@ -401,22 +403,24 @@ class NavigationBar extends View {
      * 页面大标题
      */
     getLargeTitleView() {
-        return this.prefersLargeTitles ? {
-            type: "label",
-            props: {
-                id: this.id + "-large-title",
-                text: this.navigationItem.title,
-                textColor: UIKit.textColor,
-                align: $align.left,
-                font: $font("bold", this.largeTitleFontSize),
-                line: 1
-            },
-            layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(15)
-                make.height.equalTo(this.largeTitleFontSize + 5)
-                make.top.equalTo(view.super).offset(this.largeTitleTopOffset)
-            }
-        } : {}
+        return this.prefersLargeTitles
+            && this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
+            ? {
+                type: "label",
+                props: {
+                    id: this.id + "-large-title",
+                    text: this.navigationItem.title,
+                    textColor: UIKit.textColor,
+                    align: $align.left,
+                    font: $font("bold", this.largeTitleFontSize),
+                    line: 1
+                },
+                layout: (make, view) => {
+                    make.left.equalTo(view.super.safeArea).offset(15)
+                    make.height.equalTo(this.largeTitleFontSize + 5)
+                    make.top.equalTo(view.super).offset(this.largeTitleTopOffset)
+                }
+            } : {}
     }
 
     getNavigationBarView() {
@@ -439,8 +443,8 @@ class NavigationBar extends View {
         }
         const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
         const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
-        const isHideBackground = this.prefersLargeTitles && this.navigationItem.largeTitleDisplayMode !== NavigationItem.NavigationItemLargeTitleDisplayModeNever
-        const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.NavigationItemLargeTitleDisplayModeNever
+        const isHideBackground = this.prefersLargeTitles && this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
+        const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever
         return { // 顶部bar
             type: "view",
             props: {
@@ -656,18 +660,19 @@ class NavigationItem {
         this.rightButtons = []
         this.leftButtons = []
         this.hasbutton = false
-        this.largeTitleDisplayMode = NavigationItem.UINavigationItemLargeTitleDisplayModeAutomatic
+        this.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeAutomatic
+        this.largeTitleHeightOffset = 0
     }
 
-    static get UINavigationItemLargeTitleDisplayModeAutomatic() {
+    static get LargeTitleDisplayModeAutomatic() {
         return 0
     }
 
-    static get UINavigationItemLargeTitleDisplayModeAlways() {
+    static get LargeTitleDisplayModeAlways() {
         return 1
     }
 
-    static get NavigationItemLargeTitleDisplayModeNever() {
+    static get LargeTitleDisplayModeNever() {
         return 2
     }
 
@@ -678,6 +683,16 @@ class NavigationItem {
 
     setTitleView(titleView) {
         this.titleView = titleView
+        return this
+    }
+
+    setLargeTitleDisplayMode(mode) {
+        this.largeTitleDisplayMode = mode
+        return this
+    }
+
+    setLargeTitleHeightOffset(offset) {
+        this.largeTitleHeightOffset = offset
         return this
     }
 
@@ -779,21 +794,20 @@ class NavigationController extends Controller {
 
     toNormal() {
         this.updateSelector()
-        // 显示下划线和背景
         $ui.animate({
             duration: 0.2,
             animation: () => {
+                // 显示下划线和背景
                 this.selector.underlineView.alpha = 1
                 this.selector.backgroundView.hidden = false
-            }
-        })
-        $ui.animate({
-            duration: 0.2,
-            animation: () => {
+                // 隐藏大标题，显示小标题
                 this.selector.smallTitleView.alpha = 1
                 this.selector.largeTitleView.alpha = 0
             }
         })
+        if (this.navigationBar?.navigationItem) {
+            this.navigationBar.navigationItem.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeNever
+        }
     }
 
     toLargeTitle() {
@@ -807,11 +821,14 @@ class NavigationController extends Controller {
                 this.selector.largeTitleView.alpha = 1
             }
         })
+        if (this.navigationBar?.navigationItem) {
+            this.navigationBar.navigationItem.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeAlways
+        }
     }
 
     scrollAction(sender) {
         if (!this.navigationBar.prefersLargeTitles) return
-        if (this.navigationBar?.navigationItem.largeTitleDisplayMode === NavigationItem.NavigationItemLargeTitleDisplayModeNever) return
+        if (this.navigationBar?.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeAutomatic) return
         this.updateSelector()
         // 样式
         const titleSizeMax = 40 // 下拉放大字体最大值
@@ -822,7 +839,17 @@ class NavigationController extends Controller {
         if (sender.contentOffset.y > -1 * UIKit.statusBarHeight) {
             this.selector.backgroundView.hidden = false
             if (sender.contentOffset.y > 40 - UIKit.statusBarHeight) {
-                this.toNormal()
+                $ui.animate({
+                    duration: 0.2,
+                    animation: () => {
+                        // 显示下划线和背景
+                        this.selector.underlineView.alpha = 1
+                        this.selector.backgroundView.hidden = false
+                        // 隐藏大标题，显示小标题
+                        this.selector.smallTitleView.alpha = 1
+                        this.selector.largeTitleView.alpha = 0
+                    }
+                })
             } else {
                 this.selector.underlineView.alpha = 0
                 $ui.animate({
@@ -908,25 +935,28 @@ class PageController extends Controller {
         return this
     }
 
-    initPage(heightOffset = 0) {
-        if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
-        const oldScrollAction = this.view.events.didScroll
-        this.view.events.didScroll = sender => {
-            this.navigationController.scrollAction(sender)
-            if (typeof oldScrollAction === "function") oldScrollAction(sender)
+    initPage() {
+        if (this.navigationController.navigationBar.prefersLargeTitles) {
+            if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
+            const oldScrollAction = this.view.events.didScroll
+            this.view.events.didScroll = sender => {
+                this.navigationController.scrollAction(sender)
+                if (typeof oldScrollAction === "function") oldScrollAction(sender)
+            }
+            if (!this.view.props.header) this.view.props.header = {}
+            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+                height: (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
+                    ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
+                    : this.navigationController.navigationBar.navigationBarNormalHeight) - UIKit.statusBarHeight + this.navigationItem.largeTitleHeightOffset
+            })
+            this.page = PageView.createByViews([
+                this.view,
+                this.navigationController.navigationBar.getLargeTitleView(),
+                this.navigationController.navigationBar.getNavigationBarView()
+            ])
+        } else {
+            this.page = PageView.createByViews([this.view])
         }
-        if (!this.view.props.header) this.view.props.header = {}
-        this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: (this.navigationController.navigationBar.prefersLargeTitles
-                && this.navigationItem.largeTitleDisplayMode !== NavigationItem.NavigationItemLargeTitleDisplayModeNever
-                ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
-                : this.navigationController.navigationBar.navigationBarNormalHeight) - UIKit.statusBarHeight + heightOffset
-        })
-        this.page = PageView.createByViews([
-            this.view,
-            this.navigationController.navigationBar.getLargeTitleView(),
-            this.navigationController.navigationBar.getNavigationBarView()
-        ])
         return this
     }
 
@@ -2173,13 +2203,13 @@ class Setting extends Controller {
                 tapped: () => {
                     setTimeout(() => {
                         const pageController = new PageController()
-                        pageController.navigationController.navigationBar.prefersLargeTitles = false
                         pageController
                             .setView(this.getListView(children))
                             .navigationItem
                             .setTitle(title)
                             .addPopButton()
-                        pageController.initPage(30)
+                            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                            .setLargeTitleHeightOffset(30)
                         this.viewController.push(pageController)
                     })
                 }
@@ -2301,8 +2331,9 @@ class Setting extends Controller {
                 .setView(this.getListView(this.structure))
                 .navigationItem
                 .setTitle($l10n("SETTING"))
+                .setLargeTitleHeightOffset(10)
             pageController
-                .initPage(10)
+                .initPage()
                 .page
                 .setProp("bgcolor", $color("insetGroupedBackground"))
             this.viewController.setRootPageController(pageController)
