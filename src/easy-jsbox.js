@@ -166,14 +166,14 @@ class UIKit {
      * 获取Window大小
      * @returns 
      */
-    getWindowSize() {
+    static getWindowSize() {
         return $objc("UIWindow").$keyWindow().jsValue().size
     }
 
     /**
      * 是否属于大屏设备
      */
-    isLargeScreen() {
+    static isLargeScreen() {
         return $device.isIpad || $device.isIpadPro
     }
 
@@ -181,8 +181,8 @@ class UIKit {
      * 判断是否是分屏模式
      * @returns {Boolean}
      */
-    isSplitScreenMode() {
-        return $device.info.screen.width !== this.getWindowSize().width
+    static isSplitScreenMode() {
+        return $device.info.screen.width !== UIKit.getWindowSize().width
     }
 
     useJsboxNav() {
@@ -556,15 +556,15 @@ class BarButtonItem extends View {
 
     actionStart() {
         // 隐藏button，显示spinner
-        const button = $(id)
+        const button = $(this.id)
         button.alpha = 0
         button.hidden = true
-        $("spinner-" + id).alpha = 1
+        $("spinner-" + this.id).alpha = 1
     }
 
     actionDone(status = true, message = $l10n("ERROR")) {
-        $("spinner-" + id).alpha = 0
-        const button = $(id)
+        $("spinner-" + this.id).alpha = 0
+        const button = $(this.id)
         button.hidden = false
         if (!status) { // 失败
             $ui.toast(message)
@@ -586,7 +586,7 @@ class BarButtonItem extends View {
                             button.alpha = 0
                         },
                         completion: () => {
-                            button.symbol = symbol
+                            button.symbol = this.symbol
                             $ui.animate({
                                 duration: 0.4,
                                 animation: () => {
@@ -604,8 +604,8 @@ class BarButtonItem extends View {
     }
 
     actionCancel() {
-        $("spinner-" + id).alpha = 0
-        const button = $(id)
+        $("spinner-" + this.id).alpha = 0
+        const button = $(this.id)
         button.alpha = 1
         button.hidden = false
     }
@@ -629,9 +629,9 @@ class BarButtonItem extends View {
                     events: {
                         tapped: sender => {
                             this.events.tapped({
-                                start: this.actionStart,
-                                done: this.actionDone,
-                                cancel: this.actionCancel
+                                start: () => this.actionStart(),
+                                done: () => this.actionDone(),
+                                cancel: () => this.actionCancel()
                             }, sender)
                         }
                     },
