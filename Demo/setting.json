@@ -10,7 +10,7 @@
                 "title": "TIPS",
                 "type": "script",
                 "key": "tips",
-                "value": "this.controller.tips"
+                "value": "this.method.tips"
             }
         ]
     },
@@ -48,7 +48,7 @@
                 "title": "README",
                 "type": "script",
                 "key": "readme",
-                "value": "this.controller.readme"
+                "value": "this.method.readme"
             }
         ]
     }
