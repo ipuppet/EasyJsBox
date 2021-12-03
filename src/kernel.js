@@ -548,6 +548,8 @@ function isOutdated(thisVersion, version) {
 }
 
 function init() {
+    // 该版本已停止更新
+    return
     const update = () => {
         // 清除旧文件
         $file.delete(ROOT_PATH)
