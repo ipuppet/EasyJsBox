@@ -2,6 +2,13 @@ const VERSION = "1.0.0"
 const ROOT_PATH = "/script/easy-jsbox.js" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
+class ValidationError extends Error {
+    constructor(parameter, type) {
+        super(`The type of the parameter '${parameter}' must be '${type}'`)
+        this.name = "ValidationError"
+    }
+}
+
 function l10n(language, content) {
     if (typeof content === "string") {
         const strings = {}
@@ -290,6 +297,20 @@ class ContainerView extends View {
     }
 }
 
+class SheetAddNavBarError extends Error {
+    constructor() {
+        super("Please call setView(view) first.")
+        this.name = "SheetAddNavBarError"
+    }
+}
+
+class SheetViewTypeError extends ValidationError {
+    constructor(parameter, type) {
+        super(parameter, type)
+        this.name = "SheetViewTypeError"
+    }
+}
+
 class Sheet extends View {
     init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
@@ -314,7 +335,7 @@ class Sheet extends View {
      * @returns this
      */
     setView(view = {}) {
-        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
+        if (typeof view !== "object") throw new SheetViewTypeError("view", "object")
         this.view = view
         return this
     }
@@ -327,7 +348,7 @@ class Sheet extends View {
      * @returns this
      */
     addNavBar(title, callback, btnText = "Done") {
-        if (this.view === undefined) throw "Please call setView(view) first."
+        if (this.view === undefined) throw new SheetAddNavBarError()
         const pageController = new PageController()
         pageController.navigationItem
             .addPopButton("", { // 返回按钮
@@ -1024,6 +1045,13 @@ class PageView extends ContainerView {
     }
 }
 
+class PageControllerViewTypeError extends ValidationError {
+    constructor(parameter, type) {
+        super(parameter, type)
+        this.name = "PageControllerViewTypeError"
+    }
+}
+
 /**
  * events:
  * - onChange(from, to)
@@ -1050,7 +1078,7 @@ class PageController extends Controller {
 
     initPage() {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
-            if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
+            if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
             const scrollView = [
                 "list",
                 "matrix"
