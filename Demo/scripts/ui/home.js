@@ -20,9 +20,23 @@ class HomeUI {
                     symbol: "plus.circle",
                     tapped: animate => {
                         animate.start()
-                        $ui.toast($l10n("HOME_PLUS_BUTTON_MESSAGE"))
-                        // 一秒后播放完成动画
-                        setTimeout(() => animate.done(), 1000)
+                        $ui.alert({
+                            title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
+                            actions: [
+                                {
+                                    title: "OK",
+                                    handler: () => {
+                                        animate.done()
+                                    }
+                                },
+                                {
+                                    title: "Cancel",
+                                    handler: () => {
+                                        animate.cancel()
+                                    }
+                                }
+                            ]
+                        })
                     }
                 }
             ])

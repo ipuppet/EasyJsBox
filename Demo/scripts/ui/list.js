@@ -20,6 +20,31 @@ class ListUI {
         pageController.navigationItem
             .setTitle($l10n("LIST"))
             .setTitleView(searchBar)
+            .setLeftButtons([
+                {
+                    symbol: "plus.circle",
+                    tapped: animate => {
+                        animate.start()
+                        $ui.alert({
+                            title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
+                            actions: [
+                                {
+                                    title: "OK",
+                                    handler: () => {
+                                        animate.done()
+                                    }
+                                },
+                                {
+                                    title: "Cancel",
+                                    handler: () => {
+                                        animate.cancel()
+                                    }
+                                }
+                            ]
+                        })
+                    }
+                }
+            ])
         // 修改导航条背景色
         pageController.navigationController.navigationBar.setBackgroundColor($color("primarySurface"))
         // 添加视图
