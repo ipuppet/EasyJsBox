@@ -11,6 +11,41 @@
                 "type": "script",
                 "key": "tips",
                 "value": "this.method.tips"
+            },
+            {
+                "icon": [
+                    "doc.on.clipboard",
+                    "#FFCC66"
+                ],
+                "type": "child",
+                "title": "child",
+                "key": "child",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "text.alignleft",
+                                    "#FFCC66"
+                                ],
+                                "title": "number",
+                                "type": "number",
+                                "key": "child.number",
+                                "value": 100
+                            },
+                            {
+                                "icon": [
+                                    "square.and.arrow.down.on.square",
+                                    "#FF6633"
+                                ],
+                                "title": "switch",
+                                "type": "switch",
+                                "key": "child.switch",
+                                "value": true
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },
