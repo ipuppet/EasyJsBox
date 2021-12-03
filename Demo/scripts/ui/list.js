@@ -1,21 +1,26 @@
 const {
     PageController,
-    NavigationItem
+    SearchBar
 } = require("../easy-jsbox")
 
-class HomeUI {
+class ListUI {
     constructor(kernel) {
         this.kernel = kernel
     }
 
     getPageView() {
+        // 初始化搜索条
+        const searchBar = new SearchBar()
+        searchBar.controller.setEvent("onChange", text => {
+            $ui.toast(text)
+        })
         // 初始化页面控制器
         const pageController = new PageController()
         // 设置导航条元素
         pageController.navigationItem
-            .setTitle($l10n("HOME"))
-            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeAlways) // 一直显示大标题
-            .setRightButtons([
+            .setTitle($l10n("LIST"))
+            .setTitleView(searchBar)
+            .setLeftButtons([
                 {
                     symbol: "plus.circle",
                     tapped: animate => {
@@ -40,11 +45,13 @@ class HomeUI {
                     }
                 }
             ])
+        // 修改导航条背景色
+        pageController.navigationController.navigationBar.setBackgroundColor($color("primarySurface"))
         // 添加视图
         pageController.setView({
-            type: "markdown",
+            type: "list",
             props: {
-                content: `## ${$l10n("HELLO_WORLD")}`
+                data: ["Hello", "World"]
             },
             layout: $layout.fill
         })
@@ -52,4 +59,4 @@ class HomeUI {
     }
 }
 
-module.exports = HomeUI
+module.exports = ListUI

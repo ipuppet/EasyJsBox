@@ -1,12 +1,16 @@
-const { Kernel } = require("../EasyJsBox/src/kernel")
+const {
+    Kernel,
+    Setting,
+    Sheet
+} = require("./easy-jsbox")
 
 class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
         // 注册组件
-        this.settingComponent = this.registerComponent("setting")
-        this.setting = this.settingComponent.controller
+        this.setting = new Setting()
+        this.setting.loadConfig()
         this.initSettingMethods()
     }
 
@@ -14,22 +18,24 @@ class AppKernel extends Kernel {
      * 注入设置中的脚本类型方法
      */
     initSettingMethods() {
-        this.setting.readme = animate => {
+        this.setting.method.readme = animate => {
             animate.touchHighlight()
             const content = $file.read("/README.md").string
-            this.UIKit.pushPageSheet({
-                views: [{
+            const sheet = new Sheet()
+            sheet
+                .setView({
                     type: "markdown",
                     props: { content: content },
                     layout: (make, view) => {
                         make.size.equalTo(view.super)
                     }
-                }],
-                title: $l10n("README")
-            })
+                })
+                .addNavBar($l10n("README"))
+                .init()
+                .present()
         }
 
-        this.setting.tips = animate => {
+        this.setting.method.tips = animate => {
             animate.touchHighlight()
             $ui.alert("Tips.")
         }
@@ -51,22 +57,8 @@ module.exports = {
             })
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
-            kernel.UIKit.disableLargeTitle()
-            kernel.setting.setChildPage(true)
-            kernel.UIKit.setNavButtons([
-                {
-                    symbol: "gear",
-                    handler: () => {
-                        kernel.UIKit.push({
-                            title: $l10n("SETTING"),
-                            views: kernel.setting.getView()
-                        })
-                    }
-                }
-            ])
-            const HomeUI = require("./ui/home")
-            const interfaceUi = new HomeUI(kernel)
-            kernel.UIRender(interfaceUi.getView())
+            const Factory = require("./ui/factory")
+            new Factory(kernel).render()
         } else {
             $intents.finish("不支持在此环境中运行")
             $ui.render({

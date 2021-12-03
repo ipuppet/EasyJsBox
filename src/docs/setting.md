@@ -1,49 +1,48 @@
 # Setting
 
-> 默认提供的设置组件，提供一个设置功能的UI页面和数据存储功能。
+> `Setting` 继承自 `Controller`，提供一个设置功能的 UI 页面和数据存储功能。
 
 ## 使用
 
-### `Setting.controller`
+### `Setting`
 
 > 组件控制器方法
 
-- `constructor(data)`  
-初始化，data 对象中的 args 属性即注册时的第二个参数：  
-    ```js
-    const kernel = new Kernel()
-    const MySetting = kernel.registerComponent("Setting", {
-        name: "MySetting",
-        savePath: "/storage/setting.json", // 数据文件保存路径，其中的数据优先级将高于 `settintPath` 中的默认数据。
-        structure: "", // 设置页面的结构，设置此属性时 `structurePath` 将失效
-        structurePath: "/setting.json" // 存放设置页面结构数据的 `.json` 文件
-    })
-    const MySettingController = MySetting.controller
-    // 或 通过 `getComponent(component)` 获取：
-    // `const MySettingController = kernel.getComponent("MySetting").controller`
-    ```
+- `constructor(args = {})`
 
-- `get(key)`  
-根据 `key` 获取值。
+    初始化，args 对象中参数均有 `setXxx(value): this` 实现，如 `setSavePath(path)` 返回值为对象自身，因此可以链式调用。
+
+    - `savePath`  
+    数据文件保存路径。  
+    默认值为 "/storage/setting.json"
+
+    - `structure`  
+    结构数据。`structure` 优先级高于 `structurePath`
+    若不提供则从 `structurePath` 读取数据。
+
+    - `structurePath`  
+    结构数据文件路径，如果设置了 `structure` 会使该参数失效。  
+    默认值为 "/setting.json"
+
+    - `name`  
+    实例唯一名称，若不提供则自动生成。
+
+- `get(key, _default = null)`  
+根据 `key` 获取值。若未找到将返回 `_default`。
 
 - `set(key, value)`  
+不建议使用该方法，所有数据更新推荐仅在生成的 UI 中完成。  
 设置键值对，该方法会将数据保存到文件，同时更新内存中的数据，这意味着设置即时生效，可随时调用 `get()` 获取数据。
-
-- `setHook(hook)`  
-您可以通过调用来监听 `set()` 方法，每当触发 `set()` 方法时都会调用通过该方法
-
-- `setPopEvent(pop)`  
-用来设置页面关闭后的回调函数。
-    - `pop`: 如果设置为二级页面，该参数应该提供一个可执行的函数，提供关闭该页面的方法。如
-        ```js
-        () => {
-            $ui.pop()
-            console.log("页面关闭了")
-        }
-        ```
 
 - `setFooter(footer)`  
 用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号。(作者和版本号将从根目录的 `config.js` 获取)
+
+### events
+
+> 通过父类中的方法 `setEvent(event, callback)` 进行设置，详见 [Controller](./controller.md)
+
+- `onSet(key, value)`  
+当更新键值对时触发。
 
 ### Structure
 
@@ -117,22 +116,22 @@
         "title": "README",
         "type": "script",
         "key": "readme",
-        "value": "this.controller.readme()"
+        "value": "Text message."
     }
     ```
 
 - script
 
-    如果`value`以`this.controller`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
+    如果`value`以`this.method`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
 
     ```js
     const animate = {
-        actionStart: actionStart, // 会出现加载动画
-        actionCancel: actionCancel, // 会直接恢复箭头图标
-        actionDone: actionDone, // 会出现对号，然后恢复箭头
-        touchHighlight: touchHighlight, // 被点击的一行颜色加深，然后颜色恢复
-        touchHighlightStart: () => this.touchHighlightStart(lineId), // 被点击的一行颜色加深
-        touchHighlightEnd: () => this.touchHighlightEnd(lineId) // 被点击的一行颜色恢复
+        actionStart: callable(), // 会出现加载动画
+        actionCancel: callable(), // 会直接恢复箭头图标
+        actionDone: callable(), // 会出现对号，然后恢复箭头
+        touchHighlight: callable(), // 被点击的一行颜色加深，然后颜色恢复
+        touchHighlightStart: callable(), // 被点击的一行颜色加深
+        touchHighlightEnd: callable() // 被点击的一行颜色恢复
     }
     ```
 
@@ -145,7 +144,7 @@
         "title": "README",
         "type": "script",
         "key": "calendar",
-        "value": "this.controller.readme"
+        "value": "this.method.readme"
     }
     ```
 
@@ -190,7 +189,7 @@
         "title": "RIGHT",
         "type": "menu",
         "key": "right",
-        "items": "this.controller.getMenu",
+        "items": "this.method.getMenu",
         "value": 0
     }
     ```
@@ -258,3 +257,34 @@
         ]
     }
     ```
+
+## 示例
+
+```js
+const { Setting } = require("./easy-jsbox")
+const setting = new Setting()
+setting
+    .setSavePath("/storage/setting.json")
+    .setStructure([
+        {
+            "title": "My setting",
+            "items": [
+                {
+                    "icon": [
+                        "house",
+                        "white"
+                    ],
+                    "title": "Hello",
+                    "type": "string",
+                    "key": "hello",
+                    "value": ""
+                }
+            ]
+        }
+    ])
+    .loadConfig()
+setting.set("hello", "world") // 不建议使用
+console.log(setting.get("hello"))
+```
+
+当调用 `setting.loadConfig()` 后将会从 `this.structure` 初始化数据，此时便可正常使用 `get(key, _default = null)`、`set(key, value)` 方法进行数据读写。
