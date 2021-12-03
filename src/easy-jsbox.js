@@ -1081,14 +1081,20 @@ class PageController extends Controller {
             if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
             // 计算偏移高度
             let height = this.navigationItem.largeTitleHeightOffset
-            if (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever) {
-                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
-            } else {
-                height += this.navigationController.navigationBar.navigationBarNormalHeight
-            }
             if (this.navigationItem.titleView) {
                 height += this.navigationItem.titleView.height
             }
+            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
+                height += this.navigationController.navigationBar.navigationBarNormalHeight
+            } else {
+                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            }
+            // 修饰视图顶部偏移
+            if (!this.view.props.header) this.view.props.header = {}
+            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+                height: height
+            })
+            // 重写布局
             // 滚动视图（有 header 属性）
             const scrollView = [
                 "list",
@@ -1103,20 +1109,16 @@ class PageController extends Controller {
                     make.top.equalTo(height)
                 }
             } else {
-                // 重写滚动事件
-                if (!this.view.events) this.view.events = {}
-                const oldScrollAction = this.view.events.didScroll
-                this.view.events.didScroll = sender => {
-                    this.navigationController.scrollAction(sender.contentOffset.y)
-                    if (typeof oldScrollAction === "function") oldScrollAction(sender.contentOffset.y)
-                }
-                // 修饰视图顶部偏移
-                if (!this.view.props.header) this.view.props.header = {}
-                this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-                    height: height
-                })
                 this.view.layout = $layout.fill
             }
+            // 重写滚动事件
+            if (!this.view.events) this.view.events = {}
+            const oldScrollAction = this.view.events.didScroll
+            this.view.events.didScroll = sender => {
+                this.navigationController.scrollAction(sender.contentOffset.y)
+                if (typeof oldScrollAction === "function") oldScrollAction(sender.contentOffset.y)
+            }
+            // 初始化 PageView
             this.page = PageView.createByViews([
                 this.view,
                 this.navigationController.navigationBar.getLargeTitleView(),
