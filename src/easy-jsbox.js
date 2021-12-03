@@ -1103,9 +1103,6 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    if (this.navigationController.navigationBar.isAddStatusBarHeight) {
-                        height += UIKit.statusBarHeight
-                    }
                     make.top.equalTo(height)
                 }
             } else {
