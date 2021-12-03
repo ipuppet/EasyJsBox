@@ -494,7 +494,7 @@ class NavigationBar extends View {
                     },
                     layout: (make, view) => {
                         make.left.right.inset(0)
-                        make.height.equalTo(17)
+                        make.height.equalTo(20)
                         make.centerY.equalTo(view.super.safeArea)
                     }
                 }
