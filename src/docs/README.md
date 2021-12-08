@@ -14,5 +14,6 @@
 
 ## 文档索引
 
+[Kernel](./kernel.md)
 [Controller](./controller.md)
 [Setting](./setting.md)

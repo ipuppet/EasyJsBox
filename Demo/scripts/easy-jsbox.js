@@ -1,12 +1,30 @@
 const VERSION = "1.0.0"
-const ROOT_PATH = "/script/easy-jsbox.js" // JSBox path, not nodejs
-const SHARED_PATH = "shared://EasyJsBox"
 
-class ValidationError extends Error {
-    constructor(parameter, type) {
-        super(`The type of the parameter '${parameter}' must be '${type}'`)
-        this.name = "ValidationError"
+/**
+ * 对比版本号
+ * @param {String} preVersion 
+ * @param {String} lastVersion 
+ * @returns 1: preVersion 大, 0: 相等, -1: lastVersion 大
+ */
+function versionCompare(preVersion = '', lastVersion = '') {
+    var sources = preVersion.split('.')
+    var dests = lastVersion.split('.')
+    var maxL = Math.max(sources.length, dests.length)
+    var result = 0
+    for (let i = 0; i < maxL; i++) {
+        let preValue = sources.length > i ? sources[i] : 0
+        let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
+        let lastValue = dests.length > i ? dests[i] : 0
+        let lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue)
+        if (preNum < lastNum) {
+            result = -1
+            break
+        } else if (preNum > lastNum) {
+            result = 1
+            break
+        }
     }
+    return result
 }
 
 function l10n(language, content) {
@@ -37,6 +55,13 @@ function uuid() {
     s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
     s[8] = s[13] = s[18] = s[23] = "-"
     return s.join("")
+}
+
+class ValidationError extends Error {
+    constructor(parameter, type) {
+        super(`The type of the parameter '${parameter}' must be '${type}'`)
+        this.name = "ValidationError"
+    }
 }
 
 class Controller {
@@ -111,11 +136,6 @@ class View {
 }
 
 class UIKit {
-    constructor() {
-        // 隐藏 jsbox 默认 nav 栏
-        this.jsboxNavHidden = true
-    }
-
     static get statusBarHeight() {
         return $objc("UIApplication").$sharedApplication().$statusBarFrame().height
     }
@@ -158,14 +178,14 @@ class UIKit {
         }
     }
 
-    static blurBox(props = {}, views = []) {
+    static blurBox(props = {}, views = [], layout = $layout.fill) {
         return {
             type: "blur",
             props: Object.assign({
                 style: $blurStyle.thinMaterial
             }, props),
             views: views,
-            layout: $layout.fill
+            layout: layout
         }
     }
 
@@ -190,31 +210,6 @@ class UIKit {
      */
     static isSplitScreenMode() {
         return $device.info.screen.width !== UIKit.getWindowSize().width
-    }
-
-    useJsboxNav() {
-        this.jsboxNavHidden = false
-    }
-
-    setTitle(title) {
-        if (!this.jsboxNavHidden) {
-            $ui.title = title
-        }
-        this.title = title
-    }
-
-    setNavButtons(buttons) {
-        this.navButtons = buttons
-    }
-
-    UIRender(view) {
-        view.props = Object.assign({
-            title: this.title,
-            navBarHidden: this.jsboxNavHidden,
-            navButtons: this.navButtons ?? [],
-            statusBarStyle: 0
-        }, view.props)
-        $ui.render(view)
     }
 }
 
@@ -469,7 +464,7 @@ class NavigationBar extends View {
                     make.bottom.equalTo(view.super.safeAreaTop).offset(this.largeTitleTopOffset)
                     if (align === UIKit.align.left) make.left.inset(5)
                     else make.right.inset(5)
-                    make.width.equalTo(buttons.length * BarButtonItem.width)
+                    make.width.equalTo(buttons.length * BarButtonItem.size.width)
                 }
             } : {}
         }
@@ -550,12 +545,12 @@ class NavigationBar extends View {
 class BarButtonItem extends View {
     constructor(args) {
         super(args)
-        this.title = "Button"
+        this.title = ""
         this.align = UIKit.align.right
     }
 
-    static get width() {
-        return 40
+    static get size() {
+        return $size(40, 40)
     }
 
     setTitle(title) {
@@ -565,6 +560,11 @@ class BarButtonItem extends View {
 
     setSymbol(symbol) {
         this.symbol = symbol
+        return this
+    }
+
+    setMenu(menu) {
+        this.menu = menu
         return this
     }
 
@@ -639,6 +639,7 @@ class BarButtonItem extends View {
                         id: this.id,
                         tintColor: UIKit.textColor,
                         symbol: this.symbol,
+                        menu: this.menu,
                         title: this.title,
                         titleColor: UIKit.textColor,
                         contentEdgeInsets: $insets(0, 0, 0, 0),
@@ -667,13 +668,12 @@ class BarButtonItem extends View {
                 }
             ],
             layout: (make, view) => {
-                make.height.equalTo(view.super)
-                make.width.equalTo(BarButtonItem.width)
+                make.size.equalTo(BarButtonItem.size)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    if (UIKit.align === UIKit.align.right) make.right.equalTo(view.prev.left)
+                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {
-                    if (UIKit.align === UIKit.align.right) make.right.inset(0)
+                    if (this.align === UIKit.align.right) make.right.inset(0)
                     else make.left.inset(0)
                 }
             }
@@ -820,36 +820,38 @@ class NavigationItem {
     }
 
     setRightButtons(buttons) {
-        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped))
+        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped, button.menu))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
     setLeftButtons(buttons) {
-        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped))
+        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped, button.menu))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addRightButton(symbol, title, tapped) {
+    addRightButton(symbol, title, tapped, menu) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvent("tapped", tapped)
             .setAlign(UIKit.align.right)
             .setSymbol(symbol)
             .setTitle(title)
+            .setMenu(menu)
         this.rightButtons.push(barButtonItem.definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addLeftButton(symbol, title, tapped) {
+    addLeftButton(symbol, title, tapped, menu) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvent("tapped", tapped)
             .setAlign(UIKit.align.left)
             .setSymbol(symbol)
             .setTitle(title)
+            .setMenu(menu)
         this.leftButtons.push(barButtonItem.definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
@@ -1348,14 +1350,10 @@ class TabBarController extends Controller {
 class Kernel {
     constructor() {
         this.startTime = Date.now()
-        this.path = {
-            root: ROOT_PATH,
-            shared: SHARED_PATH
-        }
         this.version = VERSION
         this.name = $addin.current.name
-        this.UIKit = new UIKit()
-        this.UIKit.setTitle(this.name)
+        // 隐藏 jsbox 默认 nav 栏
+        this.jsboxNavHidden = true
     }
 
     uuid() {
@@ -1380,6 +1378,45 @@ class Kernel {
             this.debugPrint(message)
         } else {
             console.log(message)
+        }
+    }
+
+
+    useJsboxNav() {
+        this.jsboxNavHidden = false
+    }
+
+    setTitle(title) {
+        if (!this.jsboxNavHidden) {
+            $ui.title = title
+        }
+        this.title = title
+    }
+
+    setNavButtons(buttons) {
+        this.navButtons = buttons
+    }
+
+    UIRender(view) {
+        view.props = Object.assign({
+            title: this.title,
+            navBarHidden: this.jsboxNavHidden,
+            navButtons: this.navButtons ?? [],
+            statusBarStyle: 0
+        }, view.props)
+        $ui.render(view)
+    }
+
+    async checkUpdate(callback) {
+        const branche = "master" // 更新版本，可选 master, dev
+        const res = await $http.get(`https://raw.githubusercontent.com/ipuppet/EasyJsBox/${branche}/src/easy-jsbox.js`)
+        if (res.error) throw res.error
+        const firstLine = res.data.split("\n")[0]
+        const latestVersion = firstLine.slice(16).replaceAll("\"", "")
+        if (versionCompare(latestVersion, VERSION) > 0) {
+            if (typeof callback === "function") {
+                callback(res.data)
+            }
         }
     }
 }
@@ -2544,51 +2581,8 @@ class Setting extends Controller {
     }
 }
 
-/**
- * 检查版本号是否是过期版本
- * @param {String} latestVersion 最新版本号
- * @param {String} version 待检查版本号
- * @returns 过期则返回 true
- */
-function isOutdated(latestVersion, version) {
-    if (version.indexOf("dev") > -1) return true
-    // TODO 检查版本号
-    return latestVersion !== version
-}
-
-function init() {
-    return
-    const update = () => {
-        // 清除旧文件
-        $file.delete(ROOT_PATH)
-        // 复制
-        $file.copy({
-            src: SHARED_PATH,
-            dst: ROOT_PATH
-        })
-        setTimeout(() => {
-            $ui.toast("The update is successful and will restart soon")
-            setTimeout(() => $addin.restart(), 1500)
-        }, 1500)
-    }
-    if ($file.exists(ROOT_PATH) && $file.exists(`${ROOT_PATH}/src/kernel.js`)) {
-        // 不在 widget 中运行且 SHARED_PATH 目录存在则检查更新
-        if ($file.exists(SHARED_PATH) && $app.env !== $env.widget) {
-            const SHARED_VERSION = eval($file.read(`${SHARED_PATH}/src/kernel.js`).string).VERSION
-            if (isOutdated(VERSION, SHARED_VERSION)) {
-                update()
-            }
-        }
-    } else {
-        update()
-    }
-}
-
 module.exports = {
     VERSION,
-    SHARED_PATH,
-    init,
-    isOutdated,
     // class
     UIKit,
     ViewController,
