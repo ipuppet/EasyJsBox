@@ -8,7 +8,6 @@ class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
-        // 注册组件
         this.setting = new Setting()
         this.setting.loadConfig()
         this.initSettingMethods()
