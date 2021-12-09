@@ -10,7 +10,7 @@
 5、利用剩余相差天数确定农历哪一天 */
 
 // 农历1949-2100年查询表
-let lunarYearArr = [
+const lunarYearArr = [
     0x0b557, //1949
     0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0, //1950-1959
     0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, //1960-1969
@@ -32,159 +32,178 @@ let lunarYearArr = [
     lunarMonth = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '冬', '腊'],
     lunarDay = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '初', '廿'],
     tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'],
-    diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
 
-// 公历转农历函数
-function sloarToLunar(sy, sm, sd) {
-    // 输入的月份减1处理
-    sm -= 1
-
-    // 计算与公历基准的相差天数
-    // Date.UTC()返回的是距离公历1970年1月1日的毫秒数,传入的月份需要减1
-    let daySpan = (Date.UTC(sy, sm, sd) - Date.UTC(1949, 0, 29)) / (24 * 60 * 60 * 1000) + 1
-    let ly, lm, ld
-    // 确定输出的农历年份
-    for (let j = 0; j < lunarYearArr.length; j++) {
-        daySpan -= lunarYearDays(lunarYearArr[j])
-        if (daySpan <= 0) {
-            ly = 1949 + j
-            // 获取农历年份确定后的剩余天数
-            daySpan += lunarYearDays(lunarYearArr[j])
-            break
+class SloarToLunar {
+    /**
+     * 公历转农历
+     * @param {Number} sy 年
+     * @param {Number} sm 月
+     * @param {Number} sd 日
+     * @returns 
+     */
+    sloarToLunar(sy, sm, sd) {
+        // 输入的月份减1处理
+        sm -= 1
+        // 计算与公历基准的相差天数
+        // Date.UTC()返回的是距离公历1970年1月1日的毫秒数,传入的月份需要减1
+        let daySpan = (Date.UTC(sy, sm, sd) - Date.UTC(1949, 0, 29)) / (24 * 60 * 60 * 1000) + 1
+        let ly, lm, ld
+        // 确定输出的农历年份
+        for (let j = 0; j < lunarYearArr.length; j++) {
+            daySpan -= this.lunarYearDays(lunarYearArr[j])
+            if (daySpan <= 0) {
+                ly = 1949 + j
+                // 获取农历年份确定后的剩余天数
+                daySpan += this.lunarYearDays(lunarYearArr[j])
+                break
+            }
         }
-    }
-
-    // 确定输出的农历月份
-    for (let k = 0; k < lunarYearMonths(lunarYearArr[ly - 1949]).length; k++) {
-        daySpan -= lunarYearMonths(lunarYearArr[ly - 1949])[k]
-        if (daySpan <= 0) {
-            // 有闰月时，月份的数组长度会变成13，因此，当闰月月份小于等于k时，lm不需要加1
-            if (hasLeapMonth(lunarYearArr[ly - 1949]) && hasLeapMonth(lunarYearArr[ly - 1949]) <= k) {
-                if (hasLeapMonth(lunarYearArr[ly - 1949]) < k) {
-                    lm = k
-                } else if (hasLeapMonth(lunarYearArr[ly - 1949]) === k) {
-                    lm = '闰' + k
+        // 确定输出的农历月份
+        for (let k = 0; k < this.lunarYearMonths(lunarYearArr[ly - 1949]).length; k++) {
+            daySpan -= this.lunarYearMonths(lunarYearArr[ly - 1949])[k]
+            if (daySpan <= 0) {
+                // 有闰月时，月份的数组长度会变成13，因此，当闰月月份小于等于k时，lm不需要加1
+                if (this.hasLeapMonth(lunarYearArr[ly - 1949]) && this.hasLeapMonth(lunarYearArr[ly - 1949]) <= k) {
+                    if (this.hasLeapMonth(lunarYearArr[ly - 1949]) < k) {
+                        lm = k
+                    } else if (this.hasLeapMonth(lunarYearArr[ly - 1949]) === k) {
+                        lm = '闰' + k
+                    } else {
+                        lm = k + 1
+                    }
                 } else {
                     lm = k + 1
                 }
-            } else {
-                lm = k + 1
+                // 获取农历月份确定后的剩余天数
+                daySpan += this.lunarYearMonths(lunarYearArr[ly - 1949])[k]
+                break
             }
-            // 获取农历月份确定后的剩余天数
-            daySpan += lunarYearMonths(lunarYearArr[ly - 1949])[k]
-            break
+        }
+        // 确定输出农历哪一天
+        ld = daySpan
+        // 将计算出来的农历月份转换成汉字月份，闰月需要在前面加上闰字
+        if (this.hasLeapMonth(lunarYearArr[ly - 1949]) && (typeof (lm) === 'string' && lm.indexOf('闰') > -1)) {
+            lm = `闰${lunarMonth[/\d/.exec(lm) - 1]}`
+        } else {
+            lm = lunarMonth[lm - 1]
+        }
+        // 将计算出来的农历年份转换为天干地支年
+        ly = this.getTianGan(ly) + this.getDiZhi(ly)
+        // 将计算出来的农历天数转换成汉字
+        if (ld < 11) {
+            ld = `${lunarDay[10]}${lunarDay[ld - 1]}`
+        } else if (ld > 10 && ld < 20) {
+            ld = `${lunarDay[9]}${lunarDay[ld - 11]}`
+        } else if (ld === 20) {
+            ld = `${lunarDay[1]}${lunarDay[9]}`
+        } else if (ld > 20 && ld < 30) {
+            ld = `${lunarDay[11]}${lunarDay[ld - 21]}`
+        } else if (ld === 30) {
+            ld = `${lunarDay[2]}${lunarDay[9]}`
+        }
+        // console.log(ly, lm, ld)
+        return {
+            lunarYear: ly,
+            lunarMonth: lm,
+            lunarDay: ld,
         }
     }
 
-    // 确定输出农历哪一天
-    ld = daySpan;
-
-    // 将计算出来的农历月份转换成汉字月份，闰月需要在前面加上闰字
-    if (hasLeapMonth(lunarYearArr[ly - 1949]) && (typeof (lm) === 'string' && lm.indexOf('闰') > -1)) {
-        lm = `闰${lunarMonth[/\d/.exec(lm) - 1]}`
-    } else {
-        lm = lunarMonth[lm - 1]
+    /**
+     * 计算农历年是否有闰月
+     * 农历年份信息用16进制存储，其中16进制的最后1位可以用于判断是否有闰月
+     * @param {Number} ly 存储农历年的16进制
+     * @returns 
+     */
+    hasLeapMonth(ly) {
+        // 获取16进制的最后1位，需要用到&与运算符
+        if (ly & 0xf) {
+            return ly & 0xf
+        } else {
+            return false
+        }
     }
 
-    // 将计算出来的农历年份转换为天干地支年
-    ly = getTianGan(ly) + getDiZhi(ly)
-
-    // 将计算出来的农历天数转换成汉字
-    if (ld < 11) {
-        ld = `${lunarDay[10]}${lunarDay[ld - 1]}`
-    } else if (ld > 10 && ld < 20) {
-        ld = `${lunarDay[9]}${lunarDay[ld - 11]}`
-    } else if (ld === 20) {
-        ld = `${lunarDay[1]}${lunarDay[9]}`
-    } else if (ld > 20 && ld < 30) {
-        ld = `${lunarDay[11]}${lunarDay[ld - 21]}`
-    } else if (ld === 30) {
-        ld = `${lunarDay[2]}${lunarDay[9]}`
+    /**
+     * 如果有闰月，计算农历闰月天数
+     * 农历年份信息用16进制存储，其中16进制的第1位（0x除外）可以用于表示闰月是大月还是小月
+     * @param {Number} ly 存储农历年的16进制
+     * @returns 
+     */
+    leapMonthDays(ly) {
+        if (this.hasLeapMonth(ly)) {
+            // 获取16进制的第1位（0x除外）
+            return (ly & 0xf0000) ? 30 : 29
+        } else {
+            return 0
+        }
     }
 
-    // console.log(ly, lm, ld);
-
-    return {
-        lunarYear: ly,
-        lunarMonth: lm,
-        lunarDay: ld,
-    }
-}
-
-// 计算农历年是否有闰月，参数为存储农历年的16进制
-// 农历年份信息用16进制存储，其中16进制的最后1位可以用于判断是否有闰月
-function hasLeapMonth(ly) {
-    // 获取16进制的最后1位，需要用到&与运算符
-    if (ly & 0xf) {
-        return ly & 0xf
-    } else {
-        return false
-    }
-}
-
-// 如果有闰月，计算农历闰月天数，参数为存储农历年的16进制
-// 农历年份信息用16进制存储，其中16进制的第1位（0x除外）可以用于表示闰月是大月还是小月
-function leapMonthDays(ly) {
-    if (hasLeapMonth(ly)) {
-        // 获取16进制的第1位（0x除外）
-        return (ly & 0xf0000) ? 30 : 29
-    } else {
-        return 0
-    }
-}
-
-// 计算农历一年的总天数，参数为存储农历年的16进制
-// 农历年份信息用16进制存储，其中16进制的第2-4位（0x除外）可以用于表示正常月是大月还是小月
-function lunarYearDays(ly) {
-    let totalDays = 0
-
-    // 获取正常月的天数，并累加
-    // 获取16进制的第2-4位，需要用到>>移位运算符
-    for (let i = 0x8000; i > 0x8; i >>= 1) {
-        let monthDays = (ly & i) ? 30 : 29
-        totalDays += monthDays
-    }
-    // 如果有闰月，需要把闰月的天数加上
-    if (hasLeapMonth(ly)) {
-        totalDays += leapMonthDays(ly)
+    /**
+     * 计算农历一年的总天数
+     * 农历年份信息用16进制存储，其中16进制的第2-4位（0x除外）可以用于表示正常月是大月还是小月
+     * @param {Number} ly 存储农历年的16进制
+     * @returns 
+     */
+    lunarYearDays(ly) {
+        let totalDays = 0
+        // 获取正常月的天数，并累加
+        // 获取16进制的第2-4位，需要用到>>移位运算符
+        for (let i = 0x8000; i > 0x8; i >>= 1) {
+            let monthDays = (ly & i) ? 30 : 29
+            totalDays += monthDays
+        }
+        // 如果有闰月，需要把闰月的天数加上
+        if (this.hasLeapMonth(ly)) {
+            totalDays += this.leapMonthDays(ly)
+        }
+        return totalDays
     }
 
-    return totalDays
-}
-
-// 获取农历每个月的天数
-// 参数需传入16进制数值
-function lunarYearMonths(ly) {
-    let monthArr = []
-
-    // 获取正常月的天数，并添加到monthArr数组中
-    // 获取16进制的第2-4位，需要用到>>移位运算符
-    for (let i = 0x8000; i > 0x8; i >>= 1) {
-        monthArr.push((ly & i) ? 30 : 29)
+    /**
+     * 获取农历每个月的天数
+     * @param {Number} ly 16进制数值
+     * @returns 
+     */
+    lunarYearMonths(ly) {
+        let monthArr = []
+        // 获取正常月的天数，并添加到monthArr数组中
+        // 获取16进制的第2-4位，需要用到>>移位运算符
+        for (let i = 0x8000; i > 0x8; i >>= 1) {
+            monthArr.push((ly & i) ? 30 : 29)
+        }
+        // 如果有闰月，需要把闰月的天数加上
+        if (this.hasLeapMonth(ly)) {
+            monthArr.splice(this.hasLeapMonth(ly), 0, this.leapMonthDays(ly))
+        }
+        return monthArr
     }
-    // 如果有闰月，需要把闰月的天数加上
-    if (hasLeapMonth(ly)) {
-        monthArr.splice(hasLeapMonth(ly), 0, leapMonthDays(ly))
+
+    /**
+     * 将农历年转换为天干，参数为农历年
+     * @param {Number} ly 
+     * @returns 
+     */
+    getTianGan(ly) {
+        let tianGanKey = (ly - 3) % 10
+        if (tianGanKey === 0) tianGanKey = 10
+        return tianGan[tianGanKey - 1]
     }
 
-    return monthArr
-}
-
-// 将农历年转换为天干，参数为农历年
-function getTianGan(ly) {
-    let tianGanKey = (ly - 3) % 10
-    if (tianGanKey === 0) tianGanKey = 10
-    return tianGan[tianGanKey - 1]
-}
-
-// 将农历年转换为地支，参数为农历年
-function getDiZhi(ly) {
-    let diZhiKey = (ly - 3) % 12
-    if (diZhiKey === 0) diZhiKey = 12
-    return diZhi[diZhiKey - 1]
+    /**
+     * 将农历年转换为地支，参数为农历年
+     * @param {Number} ly 
+     * @returns 
+     */
+    getDiZhi(ly) {
+        let diZhiKey = (ly - 3) % 12
+        if (diZhiKey === 0) diZhiKey = 12
+        return diZhi[diZhiKey - 1]
+    }
 }
 
 module.exports = {
     VERSION: "1.0.0",
-    sloarToLunar
+    SloarToLunar
 }
