@@ -97,5 +97,5 @@ class Matrix {
 
 module.exports = {
     VERSION: "1.0.0",
-    Plugin: Matrix
+    Matrix
 }
