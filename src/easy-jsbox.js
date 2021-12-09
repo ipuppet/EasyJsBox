@@ -2475,15 +2475,19 @@ class Setting extends Controller {
             events: this._withTouchEvents(lineId, {
                 tapped: () => {
                     setTimeout(() => {
-                        const pageController = new PageController()
-                        pageController
-                            .setView(this.getListView(children))
-                            .navigationItem
-                            .setTitle(title)
-                            .addPopButton()
-                            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-                        pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
-                        this.viewController.push(pageController)
+                        if (this.events?.onChildPush) {
+                            this.callEvent("onChildPush", this.getListView(children))
+                        } else {
+                            const pageController = new PageController()
+                            pageController
+                                .setView(this.getListView(children))
+                                .navigationItem
+                                .setTitle(title)
+                                .addPopButton()
+                                .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                            pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                            this.viewController.push(pageController)
+                        }
                     })
                 }
             }, true, 0.3)
