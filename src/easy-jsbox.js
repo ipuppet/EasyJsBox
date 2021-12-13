@@ -2476,7 +2476,7 @@ class Setting extends Controller {
                 tapped: () => {
                     setTimeout(() => {
                         if (this.events?.onChildPush) {
-                            this.callEvent("onChildPush", this.getListView(children))
+                            this.callEvent("onChildPush", this.getListView(children), title)
                         } else {
                             const pageController = new PageController()
                             pageController

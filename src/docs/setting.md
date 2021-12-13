@@ -55,9 +55,14 @@
 
 当更新键值对时触发。
 
-- `onChildPush(listView)`
+- `onChildPush(listView, title)`
 
-可重写child类型的push事件
+    可重写child类型的push事件
+
+    ### Parameter
+    
+    - listView 生成的子列表视图对象
+    - title 子列表的标题
 
 ### Structure
 
