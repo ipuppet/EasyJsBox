@@ -83,7 +83,7 @@
     
         该回调函数仅在需要更新时才被调用，否则该函数静默。
 
-        ### Parameter
+        Parameter
     
         - newScriptContent: String 从 Github 获取的最新脚本内容。
 

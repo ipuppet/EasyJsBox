@@ -12,37 +12,57 @@
 
     初始化，args 对象中参数均有 `setXxx(value): this` 实现，如 `setSavePath(path)` 返回值为对象自身，因此可以链式调用。
 
-    - `savePath`  
-    数据文件保存路径。  
+    - `savePath`
+
+    数据文件保存路径。
+    
     默认值为 "/storage/setting.json"
 
-    - `structure`  
+    - `structure`
+
     结构数据。`structure` 优先级高于 `structurePath`
+
     若不提供则从 `structurePath` 读取数据。
 
-    - `structurePath`  
-    结构数据文件路径，如果设置了 `structure` 会使该参数失效。  
+    - `structurePath`
+
+    结构数据文件路径，如果设置了 `structure` 会使该参数失效。
+
     默认值为 "/setting.json"
 
-    - `name`  
+    - `name`
+
     实例唯一名称，若不提供则自动生成。
 
-- `get(key, _default = null)`  
+- `get(key, _default = null)`
+
 根据 `key` 获取值。若未找到将返回 `_default`。
 
-- `set(key, value)`  
+- `set(key, value)`
+
 不建议使用该方法，所有数据更新推荐仅在生成的 UI 中完成。  
 设置键值对，该方法会将数据保存到文件，同时更新内存中的数据，这意味着设置即时生效，可随时调用 `get()` 获取数据。
 
-- `setFooter(footer)`  
+- `setFooter(footer)`
+
 用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号。(作者和版本号将从根目录的 `config.js` 获取)
 
 ### events
 
 > 通过父类中的方法 `setEvent(event, callback)` 进行设置，详见 [Controller](./controller.md)
 
-- `onSet(key, value)`  
+- `onSet(key, value)`
+
 当更新键值对时触发。
+
+- `onChildPush(listView, title)`
+
+    可重写child类型的push事件
+
+    ### Parameter
+    
+    - listView 生成的子列表视图对象
+    - title 子列表的标题
 
 ### Structure
 
