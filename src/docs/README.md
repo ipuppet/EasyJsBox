@@ -5,12 +5,28 @@
 
 ## 开始使用
 
-目前 EasyJsBox 统一通过 [EasyJsBoxInstaller](https://github.com/ipuppet/EasyJsBoxInstaller) 进行安装与管理。
+```js
+const { Kernel } = require("./easy-jsbox")
 
-注意：
+class AppKernel extends Kernel {
+    constructor() {
+        super()
+        this.query = $context.query
+    }
+}
 
-- 从 EasyJsBoxInstaller 更新后，需要重新启动两次您的项目才可正常生效。
-- 您项目中的`main.js`可能需要参考示例项目中的内容。
+const kernel = new AppKernel()
+kernel.useJsboxNav()
+kernel.UIRender({
+    views: [{
+        type: "label",
+        props: {
+            text: "Hello World!"
+        },
+        layout: $layout.fill
+    }]
+})
+```
 
 ## 文档索引
 
