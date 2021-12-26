@@ -1471,15 +1471,15 @@ class Setting extends Controller {
     constructor(args = {}) {
         super()
         this.savePath = args.savePath ?? (() => {
-            if (!$file.exists("/storage")) {
-                $file.mkdir("/storage")
+            if (!$file.isDirectory("storage")) {
+                $file.mkdir("storage")
             }
-            return "/storage/setting.json"
+            return "storage/setting.json"
         })()
         if (args.structure) {
             this.setStructure(args.structure) // structure 优先级高于 structurePath
         } else {
-            this.setStructurePath(args.structurePath ?? "/setting.json")
+            this.setStructurePath(args.structurePath ?? "setting.json")
         }
         this.setName(args.name ?? uuid())
         // l10n
