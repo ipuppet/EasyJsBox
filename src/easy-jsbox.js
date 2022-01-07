@@ -435,7 +435,6 @@ class NavigationBar extends View {
         this.navigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
         this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
         this.largeTitleFontSize = 34
-        this.largeTitleTopOffset = this.navigationBarNormalHeight
         this.isAddStatusBarHeight = true
         this.contentViewHeightOffset = 10
     }
@@ -443,6 +442,10 @@ class NavigationBar extends View {
     withoutStatusBarHeight() {
         this.isAddStatusBarHeight = false
         return this
+    }
+
+    getLargeTitleTopOffset() {
+        return this.navigationBarNormalHeight + (this.isAddStatusBarHeight ? UIKit.statusBarHeight : 0)
     }
 
     setNavigationItem(navigationItem) {
@@ -483,7 +486,7 @@ class NavigationBar extends View {
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
                     make.height.equalTo(this.largeTitleFontSize + 5)
-                    make.top.equalTo(view.super.safeArea).offset(this.largeTitleTopOffset)
+                    make.top.equalTo(view.super.safeArea).offset(this.getLargeTitleTopOffset())
                 }
             } : {}
     }
@@ -499,7 +502,7 @@ class NavigationBar extends View {
                 }],
                 layout: (make, view) => {
                     make.top.equalTo(view.super.safeAreaTop)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(this.largeTitleTopOffset)
+                    make.bottom.equalTo(view.super.safeAreaTop).offset(this.getLargeTitleTopOffset())
                     if (align === UIKit.align.left) make.left.inset(5)
                     else make.right.inset(5)
                     make.width.equalTo(buttons.length * BarButtonItem.size.width)
@@ -988,10 +991,7 @@ class NavigationController extends Controller {
         const titleSizeMax = 40 // 下拉放大字体最大值
         // 标题跟随
         this.selector.largeTitleView.updateLayout((make, view) => {
-            const offset = this.navigationBar.isAddStatusBarHeight
-                ? this.navigationBar.largeTitleTopOffset - contentOffset + UIKit.statusBarHeight
-                : this.navigationBar.largeTitleTopOffset - contentOffset
-            make.top.equalTo(view.super).offset(offset)
+            make.top.equalTo(view.super).offset(this.navigationBar.getLargeTitleTopOffset() - contentOffset)
         })
         if (contentOffset > 0) {
             if (contentOffset > this.topScrollTrigger) {
@@ -1049,19 +1049,19 @@ class NavigationController extends Controller {
         if (!this.navigationBar.prefersLargeTitles) return
         if (this.navigationBar?.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeAutomatic) return
         this.updateSelector()
-        let contentOffsetWithStatusBarHeight = contentOffset
+        this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffset)
+        // 此顺序必须在 titleView 的 scrollAction 事件之后
         if (this.navigationBar.isAddStatusBarHeight) {
-            contentOffsetWithStatusBarHeight += UIKit.statusBarHeight
+            contentOffset += UIKit.statusBarHeight
         }
-        this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffsetWithStatusBarHeight)
         // 在 titleView 折叠前锁住主要视图
-        if (contentOffsetWithStatusBarHeight > 0) {
-            const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
-            contentOffsetWithStatusBarHeight -= height
-            if (contentOffsetWithStatusBarHeight < 0) contentOffsetWithStatusBarHeight = 0
+        if (contentOffset > 0) {
+            let height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+            contentOffset -= height
+            if (contentOffset < 0) contentOffset = 0
         }
-        this._largeTitleScrollAction(contentOffsetWithStatusBarHeight)
-        this._navigationBarScrollAction(contentOffsetWithStatusBarHeight)
+        this._largeTitleScrollAction(contentOffset)
+        this._navigationBarScrollAction(contentOffset)
     }
 }
 
@@ -1142,6 +1142,8 @@ class PageController extends Controller {
             if (this.navigationItem.titleView) {
                 height += this.navigationItem.titleView.height
             }
+            if (this.navigationController.navigationBar.isAddStatusBarHeight)
+                height += UIKit.statusBarHeight
             if (this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
                 height += this.navigationController.navigationBar.navigationBarNormalHeight
             } else {
@@ -1161,8 +1163,6 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    if (this.navigationController.navigationBar.isAddStatusBarHeight)
-                        height += UIKit.statusBarHeight
                     make.top.equalTo(height)
                 }
             } else {
