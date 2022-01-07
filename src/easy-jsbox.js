@@ -378,7 +378,7 @@ class Sheet extends View {
      * @param {String} btnText 按钮显示的文字，默认为 "Done"
      * @returns this
      */
-    addNavBar(title, callback, btnText = "Done") {
+    addNavBar(title, callback, btnText = "Done", rightButtons = []) {
         if (this.view === undefined) throw new SheetAddNavBarError()
         const pageController = new PageController()
         pageController.navigationItem
@@ -404,6 +404,7 @@ class Sheet extends View {
             })
             .setTitle(title)
             .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+            .setRightButtons(rightButtons)
         pageController
             .setView(this.view)
             .navigationController.navigationBar
@@ -441,6 +442,7 @@ class NavigationBar extends View {
 
     withoutStatusBarHeight() {
         this.isAddStatusBarHeight = false
+        return this
     }
 
     setNavigationItem(navigationItem) {
@@ -986,7 +988,10 @@ class NavigationController extends Controller {
         const titleSizeMax = 40 // 下拉放大字体最大值
         // 标题跟随
         this.selector.largeTitleView.updateLayout((make, view) => {
-            make.top.equalTo(view.super).offset(this.navigationBar.largeTitleTopOffset - contentOffset + UIKit.statusBarHeight)
+            const offset = this.navigationBar.isAddStatusBarHeight
+                ? this.navigationBar.largeTitleTopOffset - contentOffset + UIKit.statusBarHeight
+                : this.navigationBar.largeTitleTopOffset - contentOffset
+            make.top.equalTo(view.super).offset(offset)
         })
         if (contentOffset > 0) {
             if (contentOffset > this.topScrollTrigger) {
@@ -1044,7 +1049,10 @@ class NavigationController extends Controller {
         if (!this.navigationBar.prefersLargeTitles) return
         if (this.navigationBar?.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeAutomatic) return
         this.updateSelector()
-        let contentOffsetWithStatusBarHeight = contentOffset + UIKit.statusBarHeight
+        let contentOffsetWithStatusBarHeight = contentOffset
+        if (this.navigationBar.isAddStatusBarHeight) {
+            contentOffsetWithStatusBarHeight += UIKit.statusBarHeight
+        }
         this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffsetWithStatusBarHeight)
         // 在 titleView 折叠前锁住主要视图
         if (contentOffsetWithStatusBarHeight > 0) {
@@ -1481,6 +1489,7 @@ class Setting extends Controller {
         } else {
             this.setStructurePath(args.structurePath ?? "setting.json")
         }
+        this.isUseJsboxNav = false
         this.setName(args.name ?? uuid())
         // l10n
         this.loadL10n()
@@ -1489,6 +1498,10 @@ class Setting extends Controller {
         // 用于存放 script 类型用到的方法
         this.method = {}
         this.loadConfigStatus = false
+    }
+
+    useJsboxNav() {
+        this.isUseJsboxNav = true
     }
 
     _checkLoadConfigError() {
@@ -2478,15 +2491,22 @@ class Setting extends Controller {
                         if (this.events?.onChildPush) {
                             this.callEvent("onChildPush", this.getListView(children), title)
                         } else {
-                            const pageController = new PageController()
-                            pageController
-                                .setView(this.getListView(children))
-                                .navigationItem
-                                .setTitle(title)
-                                .addPopButton()
-                                .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-                            pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
-                            this.viewController.push(pageController)
+                            if (this.isUseJsboxNav) {
+                                UIKit.push({
+                                    title: title,
+                                    views: [this.getListView(children)]
+                                })
+                            } else {
+                                const pageController = new PageController()
+                                pageController
+                                    .setView(this.getListView(children))
+                                    .navigationItem
+                                    .setTitle(title)
+                                    .addPopButton()
+                                    .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                this.viewController.push(pageController)
+                            }
                         }
                     })
                 }
