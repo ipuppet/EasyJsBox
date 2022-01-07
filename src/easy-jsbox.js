@@ -440,8 +440,12 @@ class NavigationBar extends View {
         this.contentViewHeightOffset = 10
     }
 
+    static get PageSheetNavigationBarHeight() {
+        return 56
+    }
+
     pageSheetMode() {
-        this.navigationBarNormalHeight = 56
+        this.navigationBarNormalHeight = NavigationBar.PageSheetNavigationBarHeight
         this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
         return this
     }
