@@ -16,7 +16,7 @@
 
     数据文件保存路径。
     
-    默认值为 "/storage/setting.json"
+    默认值为 "storage/setting.json"
 
     - `structure`
 
@@ -28,7 +28,7 @@
 
     结构数据文件路径，如果设置了 `structure` 会使该参数失效。
 
-    默认值为 "/setting.json"
+    默认值为 "setting.json"
 
     - `name`
 
@@ -37,6 +37,10 @@
 - `get(key, _default = null)`
 
 根据 `key` 获取值。若未找到将返回 `_default`。
+
+- `useJsboxNav()`
+
+    调用后将修改 child 类型弹出方式为 JsBox 默认样式。
 
 - `set(key, value)`
 
