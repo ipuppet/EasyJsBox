@@ -929,7 +929,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.inset(10)
+                make.left.equalTo(view.super.safeArea).offset(10)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: { tapped: () => { $ui.pop() } }
