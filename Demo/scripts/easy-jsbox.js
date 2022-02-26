@@ -522,7 +522,7 @@ class NavigationBar extends View {
         }
         const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
         const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
-        const isHideBackground = this.prefersLargeTitles && this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
+        const isHideBackground = this.prefersLargeTitles
         const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever
         return { // 顶部bar
             type: "view",
@@ -1056,17 +1056,22 @@ class NavigationController extends Controller {
 
     scrollAction(contentOffset) {
         if (!this.navigationBar.prefersLargeTitles) return
-        if (this.navigationBar?.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeAutomatic) return
+        const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
+        if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAlways) return
         this.updateSelector()
-        this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffset)
-        // 在 titleView 折叠前锁住主要视图
-        if (contentOffset > 0) {
-            let height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
-            contentOffset -= height
-            if (contentOffset < 0) contentOffset = 0
+        if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAutomatic) {
+            this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffset)
+            // 在 titleView 折叠前锁住主要视图
+            if (contentOffset > 0) {
+                let height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+                contentOffset -= height
+                if (contentOffset < 0) contentOffset = 0
+            }
+            this._largeTitleScrollAction(contentOffset)
+            this._navigationBarScrollAction(contentOffset)
+        } else if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
+            this._navigationBarScrollAction(contentOffset)
         }
-        this._largeTitleScrollAction(contentOffset)
-        this._navigationBarScrollAction(contentOffset)
     }
 }
 
