@@ -227,7 +227,7 @@ class UIKit {
                 statusBarStyle: statusBarStyle,
                 navButtons: navButtons,
                 title: title,
-                bgcolor: $color(bgcolor),
+                bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor,
             },
             events: {
                 disappeared: () => {
@@ -514,8 +514,8 @@ class NavigationBar extends View {
                 layout: (make, view) => {
                     make.top.equalTo(view.super.safeAreaTop)
                     make.bottom.equalTo(view.super.top).offset(this.getNavigationBarHeight())
-                    if (align === UIKit.align.left) make.left.inset(5)
-                    else make.right.inset(5)
+                    if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
+                    else make.right.equalTo(view.super.safeArea).offset(-5)
                     make.width.equalTo(buttons.length * BarButtonItem.size.width)
                 }
             } : {}
@@ -601,7 +601,7 @@ class BarButtonItem extends View {
         return $size(44, 44)
     }
 
-    setTitle(title) {
+    setTitle(title = "") {
         this.title = title
         return this
     }
@@ -682,17 +682,19 @@ class BarButtonItem extends View {
             type: "view",
             views: [
                 {
-                    type: "button",
+                    type: "button", // TODO 控制 symbol 大小
                     props: Object.assign({
                         id: this.id,
+                        bgcolor: $color("clear"),
                         tintColor: UIKit.textColor,
                         image: $image(this.symbol),
-                        title: this.title,
                         titleColor: UIKit.textColor,
                         contentEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0),
-                        bgcolor: $color("clear")
-                    }, this.menu ? { menu: this.menu } : {}),
+                        titleEdgeInsets: $insets(0, 0, 0, 0),
+                        imageEdgeInsets: $insets(0, 0, 0, 0)
+                    },
+                        this.menu ? { menu: this.menu } : {},
+                        this.title?.length > 0 ? { title: this.title } : {}),
                     events: {
                         tapped: sender => {
                             this.events.tapped({
@@ -773,7 +775,8 @@ class SearchBar extends BarTitleView {
             layout: (make, view) => {
                 //make.top.equalTo(view.prev.bottom).offset(15)
                 make.top.equalTo(view.prev.bottom).offset(15)
-                make.left.right.inset(15)
+                make.left.equalTo(view.super.safeArea).offset(15)
+                make.right.equalTo(view.super.safeArea).offset(-15)
                 make.height.equalTo(this.height)
             },
             events: {
@@ -1509,6 +1512,10 @@ class Setting extends Controller {
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
         this.method = {}
+    }
+
+    static get bgcolor() {
+        return $color("insetGroupedBackground")
     }
 
     useJsboxNav() {
@@ -2510,6 +2517,7 @@ class Setting extends Controller {
                             if (this.isUseJsboxNav) {
                                 UIKit.push({
                                     title: title,
+                                    bgcolor: Setting.bgcolor,
                                     views: [this.getListView(children)]
                                 })
                             } else {
@@ -2649,7 +2657,7 @@ class Setting extends Controller {
             pageController
                 .initPage()
                 .page
-                .setProp("bgcolor", $color("insetGroupedBackground"))
+                .setProp("bgcolor", Setting.bgcolor)
             this.viewController.setRootPageController(pageController)
         }
         return this.viewController.getRootPageController().getPage()
