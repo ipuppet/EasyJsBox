@@ -1456,7 +1456,6 @@ class Kernel {
         }
     }
 
-
     useJsboxNav() {
         this.jsboxNavHidden = false
     }
