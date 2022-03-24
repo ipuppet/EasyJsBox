@@ -54,6 +54,10 @@
 
     调用后将修改 child 类型弹出方式为 JsBox 默认样式。
 
+- `setReadonly()`
+
+    设置为只读模式，尝试写入数据将抛出 `SettingReadonlyError` 错误。
+
 - `set(key, value)`
 
     不建议使用该方法，所有数据更新推荐仅在生成的 UI 中完成。
