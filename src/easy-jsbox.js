@@ -1209,7 +1209,8 @@ class PageController extends Controller {
             if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
                 // 非滚动视图
                 this.view.layout = (make, view) => {
-                    make.bottom.left.right.equalTo(view.super)
+                    make.left.right.equalTo(view.super.safeArea)
+                    make.bottom.equalTo(view.super)
                     let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
                     if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
                         largeTitleFontSize = 0
@@ -1230,7 +1231,10 @@ class PageController extends Controller {
                     this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
                 }
                 // layout
-                this.view.layout = $layout.fill
+                this.view.layout = (make, view) => {
+                    make.left.right.equalTo(view.super.safeArea)
+                    make.top.bottom.equalTo(view.super)
+                }
             }
 
             // 重写滚动事件
