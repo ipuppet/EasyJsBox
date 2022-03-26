@@ -69,6 +69,18 @@
 
     渲染视图，应该始终通过该方法进行渲染。
 
+    该方法将自动注册事件 `"interfaceOrientationEvent"` 用以监听屏幕方向：
+
+    ```js
+    $app.notify({
+        name: "interfaceOrientationEvent",
+        object: {
+            statusBarOrientation: UIKit.statusBarOrientation,
+            isHorizontal: UIKit.isHorizontal
+        }
+    })
+    ```
+
     ### Parameter
     
     - view: Object 视图对象，与 JSBox 原生格式一致。
