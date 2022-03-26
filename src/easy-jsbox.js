@@ -387,7 +387,7 @@ class Sheet extends View {
             .setMenu(popButton.menu)
         const button = barButtonItem.definition.views[0]
         button.layout = (make, view) => {
-            make.left.inset(15)
+            make.left.equalTo(view.super.safeArea).offset(15)
             make.centerY.equalTo(view.super.safeArea)
         }
         pageController.navigationItem
@@ -930,7 +930,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(10)
+                make.left.equalTo(view.super.safeArea).offset(15)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: { tapped: () => { $ui.pop() } }
