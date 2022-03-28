@@ -373,7 +373,7 @@ class Matrix extends View {
     }
     hiddenViews
 
-    titleToData(title) {
+    #titleToData(title) {
         if (!this.hiddenViews) {
             this.hiddenViews = {}
             // hide other views
@@ -412,7 +412,7 @@ class Matrix extends View {
         const dataWithTitle = []
         data.forEach(item => {
             if (item.title) {
-                item.items.unshift(this.titleToData(item.title))
+                item.items.unshift(this.#titleToData(item.title))
             }
             dataWithTitle.push(item)
         })
