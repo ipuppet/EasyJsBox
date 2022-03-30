@@ -1972,9 +1972,6 @@ class FileStorage {
         this.#createDirectory(path)
 
         path = `${path}/${fileName}`
-        if (!$file.exists(path)) {
-            throw new FileStorageFileNotFoundError(path)
-        }
         return path
     }
 
@@ -2010,7 +2007,14 @@ class FileStorage {
         if (!fileName) {
             throw new FileStorageParameterError("fileName")
         }
-        return $file.read(this.#filePath(path, fileName))
+        path = this.#filePath(path, fileName)
+        if (!$file.exists(path)) {
+            throw new FileStorageFileNotFoundError(path)
+        }
+        if ($file.isDirectory(path)) {
+            return $file.list(path)
+        }
+        return $file.read(path)
     }
 
     readSync(path = "", fileName) {
