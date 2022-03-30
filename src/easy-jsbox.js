@@ -1859,6 +1859,12 @@ class Kernel {
     // 隐藏 jsbox 默认 nav 栏
     isUseJsboxNav = false
 
+    constructor() {
+        if ($app.isDebugging) {
+            this.debug()
+        }
+    }
+
     uuid() {
         return uuid()
     }
