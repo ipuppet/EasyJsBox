@@ -68,6 +68,14 @@
 
     用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号。(作者和版本号将从根目录的 `config.js` 获取)
 
+- `getImage(key, compress = false)`
+
+    类型为 `image` 的项只能通过该方法获取 `$image` 对象。
+
+    `compress` 为可选参数，若为 `true` 则返回一个经过 `compressImage()` 压缩后的图片。
+
+    `compressImage()` 为 `EasyJsBox` 全局函数。
+
 ### events
 
 > 通过父类中的方法 `setEvent(event, callback)` 进行设置，详见 [Controller](./controller.md)
@@ -296,6 +304,23 @@
                 "items": []
             }
         ]
+    }
+    ```
+
+- image
+
+    `image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象
+
+    `compress` 为可选参数
+
+    ```json
+    {
+        "icon": [
+            "photo"
+        ],
+        "title": "IMAGE",
+        "type": "image",
+        "key": "image"
     }
     ```
 
