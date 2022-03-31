@@ -2243,6 +2243,7 @@ class Setting extends Controller {
         "PREVIEW" = "预览";
         "SELECT_IMAGE" = "选择图片";
         "CLEAR_IMAGE" = "清除图片";
+        "NO_IMAGE" = "无图片";
         
         "ABOUT" = "关于";
         "VERSION" = "Version";
@@ -2274,6 +2275,7 @@ class Setting extends Controller {
         "PREVIEW" = "Preview";
         "SELECT_IMAGE" = "Select Image";
         "CLEAR_IMAGE" = "Clear Image";
+        "NO_IMAGE" = "No Image";
 
         "ABOUT" = "About";
         "VERSION" = "Version";
@@ -2390,7 +2392,10 @@ class Setting extends Controller {
             const name = this.getImageName(key, compress)
             return this.fileStorage.read(this.imagePath, name).image
         } catch (error) {
-            return $image("questionmark.square.dashed")
+            if (error instanceof FileStorageFileNotFoundError) {
+                return null
+            }
+            throw error
         }
     }
 
@@ -3270,7 +3275,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: id,
-                                image: this.getImage(key, true),
+                                image: this.getImage(key, true) ?? $image("questionmark.square.dashed"),
                             },
                             layout: (make, view) => {
                                 make.right.inset(this.rightOffset)
@@ -3286,9 +3291,14 @@ class Setting extends Controller {
                                 items: [$l10n("PREVIEW"), $l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
                                 handler: (title, idx) => {
                                     if (idx === 0) {
-                                        $quicklook.open({
-                                            image: this.getImage(key)
-                                        })
+                                        const image = this.getImage(key)
+                                        if (image) {
+                                            $quicklook.open({
+                                                image: image
+                                            })
+                                        } else {
+                                            $ui.toast($l10n("NO_IMAGE"))
+                                        }
                                     } else if (idx === 1) {
                                         $photo.pick({ format: "data" }).then(resp => {
                                             $ui.toast($l10n("LOADING"))
