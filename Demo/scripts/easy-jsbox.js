@@ -934,7 +934,7 @@ class FixedFooterView extends View {
         this.setProp("bgcolor", UIKit.primaryViewBackgroundColor)
         this.layout = (make, view) => {
             make.left.right.equalTo(view.super)
-            make.bottom.equalTo(view.super).offset(this.hasTabBar ? -TabBarController.tabBarHeight : 0)
+            make.bottom.equalTo(view.super.safeArea).offset(this.hasTabBar ? -TabBarController.tabBarHeight : 0)
             make.height.equalTo(this.height)
         }
 
