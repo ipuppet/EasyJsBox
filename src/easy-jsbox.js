@@ -235,7 +235,11 @@ class View {
     }
 
     get definition() {
-        return this.getView()
+        try {
+            return this.getView()
+        } catch (error) {
+            console.error(error)
+        }
     }
 }
 
