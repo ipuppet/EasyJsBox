@@ -2048,6 +2048,19 @@ class FileStorage {
         })
     }
 
+    exists(path = "", fileName) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        path = this.#filePath(path, fileName)
+
+        if ($file.exists(path)) {
+            return path
+        }
+
+        return false
+    }
+
     read(path = "", fileName) {
         if (!fileName) {
             throw new FileStorageParameterError("fileName")
