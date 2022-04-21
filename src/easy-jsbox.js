@@ -294,8 +294,9 @@ class UIKit {
             type: "canvas",
             props: props,
             layout: (make, view) => {
-                if (view.prev === undefined) return false
-                if (align === UIKit.align.bottom) {
+                if (view.prev === undefined) {
+                    make.top.equalTo(view.super)
+                } else if (align === UIKit.align.bottom) {
                     make.top.equalTo(view.prev.bottom)
                 } else {
                     make.top.equalTo(view.prev.top)
