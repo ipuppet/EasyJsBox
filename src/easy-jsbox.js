@@ -1616,11 +1616,16 @@ class PageController extends Controller {
                 this.view.props.indicatorInsets = $insets(
                     old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
                     old.left,
-                    old.bottom,
+                    old.bottom + (this.navigationItem.fixedFooterView?.height ?? 0),
                     old.right
                 )
             } else {
-                this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
+                this.view.props.indicatorInsets = $insets(
+                    this.navigationController.navigationBar.navigationBarNormalHeight,
+                    0,
+                    this.navigationItem.fixedFooterView?.height ?? 0,
+                    0
+                )
             }
 
             // layout
