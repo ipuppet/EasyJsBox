@@ -933,10 +933,20 @@ class FixedFooterView extends View {
         this.type = "view"
         this.setProp("bgcolor", UIKit.primaryViewBackgroundColor)
         this.layout = (make, view) => {
-            make.left.right.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeArea).offset(this.hasTabBar ? -TabBarController.tabBarHeight : 0)
-            make.height.equalTo(this.height)
+            make.left.right.bottom.equalTo(view.super)
+            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height - (this.hasTabBar ? TabBarController.tabBarHeight : 0))
         }
+
+        this.views = [
+            View.create({
+                props: this.props,
+                views: this.views,
+                layout: (make, view) => {
+                    make.left.right.top.equalTo(view.super)
+                    make.height.equalTo(this.height)
+                }
+            })
+        ]
 
         return this
     }
@@ -944,6 +954,7 @@ class FixedFooterView extends View {
 
 class SearchBar extends BarTitleView {
     height = 35
+    topOffset = 15
     kbType = $kbType.search
     placeholder = $l10n("SEARCH")
 
@@ -987,7 +998,7 @@ class SearchBar extends BarTitleView {
                 }
             }],
             layout: (make, view) => {
-                make.top.equalTo(view.prev.bottom).offset(15)
+                make.top.equalTo(view.prev.bottom).offset(this.topOffset)
                 make.left.equalTo(view.super.safeArea).offset(15)
                 make.right.equalTo(view.super.safeArea).offset(-15)
                 make.height.equalTo(this.height)
@@ -1397,18 +1408,20 @@ class NavigationController extends Controller {
         })
 
         if (contentOffset > 0) {
-            if (contentOffset > this.largeTitleScrollTrigger) {
+            if (contentOffset >= this.largeTitleScrollTrigger) {
                 this.#changeLargeTitleView(NavigationController.largeTitleViewSmallMode)
             } else {
                 this.#changeLargeTitleView(NavigationController.largeTitleViewLargeMode)
             }
-        } else if (contentOffset < -20) {
+        } else {
             // 切换模式
             this.#changeLargeTitleView(NavigationController.largeTitleViewLargeMode)
-            // 下拉放大字体
-            let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
-            if (size > titleSizeMax) size = titleSizeMax
-            this.selector.largeTitleView.font = $font("bold", size)
+            if (contentOffset < -20) {
+                // 下拉放大字体
+                let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
+                if (size > titleSizeMax) size = titleSizeMax
+                this.selector.largeTitleView.font = $font("bold", size)
+            }
         }
     }
 
@@ -1464,17 +1477,16 @@ class NavigationController extends Controller {
         }
     }
 
-    didEndDragging(contentOffset, decelerate, scrollToOffset) {
+    didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset) {
         if (!this.navigationBar.prefersLargeTitles) return
         const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAlways) return
         this.updateSelector()
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAutomatic) {
             // titleView didEndDragging
-            const zeroOffset = (!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.addStatusBarHeight
-                ? UIKit.statusBarHeight
-                : 0
-            this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
+            this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(
+                contentOffset, decelerate, scrollToOffset, zeroOffset
+            )
             const titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
             contentOffset -= titleViewHeight
             if (
@@ -1631,7 +1643,7 @@ class PageController extends Controller {
             // layout
             this.view.layout = (make, view) => {
                 if (this.view.props.stickyHeader === true) {
-                    make.top.equalTo(view.super).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
+                    make.top.equalTo(view.super.safeArea).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
                 } else {
                     make.top.equalTo(view.super)
                 }
@@ -1643,19 +1655,33 @@ class PageController extends Controller {
             this.view
                 .assignEvent("didScroll", sender => {
                     let contentOffset = sender.contentOffset.y
-                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    if (
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
+                        && this.navigationController.navigationBar.addStatusBarHeight
+                        && this.view.props.stickyHeader !== true
+                    ) {
                         contentOffset += UIKit.statusBarHeight
                     }
                     this.navigationController.didScroll(contentOffset)
                 })
                 .assignEvent("didEndDragging", (sender, decelerate) => {
                     let contentOffset = sender.contentOffset.y
-                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    let zeroOffset = 0
+                    if (
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
+                        && this.navigationController.navigationBar.addStatusBarHeight
+                        && this.view.props.stickyHeader !== true
+                    ) {
                         contentOffset += UIKit.statusBarHeight
+                        zeroOffset = UIKit.statusBarHeight
                     }
-                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
+                    this.navigationController.didEndDragging(
+                        contentOffset, decelerate,
+                        (...args) => sender.scrollToOffset(...args),
+                        zeroOffset
+                    )
                 })
-                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+                .assignEvent("willBeginDecelerating", (...args) => this.view.events?.didEndDragging(...args))
         }
     }
 
