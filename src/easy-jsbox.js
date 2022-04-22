@@ -927,14 +927,13 @@ class BarTitleView extends View {
 
 class FixedFooterView extends View {
     height = 60
-    hasTabBar = false
 
     getView() {
         this.type = "view"
         this.setProp("bgcolor", UIKit.primaryViewBackgroundColor)
         this.layout = (make, view) => {
             make.left.right.bottom.equalTo(view.super)
-            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height - (this.hasTabBar ? TabBarController.tabBarHeight : 0))
+            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height)
         }
 
         this.views = [
@@ -1720,7 +1719,6 @@ class PageController extends Controller {
 class TabBarCellView extends View {
     constructor(args = {}) {
         super(args)
-        this.props.id = this.id
         this.setIcon(args.icon)
         this.setTitle(args.title)
         if (args.activeStatus !== undefined) {
@@ -1788,7 +1786,33 @@ class TabBarCellView extends View {
                 }
             }
         ]
-        return super.getView()
+        return this
+    }
+}
+
+class TabBarHeaderView extends View {
+    height = 60
+
+    getView() {
+        this.type = "view"
+        this.setProp("bgcolor", this.props.bgcolor ?? UIKit.primaryViewBackgroundColor)
+        this.layout = (make, view) => {
+            make.left.right.bottom.equalTo(view.super)
+            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height - TabBarController.tabBarHeight)
+        }
+
+        this.views = [
+            View.create({
+                props: this.props,
+                views: this.views,
+                layout: (make, view) => {
+                    make.left.right.top.equalTo(view.super)
+                    make.height.equalTo(this.height)
+                }
+            })
+        ]
+
+        return this
     }
 }
 
@@ -1797,6 +1821,7 @@ class TabBarController extends Controller {
 
     #pages = {}
     #cells = {}
+    #header
     #selected
 
     get selected() {
@@ -1805,6 +1830,10 @@ class TabBarController extends Controller {
 
     set selected(selected) {
         this.switchPageTo(selected)
+    }
+
+    get contentOffset() {
+        return TabBarController.tabBarHeight + (this.#header?.height ?? 0)
     }
 
     /**
@@ -1873,6 +1902,11 @@ class TabBarController extends Controller {
         return this
     }
 
+    setHeader(view) {
+        this.#header = view
+        return this
+    }
+
     #cellViews() {
         const views = []
         Object.values(this.#cells).forEach(cell => {
@@ -1899,23 +1933,22 @@ class TabBarController extends Controller {
                     view.views[0].props.indicatorInsets = $insets(
                         old.top,
                         old.left,
-                        old.bottom + TabBarController.tabBarHeight,
+                        old.bottom + this.contentOffset,
                         old.right
                     )
                 } else {
-                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, TabBarController.tabBarHeight)
+                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
                 // footer
-                if (view.views[0].props.footer) {
-                    view.views[0].props.footer.height += TabBarController.tabBarHeight
+                if (view.views[0].footer === undefined) {
+                    view.views[0].footer = { props: {} }
+                } else if (view.views[0].footer.props === undefined) {
+                    view.views[0].footer.props = {}
+                }
+                if (view.views[0].props.footer.props.height) {
+                    view.views[0].props.footer.props.height += this.contentOffset
                 } else {
-                    view.views[0].props.footer = Object.assign(
-                        view.views[0].props.footer = {
-                            props: {
-                                height: TabBarController.tabBarHeight
-                            }
-                        }
-                    )
+                    view.views[0].props.footer.props.height = this.contentOffset
                 }
             }
             return view
@@ -1928,7 +1961,7 @@ class TabBarController extends Controller {
             layout: (make, view) => {
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(view.super)
-                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-TabBarController.tabBarHeight)
                 make.bottom.equalTo(view.super)
             },
             views: [
@@ -1947,7 +1980,7 @@ class TabBarController extends Controller {
                 UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
-        return View.createByViews(this.#pageViews().concat(tabBarView))
+        return View.createByViews(this.#pageViews().concat(this.#header?.definition ?? [], tabBarView))
     }
 }
 
@@ -3558,6 +3591,7 @@ module.exports = {
     PageView,
     PageController,
     TabBarCellView,
+    TabBarHeaderView,
     TabBarController,
     Kernel,
     FileStorage,
