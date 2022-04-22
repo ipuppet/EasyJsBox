@@ -2196,7 +2196,7 @@ class FileStorage {
         }
     }
 
-    delete(path = "", fileName) {
+    delete(path = "", fileName = "") {
         return $file.delete(this.#filePath(path, fileName))
     }
 }
