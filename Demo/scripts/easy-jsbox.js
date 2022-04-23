@@ -1,4 +1,4 @@
-const VERSION = "1.2.1"
+const VERSION = "1.2.2"
 
 String.prototype.trim = function (char, type) {
     if (char) {
