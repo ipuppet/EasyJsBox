@@ -1164,6 +1164,7 @@ class NavigationBar extends View {
 
     prefersLargeTitles = true
     largeTitleFontSize = 34
+    largeTitleLabelHeightOffset = 5
     navigationBarTitleFontSize = 17
     addStatusBarHeight = true
     contentViewHeightOffset = 10
@@ -1225,7 +1226,7 @@ class NavigationBar extends View {
                 },
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
-                    make.height.equalTo(this.largeTitleFontSize + 5)
+                    make.height.equalTo(this.largeTitleFontSize + this.largeTitleLabelHeightOffset)
                     make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
                 }
             } : {}
@@ -1612,12 +1613,15 @@ class PageController extends Controller {
             height += this.navigationItem.titleView.height
             height += this.navigationItem.titleView.bottomOffset
         }
-        if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-            if (this.view.props.stickyHeader !== true) {
-                height += this.navigationController.navigationBar.navigationBarNormalHeight
-            }
+        if (this.view.props.stickyHeader) {
+            height += this.navigationController.navigationBar.largeTitleFontSize
+            height += this.navigationController.navigationBar.largeTitleLabelHeightOffset
         } else {
-            height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
+                height += this.navigationController.navigationBar.navigationBarNormalHeight
+            } else {
+                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            }
         }
 
         // 修饰视图顶部偏移
@@ -1672,7 +1676,7 @@ class PageController extends Controller {
                 ? this.navigationItem.titleView.height
                 + this.navigationItem.titleView.bottomOffset
                 + this.navigationController.navigationBar.contentViewHeightOffset
-                - 2.5 // 大标题中有 5 额外空间用以完整显示 g y 等字符
+                - this.navigationController.navigationBar.largeTitleLabelHeightOffset / 2 // 大标题中有额外空间用以完整显示 g y 等字符
                 : 0
             if (this.view.props.indicatorInsets) {
                 const old = this.view.props.indicatorInsets
@@ -1693,7 +1697,7 @@ class PageController extends Controller {
 
             // layout
             this.view.layout = (make, view) => {
-                if (this.view.props.stickyHeader === true) {
+                if (this.view.props.stickyHeader) {
                     make.top.equalTo(view.super.safeArea).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
                 } else {
                     make.top.equalTo(view.super)
@@ -1709,7 +1713,7 @@ class PageController extends Controller {
                     if (
                         (!UIKit.isHorizontal || UIKit.isLargeScreen)
                         && this.navigationController.navigationBar.addStatusBarHeight
-                        && this.view.props.stickyHeader !== true
+                        && !this.view.props.stickyHeader
                     ) {
                         contentOffset += UIKit.statusBarHeight
                     }
@@ -1721,7 +1725,7 @@ class PageController extends Controller {
                     if (
                         (!UIKit.isHorizontal || UIKit.isLargeScreen)
                         && this.navigationController.navigationBar.addStatusBarHeight
-                        && this.view.props.stickyHeader !== true
+                        && !this.view.props.stickyHeader
                     ) {
                         contentOffset += UIKit.statusBarHeight
                         zeroOffset = UIKit.statusBarHeight
