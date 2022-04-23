@@ -1321,7 +1321,7 @@ class NavigationController extends Controller {
     static largeTitleViewLargeMode = 1
 
     navigationBar = new NavigationBar()
-    largeTitleScrollTrigger = this.navigationBar.largeTitleFontSize - 3
+    largeTitleScrollTrigger = this.navigationBar.navigationBarNormalHeight
 
     updateSelector() {
         this.selector = {
@@ -1424,7 +1424,10 @@ class NavigationController extends Controller {
             }
         }
 
-        if (contentOffset > this.navigationBar.navigationBarNormalHeight) {
+        let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
+            ? 5
+            : this.largeTitleScrollTrigger
+        if (contentOffset > trigger) {
             // 隐藏遮罩
             this.selector.largeTitleMaskView.hidden = true
             $ui.animate({
