@@ -2,9 +2,9 @@ const VERSION = "1.2.2"
 
 String.prototype.trim = function (char, type) {
     if (char) {
-        if (type == "l") {
+        if (type === "l") {
             return this.replace(new RegExp("^\\" + char + "+", "g"), "")
-        } else if (type == "r") {
+        } else if (type === "r") {
             return this.replace(new RegExp("\\" + char + "+$", "g"), "")
         }
         return this.replace(new RegExp("^\\" + char + "+|\\" + char + "+$", "g"), "")
@@ -43,7 +43,7 @@ function l10n(language, content) {
     if (typeof content === "string") {
         const strings = {}
         const strArr = content.split(";")
-        strArr.forEach((line) => {
+        strArr.forEach(line => {
             line = line.trim()
             if (line !== "") {
                 const kv = line.split("=")
@@ -115,7 +115,7 @@ class Controller {
     events = {}
 
     setEvents(events) {
-        Object.keys(events).forEach((event) => this.setEvent(event, events[event]))
+        Object.keys(events).forEach(event => this.setEvent(event, events[event]))
         return this
     }
 
@@ -163,7 +163,7 @@ class View {
     }
 
     setProps(props) {
-        Object.keys(props).forEach((key) => this.setProp(key, props[key]))
+        Object.keys(props).forEach(key => this.setProp(key, props[key]))
         return this
     }
 
@@ -181,7 +181,7 @@ class View {
     }
 
     setEvents(events) {
-        Object.keys(events).forEach((event) => this.setEvent(event, events[event]))
+        Object.keys(events).forEach(event => this.setEvent(event, events[event]))
         return this
     }
 
@@ -486,15 +486,15 @@ class Matrix extends View {
 
     rebuildData(data = []) {
         // rebuild data
-        return data.map((section) => {
-            section.items = section.items.map((item) => {
+        return data.map(section => {
+            section.items = section.items.map(item => {
                 // 所有元素都重置 hidden 属性
-                Object.keys(item).forEach((key) => {
+                Object.keys(item).forEach(key => {
                     item[key].hidden = this.templateHiddenStatus[key] ?? false
                 })
 
                 // 修正数据
-                Object.keys(this.templateHiddenStatus).forEach((key) => {
+                Object.keys(this.templateHiddenStatus).forEach(key => {
                     if (!item[key]) {
                         item[key] = {}
                     }
@@ -820,7 +820,7 @@ class BarButtonItem extends View {
 
     getView() {
         const userTapped = this.events.tapped
-        this.events.tapped = (sender) => {
+        this.events.tapped = sender => {
             if (!userTapped) return
             userTapped(
                 {
@@ -954,7 +954,7 @@ class SearchBar extends BarTitleView {
                 },
                 layout: $layout.fill,
                 events: {
-                    changed: (sender) => this.controller.callEvent("onChange", sender.text)
+                    changed: sender => this.controller.callEvent("onChange", sender.text)
                 }
             }
         ]
@@ -992,14 +992,14 @@ class SearchBarController extends Controller {
 
     hide() {
         this.updateSelector()
-        this.selector.inputBox.updateLayout((make) => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(0)
         })
     }
 
     show() {
         this.updateSelector()
-        this.selector.inputBox.updateLayout((make) => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(this.searchBar.height)
         })
     }
@@ -1010,7 +1010,7 @@ class SearchBarController extends Controller {
         // 调整大小
         let height = this.searchBar.height - contentOffset
         height = height > 0 ? (height > this.searchBar.height ? this.searchBar.height : height) : 0
-        this.selector.inputBox.updateLayout((make) => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(height)
         })
         // 隐藏内容
@@ -1074,13 +1074,13 @@ class NavigationItem {
     }
 
     setRightButtons(buttons) {
-        buttons.forEach((button) => this.addRightButton(button))
+        buttons.forEach(button => this.addRightButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
     setLeftButtons(buttons) {
-        buttons.forEach((button) => this.addLeftButton(button))
+        buttons.forEach(button => this.addLeftButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -1722,7 +1722,7 @@ class PageController extends Controller {
 
             // 重写滚动事件
             this.view
-                .assignEvent("didScroll", (sender) => {
+                .assignEvent("didScroll", sender => {
                     let contentOffset = sender.contentOffset.y
                     if (
                         (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
@@ -1943,7 +1943,7 @@ class TabBarController extends Controller {
      * @returns
      */
     setPages(pages = {}) {
-        Object.keys(pages).forEach((key) => this.setPage(key, pages[key]))
+        Object.keys(pages).forEach(key => this.setPage(key, pages[key]))
         return this
     }
 
@@ -1985,7 +1985,7 @@ class TabBarController extends Controller {
      * @returns
      */
     setCells(cells = {}) {
-        Object.keys(cells).forEach((key) => this.setCell(key, cells[key]))
+        Object.keys(cells).forEach(key => this.setCell(key, cells[key]))
         return this
     }
 
@@ -2010,8 +2010,8 @@ class TabBarController extends Controller {
 
     #cellViews() {
         const views = []
-        Object.values(this.#cells).forEach((cell) => {
-            cell.setEvent("tapped", (sender) => {
+        Object.values(this.#cells).forEach(cell => {
+            cell.setEvent("tapped", sender => {
                 const key = sender.info.key
                 // 切换页面
                 this.switchPageTo(key)
@@ -2022,7 +2022,7 @@ class TabBarController extends Controller {
     }
 
     #pageViews() {
-        return Object.values(this.#pages).map((page) => {
+        return Object.values(this.#pages).map(page => {
             const view = page.definition
             if (UIKit.scrollViewList.indexOf(view.views[0].type) > -1) {
                 if (view.views[0].props === undefined) {
@@ -2648,7 +2648,7 @@ class Setting extends Controller {
                                   }),
                                   align: $align.center
                               },
-                              layout: (make) => {
+                              layout: make => {
                                   make.left.right.inset(0)
                                   make.top.inset(10)
                               }
@@ -2879,7 +2879,7 @@ class Setting extends Controller {
                         onColor: $color("#00CC00")
                     },
                     events: {
-                        changed: (sender) => {
+                        changed: sender => {
                             if (!this.set(key, sender.on)) {
                                 sender.on = !sender.on
                             }
@@ -2908,7 +2908,7 @@ class Setting extends Controller {
                         tintColor: $color("primaryText")
                     },
                     events: {
-                        tapped: (sender) => {
+                        tapped: sender => {
                             const popover = $ui.popover({
                                 sourceView: sender,
                                 sourceRect: sender.bounds,
@@ -2922,7 +2922,7 @@ class Setting extends Controller {
                                             align: $align.left,
                                             text: this.get(key)
                                         },
-                                        layout: (make) => {
+                                        layout: make => {
                                             make.left.right.inset(10)
                                             make.top.inset(20)
                                             make.height.equalTo(90)
@@ -2936,7 +2936,7 @@ class Setting extends Controller {
                                             titleEdgeInsets: 10,
                                             contentEdgeInsets: 0
                                         },
-                                        layout: (make) => {
+                                        layout: make => {
                                             make.right.inset(10)
                                             make.bottom.inset(25)
                                             make.size.equalTo(30)
@@ -2983,8 +2983,8 @@ class Setting extends Controller {
                                 type: $kbType.decimal,
                                 text: this.get(key),
                                 placeholder: title,
-                                handler: (text) => {
-                                    const isNumber = (str) => {
+                                handler: text => {
+                                    const isNumber = str => {
                                         const reg = /^[0-9]+.?[0-9]*$/
                                         return reg.test(str)
                                     }
@@ -3038,7 +3038,7 @@ class Setting extends Controller {
                         value: this.get(key)
                     },
                     events: {
-                        changed: (sender) => {
+                        changed: sender => {
                             $(id).text = sender.value
                             if (!this.set(key, sender.value)) {
                                 $(id).text = this.get(key)
@@ -3206,7 +3206,7 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.prev)
                     },
                     events: {
-                        changed: (sender) => {
+                        changed: sender => {
                             const value = withTitle ? [sender.index, title] : sender.index
                             this.set(key, value)
                         }
@@ -3334,7 +3334,7 @@ class Setting extends Controller {
 
     createDate(key, icon, title, mode = 2) {
         const id = this.getId("date", key)
-        const getFormatDate = (date) => {
+        const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
             switch (mode) {
@@ -3421,7 +3421,7 @@ class Setting extends Controller {
                             $input.text({
                                 text: this.get(key),
                                 placeholder: title,
-                                handler: (text) => {
+                                handler: text => {
                                     if (text === "") {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
@@ -3503,7 +3503,7 @@ class Setting extends Controller {
                                         $input.text({
                                             text: "",
                                             placeholder: title,
-                                            handler: (text) => {
+                                            handler: text => {
                                                 if (text === "") {
                                                     $ui.toast($l10n("INVALID_VALUE"))
                                                     return
@@ -3628,7 +3628,7 @@ class Setting extends Controller {
                                             $ui.toast($l10n("NO_IMAGE"))
                                         }
                                     } else if (idx === 1) {
-                                        $photo.pick({ format: "data" }).then((resp) => {
+                                        $photo.pick({ format: "data" }).then(resp => {
                                             $ui.toast($l10n("LOADING"))
                                             if (!resp.status || !resp.data) {
                                                 if (resp?.error?.description !== "canceled") {
@@ -3675,7 +3675,7 @@ class Setting extends Controller {
                 const value = this.get(item.key)
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
-                if (typeof item.items === "object") item.items = item.items.map((item) => $l10n(item))
+                if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
                 // 更新标题值
                 item.title = $l10n(item.title)
                 switch (item.type) {
