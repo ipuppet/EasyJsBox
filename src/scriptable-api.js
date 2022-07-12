@@ -1,4 +1,57 @@
 /**
+ * TODO Request
+ */
+ class Request {
+    url
+    method = "GET"
+    headers = {}
+    body
+    timeoutInterval
+    onRedirect
+    response
+    allowInsecureRequest
+
+    constructor(url) {
+        this.url = url
+    }
+
+    load() {
+        return $http.request({
+            method: this.method,
+            url: this.url,
+            header: this.headers,
+            body: this.body
+        })
+    }
+
+    async loadString() {
+        const resp = await this.load()
+        if (typeof resp.data !== "string") {
+            resp.data = JSON.stringify(resp.data)
+        }
+
+        return resp
+    }
+
+    loadJSON() {
+        return this.load()
+    }
+
+    async loadImage() {
+        const resp = await this.load()
+        return new Image(resp?.rawData?.image)
+    }
+
+    addParameterToMultipart(name, value) {}
+
+    addFileDataToMultipart(data, mimeType, name, filename) {}
+
+    addFileToMultipart(filePath, name, filename) {}
+
+    addImageToMultipart(image, name, filename) {}
+}
+
+/**
  * TODO Font
  */
 class Font {
@@ -279,7 +332,11 @@ class DrawContext {
                       }
                     : {}
             ),
-            ctx => {}
+            ctx => {
+                this.renderQueue.forEach(render => {
+                    render(ctx)
+                })
+            }
         )
     }
 
@@ -862,6 +919,7 @@ class Device {
 }
 
 module.exports = {
+    Request,
     Font,
     Color,
     Size,
