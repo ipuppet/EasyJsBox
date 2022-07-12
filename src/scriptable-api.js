@@ -194,51 +194,70 @@ class Size {
     }
 }
 
-/**
- * TODO Rect min max
- */
 class Rect {
     x
     y
+    minX
+    maxX
+    minY
+    maxY
     width
     height
-    origin
-    size
 
     constructor(x, y, width, height) {
         this.x = x
         this.y = y
+
+        this.maxX = x
+        this.minX = x
+        this.maxY = y
+        this.minY = y
+
         this.width = width
         this.height = height
     }
 
-    get minX() {
-        return this.x
+    get origin() {
+        return new Point(this.x, this.y)
     }
-    get maxX() {
-        return this.x
+
+    /**
+     * @param {Point} point
+     */
+    set origin(point) {
+        this.x = point.x
+        this.y = point.y
     }
-    get minY() {
-        return this.y
+
+    get size() {
+        return new Size(this.width, this.height)
     }
-    get maxY() {
-        return this.y
-    }
-    set minX(x) {
-        this.x = x
-    }
-    set maxX(x) {
-        this.x = x
-    }
-    set minY(y) {
-        this.y = y
-    }
-    set maxY(y) {
-        this.y = y
+
+    /**
+     * @param {Size} size
+     */
+    set size(size) {
+        this.width = size.width
+        this.height = size.height
     }
 
     get definition() {
-        return $rect(this.x, this.y, this.width, this.height)
+        let x = this.x,
+            y = this.y
+        if (x > this.maxX) {
+            x = this.maxX
+        }
+        if (x < this.minX) {
+            x = this.minX
+        }
+        if (y > this.maxY) {
+            y = this.maxY
+        }
+        if (y < this.minY) {
+            y = this.minY
+        }
+
+        return $rect(x, y, this.width, this.height)
     }
 }
 
@@ -246,6 +265,8 @@ class Rect {
  * TODO Path
  */
 class Path {
+    renderQueue = []
+
     /**
      *
      * @param {Point} point
@@ -276,7 +297,13 @@ class Path {
      * @param {number} cornerWidth
      * @param {number} cornerHeight
      */
-    addRoundedRect(rect, cornerWidth, cornerHeight) {}
+    addRoundedRect(rect, cornerWidth, cornerHeight) {
+        rect = rect.definition
+
+        this.renderQueue.push(ctx => {
+            // TODO 圆角矩形
+        })
+    }
 
     /**
      *
@@ -313,30 +340,23 @@ class Path {
  */
 class DrawContext {
     size
-    respectScreenScale
+    respectScreenScale = false
     opaque = true
 
     renderQueue = []
 
     getImage() {
-        $imagekit.render(
-            Object.assign(
-                {
-                    size: this.size.definition,
-
-                    opaque: this.opaque
-                },
-                this.respectScreenScale !== undefined
-                    ? {
-                          scale: this.respectScreenScale
-                      }
-                    : {}
-            ),
-            ctx => {
+        const options = {
+            size: this.size.definition,
+            opaque: this.opaque,
+            scale: this.respectScreenScale ? 0 : 1
+        }
+        return new Image(
+            $imagekit.render(options, ctx => {
                 this.renderQueue.forEach(render => {
                     render(ctx)
                 })
-            }
+            })
         )
     }
 
@@ -363,17 +383,59 @@ class DrawContext {
         })
     }
 
-    setStrokeColor() {}
+    /**
+     *
+     * @param {Color} color
+     */
+    setStrokeColor(color) {
+        this.renderQueue.push(ctx => {
+            ctx.fillColor = color.definition
+        })
+    }
+
     setLineWidth() {}
-    fill() {}
-    fillRect() {}
+
+    /**
+     *
+     * @param {Rect} rect
+     */
+    fill(rect) {
+        this.renderQueue.push(ctx => {
+            ctx.fillRect(rect.definition)
+        })
+    }
+
+    /**
+     *
+     * @param {Rect} rect
+     */
+    fillRect(rect) {
+        this.fill(rect)
+    }
+
     fillEllipse() {}
     stroke() {}
     strokeRect() {}
     strokeEllipse() {}
-    addPath() {}
-    strokePath() {}
-    fillPath() {}
+
+    /**
+     *
+     * @param {Path} path
+     */
+    addPath(path) {
+        this.renderQueue = this.renderQueue.concat(path.renderQueue)
+    }
+    strokePath() {
+        this.renderQueue.push(ctx => {
+            ctx.strokePath()
+        })
+    }
+    fillPath() {
+        this.renderQueue.push(ctx => {
+            ctx.fillPath()
+        })
+    }
+
     drawText() {}
     drawTextInRect() {}
     setFont() {}
