@@ -2428,6 +2428,8 @@ class Setting extends Controller {
     name
     // 存储数据
     setting = {}
+    // 初始用户数据，若未定义则尝试从给定的文件读取
+    userData
     // fileStorage
     fileStorage
     imagePath
@@ -2446,6 +2448,19 @@ class Setting extends Controller {
     #loadConfigStatus = false
     #footer
 
+    /**
+     *
+     * @param {Object} args
+     * @param {Function} args.set 自定义 set 方法，定义后将忽略 fileStorage 和 dataFile
+     * @param {Function} args.get 自定义 get 方法，定义后将忽略 fileStorage 和 dataFile
+     * @param {Object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
+     * @param {FileStorage} args.fileStorage FileStorage 对象，用于文件操作
+     * @param {String} args.dataFile 持久化数据保存文件
+     * @param {Object} args.structure 设置项结构
+     * @param {String} args.structurePath 结构路径，优先级低于 structure
+     * @param {Boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
+     * @param {String} args.name 唯一名称，默认分配一个 UUID
+     */
     constructor(args = {}) {
         super()
 
@@ -2453,6 +2468,7 @@ class Setting extends Controller {
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.get = args.get
+            this.userData = args.userData
         } else {
             this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
@@ -2486,13 +2502,11 @@ class Setting extends Controller {
      * @returns this
      */
     loadConfig() {
-        this.setting = {}
-        let userData = {}
         const exclude = [
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
-        userData = this.fileStorage.readAsJSON("", this.dataFile, {})
+        const userData = this.userData ?? this.fileStorage.readAsJSON("", this.dataFile, {})
         function setValue(structure) {
             const setting = {}
             for (let section of structure) {
@@ -2591,6 +2605,10 @@ class Setting extends Controller {
         "AT_BOTTOM" = "It's the end~";
         `
         )
+    }
+
+    setUserData(userData) {
+        this.userData = userData
     }
 
     setStructure(structure) {
@@ -2882,8 +2900,12 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: sender => {
-                            if (!this.set(key, sender.on)) {
+                            try {
+                                this.set(key, sender.on)
+                            } catch (error) {
+                                // 恢复开关状态
                                 sender.on = !sender.on
+                                throw error
                             }
                         }
                     },
@@ -2947,9 +2969,8 @@ class Setting extends Controller {
                                         },
                                         events: {
                                             tapped: () => {
-                                                if (this.set(key, $(`${this.name}-string-${key}`).text)) {
-                                                    popover.dismiss()
-                                                }
+                                                this.set(key, $(`${this.name}-string-${key}`).text)
+                                                popover.dismiss()
                                             }
                                         }
                                     }
@@ -2998,9 +3019,9 @@ class Setting extends Controller {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
                                     }
-                                    if (this.set(key, text)) {
-                                        $(labelId).text = text
-                                    }
+
+                                    this.set(key, text)
+                                    $(labelId).text = text
                                 }
                             })
                         }
@@ -3048,8 +3069,12 @@ class Setting extends Controller {
                     events: {
                         changed: sender => {
                             $(labelId).text = sender.value
-                            if (!this.set(key, sender.value)) {
+                            try {
+                                this.set(key, sender.value)
+                            } catch (error) {
+                                // 恢复标签显示数据
                                 $(labelId).text = this.get(key)
+                                throw error
                             }
                         }
                     },
@@ -3425,7 +3450,7 @@ class Setting extends Controller {
                         }
                     ],
                     events: {
-                        tapped: async () => {
+                        tapped: () => {
                             $input.text({
                                 text: this.get(key),
                                 placeholder: title,
@@ -3434,9 +3459,8 @@ class Setting extends Controller {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
                                     }
-                                    if (this.set(key, text)) {
-                                        $(`${id}-label`).text = text
-                                    }
+                                    this.set(key, text)
+                                    $(`${id}-label`).text = text
                                 }
                             })
                         }
