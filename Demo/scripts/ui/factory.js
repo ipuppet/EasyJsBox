@@ -1,4 +1,4 @@
-const { TabBarController } = require("../easy-jsbox")
+const { TabBarController } = require("../libs/easy-jsbox")
 
 class Factory {
     constructor(kernel) {
@@ -26,24 +26,26 @@ class Factory {
      * 渲染页面
      */
     render() {
-        this.tabBarController.setPages({
-            home: this.home(),
-            list: this.list(),
-            setting: this.setting()
-        }).setCells({
-            home: {
-                icon: ["house", "house.fill"],
-                title: $l10n("HOME")
-            },
-            list: {
-                icon: "doc.plaintext",
-                title: $l10n("LIST")
-            },
-            setting: {
-                icon: "gear",
-                title: $l10n("SETTING")
-            }
-        })
+        this.tabBarController
+            .setPages({
+                home: this.home(),
+                list: this.list(),
+                setting: this.setting()
+            })
+            .setCells({
+                home: {
+                    icon: ["house", "house.fill"],
+                    title: $l10n("HOME")
+                },
+                list: {
+                    icon: "doc.plaintext",
+                    title: $l10n("LIST")
+                },
+                setting: {
+                    icon: "gear",
+                    title: $l10n("SETTING")
+                }
+            })
         this.kernel.UIRender(this.tabBarController.generateView().definition)
     }
 }

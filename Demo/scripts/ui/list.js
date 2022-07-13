@@ -1,7 +1,4 @@
-const {
-    PageController,
-    SearchBar
-} = require("../easy-jsbox")
+const { PageController, SearchBar } = require("../libs/easy-jsbox")
 
 class ListUI {
     constructor(kernel) {
