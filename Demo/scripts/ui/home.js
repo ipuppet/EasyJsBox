@@ -1,7 +1,4 @@
-const {
-    PageController,
-    NavigationItem
-} = require("../easy-jsbox")
+const { PageController, NavigationItem } = require("../libs/easy-jsbox")
 
 class HomeUI {
     constructor(kernel) {

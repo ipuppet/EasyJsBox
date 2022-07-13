@@ -2641,7 +2641,7 @@ class Setting extends Controller {
                               type: "label",
                               props: {
                                   font: $font(14),
-                                  text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                                  text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
                                   textColor: $color({
                                       light: "#C0C0C0",
                                       dark: "#545454"
