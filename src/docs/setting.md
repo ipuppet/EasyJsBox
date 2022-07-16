@@ -97,232 +97,258 @@
 
 > 组件提供的设置项类型，保存在`setting.json`文件或实例化类时提供的文件中。
 
-- switch
-    ```json
-    {
-        "icon": [
-            "archivebox",
-            "#336699"
-        ],
-        "title": "USE_COMPRESSED_IMAGE",
-        "type": "switch",
-        "key": "album.useCompressedImage",
-        "value": true
-    }
-    ```
+#### switch
 
-- stepper
-    ```json
-    {
-        "icon": [
-            "rectangle.split.3x1.fill",
-            "#FF6666"
-        ],
-        "title": "SWITCH_INTERVAL",
-        "type": "stepper",
-        "key": "album.switchInterval",
-        "min": 10,
-        "max": 60,
-        "value": 10
-    }
-    ```
+```json
+{
+    "icon": [
+        "archivebox",
+        "#336699"
+    ],
+    "title": "USE_COMPRESSED_IMAGE",
+    "type": "switch",
+    "key": "album.useCompressedImage",
+    "value": true
+}
+```
 
-- string
-    ```json
-    {
-        "icon": [
-            "link",
-            "#CC6699"
-        ],
-        "title": "URL_SCHEME",
-        "type": "string",
-        "key": "album.urlScheme",
-        "value": ""
-    }
-    ```
+#### stepper
 
-- number
-    ```json
-    {
-        "icon": [
-            "rectangle.split.3x1.fill",
-            "#FF6666"
-        ],
-        "title": "TIME_SPAN",
-        "type": "number",
-        "key": "timeSpan",
-        "value": 10
-    }
-    ```
+```json
+{
+    "icon": [
+        "rectangle.split.3x1.fill",
+        "#FF6666"
+    ],
+    "title": "SWITCH_INTERVAL",
+    "type": "stepper",
+    "key": "album.switchInterval",
+    "min": 10,
+    "max": 60,
+    "value": 10
+}
+```
 
-- info
-    ```json
-    {
-        "icon": [
-            "book.fill",
-            "#A569BD"
-        ],
-        "title": "README",
-        "type": "script",
-        "key": "readme",
-        "value": "Text message."
-    }
-    ```
+#### string
 
-- script
+```json
+{
+    "icon": [
+        "link",
+        "#CC6699"
+    ],
+    "title": "URL_SCHEME",
+    "type": "string",
+    "key": "album.urlScheme",
+    "value": ""
+}
+```
 
-    如果`value`以`this.method`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
+#### number
 
-    ```js
-    const animate = {
-        actionStart: callable(), // 会出现加载动画
-        actionCancel: callable(), // 会直接恢复箭头图标
-        actionDone: callable(), // 会出现对号，然后恢复箭头
-        touchHighlight: callable(), // 被点击的一行颜色加深，然后颜色恢复
-        touchHighlightStart: callable(), // 被点击的一行颜色加深
-        touchHighlightEnd: callable() // 被点击的一行颜色恢复
-    }
-    ```
+```json
+{
+    "icon": [
+        "rectangle.split.3x1.fill",
+        "#FF6666"
+    ],
+    "title": "TIME_SPAN",
+    "type": "number",
+    "key": "timeSpan",
+    "value": 10
+}
+```
 
-    ```json
-    {
-        "icon": [
-            "book.fill",
-            "#A569BD"
-        ],
-        "title": "README",
-        "type": "script",
-        "key": "calendar",
-        "value": "this.method.readme"
-    }
-    ```
+#### info
 
-- tab
-    ```json
-    {
-        "icon": [
-            "flag.fill",
-            "#FFCC00"
-        ],
-        "title": "FIRST_DAY_OF_WEEK",
-        "type": "tab",
-        "key": "calendar.firstDayOfWeek",
-        "items": [
-            "_SUNDAY",
-            "_MONDAY"
-        ],
-        "value": 0
-    }
-    ```
+```json
+{
+    "icon": [
+        "book.fill",
+        "#A569BD"
+    ],
+    "title": "README",
+    "type": "script",
+    "key": "readme",
+    "value": "Text message."
+}
+```
 
-- color
-    ```json
-    {
-        "icon": [
-            "wand.and.rays",
-            "orange"
-        ],
-        "title": "COLOR_TONE",
-        "type": "color",
-        "key": "calendar.colorTone",
-        "value": "orange"
-    }
-    ```
+#### script
 
-- menu
-    ```json
-    {
-        "icon": [
-            "rectangle.3.offgrid.fill"
-        ],
-        "title": "RIGHT",
-        "type": "menu",
-        "key": "right",
-        "items": "this.method.getMenu",
-        "value": 0
-    }
-    ```
+如果`value`以`this.method`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
 
-- date
-  ```json
-    {
-        "icon": [
-            "calendar",
-            "#99CC33"
-        ],
-        "title": "CHOOSE_DATE",
-        "type": "date",
-        "key": "date",
-        "mode": 1,
-        "value": 0
-    }
-    ```
+```js
+const animate = {
+    actionStart: callable(), // 会出现加载动画
+    actionCancel: callable(), // 会直接恢复箭头图标
+    actionDone: callable(), // 会出现对号，然后恢复箭头
+    touchHighlight: callable(), // 被点击的一行颜色加深，然后颜色恢复
+    touchHighlightStart: callable(), // 被点击的一行颜色加深
+    touchHighlightEnd: callable() // 被点击的一行颜色恢复
+}
+```
 
-- input
-    ```json
-    {
-        "icon": [
-            "pencil.and.ellipsis.rectangle",
-            "#A569BD"
-        ],
-        "title": "TITLE",
-        "type": "input",
-        "key": "title",
-        "value": "Title"
-    }
-    ```
+```json
+{
+    "icon": [
+        "book.fill",
+        "#A569BD"
+    ],
+    "title": "README",
+    "type": "script",
+    "key": "calendar",
+    "value": "this.method.readme"
+}
+```
 
-- icon
-    ```json
-    {
-        "icon": [
-            "rectangle.3.offgrid.fill"
-        ],
-        "title": "ICON",
-        "type": "icon",
-        "key": "icon",
-        "value": "plus"
-    }
-    ```
+#### tab
 
-- child
-    ```json
-    {
-        "icon": [
-            "rectangle.3.offgrid.fill"
-        ],
-        "title": "CHILD",
-        "type": "child",
-        "key": "child",
-        "children": [
-            {
-                "title": "Section 1",
-                "items": []
-            },
-            {
-                "title": "Section 2",
-                "items": []
-            }
-        ]
-    }
-    ```
+`items` 若为字符串，将尝试将其作为函数执行并使用其返回值
 
-- image
+可选参数 `values`, 与 `items` 一一对应的数组，同样可传入字符串代码动态执行
 
-    `image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象
+传入 `values` 后，`get` 函数将返回 `values` 内的值
 
-    `compress` 为可选参数
+```json
+{
+    "icon": [
+        "flag.fill",
+        "#FFCC00"
+    ],
+    "title": "FIRST_DAY_OF_WEEK",
+    "type": "tab",
+    "key": "calendar.firstDayOfWeek",
+    "items": [
+        "_SUNDAY",
+        "_MONDAY"
+    ],
+    "values": [
+        "sunday",
+        "monday"
+    ],
+    "value": "sunday"
+}
+```
 
-    ```json
-    {
-        "icon": [
-            "photo"
-        ],
-        "title": "IMAGE",
-        "type": "image",
-        "key": "image"
-    }
-    ```
+以上示例中，`get` 函数在选中 `"_SUNDAY"` 时将会返回 `"sunday"`, 若未定义 `values` 则返回数字 `0`
+
+#### menu
+
+参数 `items`, `values`, 与 `tab` 类型相同
+
+```json
+{
+    "icon": [
+        "rectangle.3.offgrid.fill"
+    ],
+    "title": "RIGHT",
+    "type": "menu",
+    "key": "right",
+    "items": "this.method.getMenu",
+    "value": 0
+}
+```
+
+#### color
+
+```json
+{
+    "icon": [
+        "wand.and.rays",
+        "orange"
+    ],
+    "title": "COLOR_TONE",
+    "type": "color",
+    "key": "calendar.colorTone",
+    "value": "orange"
+}
+```
+
+#### date
+
+```json
+{
+    "icon": [
+        "calendar",
+        "#99CC33"
+    ],
+    "title": "CHOOSE_DATE",
+    "type": "date",
+    "key": "date",
+    "mode": 1,
+    "value": 0
+}
+```
+
+#### input
+
+```json
+{
+    "icon": [
+        "pencil.and.ellipsis.rectangle",
+        "#A569BD"
+    ],
+    "title": "TITLE",
+    "type": "input",
+    "key": "title",
+    "value": "Title"
+}
+```
+
+#### icon
+
+```json
+{
+    "icon": [
+        "rectangle.3.offgrid.fill"
+    ],
+    "title": "ICON",
+    "type": "icon",
+    "key": "icon",
+    "value": "plus"
+}
+```
+
+#### child
+
+```json
+{
+    "icon": [
+        "rectangle.3.offgrid.fill"
+    ],
+    "title": "CHILD",
+    "type": "child",
+    "key": "child",
+    "children": [
+        {
+            "title": "Section 1",
+            "items": []
+        },
+        {
+            "title": "Section 2",
+            "items": []
+        }
+    ]
+}
+```
+
+#### image
+
+`image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象
+
+`compress` 为可选参数
+
+```json
+{
+    "icon": [
+        "photo"
+    ],
+    "title": "IMAGE",
+    "type": "image",
+    "key": "image"
+}
+```
 
 ## 示例
 
