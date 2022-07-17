@@ -144,8 +144,8 @@ class Color {
 
     /**
      *
-     * @param {String} hex
-     * @param {Number} alpha
+     * @param {string} hex
+     * @param {number} alpha
      */
     constructor(hex, alpha = 1) {
         this.#hex = hex
@@ -294,8 +294,8 @@ class Path {
     /**
      *
      * @param {Rect} rect
-     * @param {Number} cornerWidth
-     * @param {Number} cornerHeight
+     * @param {number} cornerWidth
+     * @param {number} cornerHeight
      */
     addRoundedRect(rect, cornerWidth, cornerHeight) {
         rect = rect.definition
@@ -454,7 +454,7 @@ class Data {
 
     /**
      *
-     * @param {String} string
+     * @param {string} string
      * @returns
      */
     static fromString(string) {
@@ -463,7 +463,7 @@ class Data {
 
     /**
      *
-     * @param {String} filePath
+     * @param {string} filePath
      * @returns
      */
     static fromFile(filePath) {
@@ -472,7 +472,7 @@ class Data {
 
     /**
      *
-     * @param {String} base64String
+     * @param {string} base64String
      * @returns
      */
     static fromBase64String(base64String) {
@@ -524,7 +524,7 @@ class Image {
 
     /**
      *
-     * @param {String} filePath
+     * @param {string} filePath
      * @returns
      */
     static fromFile(filePath) {
@@ -782,7 +782,7 @@ class WidgetStack {
 
     /**
      *
-     * @param {String} text
+     * @param {string} text
      */
     addText(text) {
         const widget = new WidgetText(text)
