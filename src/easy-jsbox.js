@@ -2591,7 +2591,7 @@ class Setting extends Controller {
                     if (item.type === "child") {
                         const child = setValue(item.children)
                         Object.assign(setting, child)
-                    } else if (exclude.indexOf(item.type) < 0) {
+                    } else if (exclude.indexOf(item.type) === -1) {
                         setting[item.key] = item.key in userData ? userData[item.key] : item.value
                     } else {
                         // 被排除的项目直接赋值
