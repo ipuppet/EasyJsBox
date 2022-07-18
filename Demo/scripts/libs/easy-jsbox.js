@@ -3862,6 +3862,7 @@ class Setting extends Controller {
         return {
             type: "list",
             props: {
+                id: this.name,
                 style: 2,
                 separatorInset: $insets(0, this.iconSize + this.edgeOffset * 2, 0, this.edgeOffset), // 分割线边距
                 rowHeight: this.rowHeight,
