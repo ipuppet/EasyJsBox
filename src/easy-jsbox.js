@@ -3865,12 +3865,17 @@ class Setting extends Controller {
                 id: this.name,
                 style: 2,
                 separatorInset: $insets(0, this.iconSize + this.edgeOffset * 2, 0, this.edgeOffset), // 分割线边距
-                rowHeight: this.rowHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
                 data: this.#getSections(structure ?? this.structure)
             },
-            layout: $layout.fill
+            layout: $layout.fill,
+            events: {
+                rowHeight: (sender, indexPath) => {
+                    const info = sender.object(indexPath)?.props?.info ?? {}
+                    return info.rowHeight ?? this.rowHeight
+                }
+            }
         }
     }
 
