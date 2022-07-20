@@ -763,7 +763,9 @@ class Sheet extends View {
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(rightButtons)
         this.pageController.setView(this.view).navigationController.navigationBar.pageSheetMode()
-        this.pageController?.getPage().setProp("bgcolor", this.view.props.bgcolor)
+        if (this.view.props?.bgcolor) {
+            this.pageController?.getPage().setProp("bgcolor", this.view.props?.bgcolor)
+        }
         return this
     }
 
