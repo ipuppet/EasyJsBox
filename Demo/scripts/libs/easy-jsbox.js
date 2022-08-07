@@ -1919,7 +1919,12 @@ class PageController extends Controller {
                         zeroOffset
                     )
                 })
-                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+                .assignEvent("didEndDecelerating", (...args) => {
+                    if (args[0].tracking) {
+                        return
+                    }
+                    this.view.events?.didEndDragging(...args)
+                })
         }
     }
 
