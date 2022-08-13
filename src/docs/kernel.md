@@ -14,7 +14,7 @@
 
     返回一个 uuid
 
-- l10n(language, content)
+- l10n(language, content, override = true)
 
     手动设置 l10n 相关的数据，可在运行时进行
     
@@ -22,6 +22,7 @@
     
     - language: String 语言。如 `"en"`、`"zh-Hans"` 等。
     - content: String 具体内容。格式与使用文件的方式一样
+    - override: 是否覆盖已有内容
 
 - debug(print)
 
