@@ -720,7 +720,7 @@ class Matrix extends View {
             const width =
                 this.props.itemWidth ??
                 this.props.itemSize?.width ??
-                (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+                (sender.super.frame.width - spacing * (columns + 1)) / columns
             const height = this.props.itemHeight ?? this.props.itemSize?.height ?? 100
             return $size(width, height)
         })
