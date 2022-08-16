@@ -13,7 +13,7 @@ const { View, PageView } = require("./view")
 const { ViewController } = require("./navigation-view/view-controller")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar, NavigationBarController } = require("./navigation-view/navigation-bar")
-const { NavigationBarItems } = require("./navigation-view/navigation-bar-items")
+const { NavigationBarItems, BarButtonItem } = require("./navigation-view/navigation-bar-items")
 const { SearchBar, SearchBarController } = require("./navigation-view/search-bar")
 
 module.exports = {
@@ -42,6 +42,7 @@ module.exports = {
     NavigationBar,
     NavigationBarController,
     NavigationBarItems,
+    BarButtonItem,
     SearchBar,
     SearchBarController
 }

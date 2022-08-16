@@ -203,7 +203,7 @@ class Kernel {
         if (res.error) throw res.error
         const reg = new RegExp(`.*VERSION.?=.?"([0-9\.]*)"`)
         const latestVersion = res.data.match(reg)[1]
-        this.print(`latestVersion: ${latestVersion}`)
+        this.print(`easy-jsbox latest version: ${latestVersion}`)
         if (versionCompare(latestVersion, VERSION) > 0) {
             if (typeof callback === "function") {
                 callback(res.data)
