@@ -1,3 +1,5 @@
+const { isTaio } = require("./kernel")
+
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
 
@@ -52,7 +54,7 @@ class UIKit {
     }
 
     static get statusBarHeight() {
-        return $app.isDebugging ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
+        return $app.isDebugging || isTaio ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
     }
 
     static get statusBarOrientation() {

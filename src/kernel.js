@@ -102,6 +102,11 @@ function compressImage(image, maxSize = 1280 * 720) {
     return image
 }
 
+/**
+ * @type {boolean}
+ */
+const isTaio = $app.info.bundleID.includes("taio")
+
 const { UIKit } = require("./ui-kit")
 
 class Kernel {
@@ -214,6 +219,7 @@ class Kernel {
 
 module.exports = {
     VERSION,
+    isTaio,
     versionCompare,
     l10n,
     objectEqual,

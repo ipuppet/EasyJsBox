@@ -1,7 +1,7 @@
 const { Controller } = require("./controller")
 const { FileStorage } = require("./file-storage")
 const { FixedFooterView } = require("./fixed-footer-view")
-const { VERSION, versionCompare, l10n, objectEqual, compressImage, Kernel } = require("./kernel")
+const { VERSION, isTaio, versionCompare, l10n, objectEqual, compressImage, Kernel } = require("./kernel")
 const { Matrix } = require("./matrix")
 const { Setting } = require("./setting")
 const { Sheet } = require("./sheet")
@@ -21,6 +21,7 @@ module.exports = {
     FileStorage,
     FixedFooterView,
     VERSION,
+    isTaio,
     versionCompare,
     l10n,
     objectEqual,
