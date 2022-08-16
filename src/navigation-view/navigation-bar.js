@@ -161,7 +161,7 @@ class NavigationBar extends View {
                       }),
                 UIKit.separatorLine({
                     id: this.id + "-underline",
-                    alpha: isHideBackground ? 0 : 1
+                    hidden: isHideBackground
                 }),
                 {
                     type: "view",
