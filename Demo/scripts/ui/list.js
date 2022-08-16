@@ -1,4 +1,4 @@
-const { PageController, SearchBar } = require("../libs/easy-jsbox")
+const { NavigationView, SearchBar } = require("../libs/easy-jsbox")
 
 class ListUI {
     constructor(kernel) {
@@ -12,47 +12,47 @@ class ListUI {
             $ui.toast(text)
         })
         // 初始化页面控制器
-        const pageController = new PageController()
+        const navigationView = new NavigationView()
         // 设置导航条元素
-        pageController.navigationItem
-            .setTitle($l10n("LIST"))
-            .setTitleView(searchBar)
-            .setLeftButtons([
-                {
-                    symbol: "plus.circle",
-                    tapped: animate => {
-                        animate.start()
-                        $ui.alert({
-                            title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
-                            actions: [
-                                {
-                                    title: "OK",
-                                    handler: () => {
-                                        animate.done()
-                                    }
-                                },
-                                {
-                                    title: "Cancel",
-                                    handler: () => {
-                                        animate.cancel()
-                                    }
+        navigationView.navigationBarTitle($l10n("LIST"))
+        // pinTitleView() 方法将会始终保持 titleView 可见
+        navigationView.navigationBarItems.setTitleView(searchBar).pinTitleView()
+        navigationView.navigationBarItems.setLeftButtons([
+            {
+                symbol: "plus.circle",
+                tapped: animate => {
+                    animate.start()
+                    $ui.alert({
+                        title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
+                        actions: [
+                            {
+                                title: "OK",
+                                handler: () => {
+                                    animate.done()
                                 }
-                            ]
-                        })
-                    }
+                            },
+                            {
+                                title: "Cancel",
+                                handler: () => {
+                                    animate.cancel()
+                                }
+                            }
+                        ]
+                    })
                 }
-            ])
+            }
+        ])
         // 修改导航条背景色
-        pageController.navigationController.navigationBar.setBackgroundColor($color("primarySurface"))
+        navigationView.navigationBar.setBackgroundColor($color("primarySurface"))
         // 添加视图
-        pageController.setView({
+        navigationView.setView({
             type: "list",
             props: {
                 data: ["Hello", "World"]
             },
             layout: $layout.fill
         })
-        return pageController.getPage()
+        return navigationView.getPage()
     }
 }
 

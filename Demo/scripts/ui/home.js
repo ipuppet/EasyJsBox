@@ -1,4 +1,4 @@
-const { PageController, NavigationItem } = require("../libs/easy-jsbox")
+const { NavigationView, NavigationBar } = require("../libs/easy-jsbox")
 
 class HomeUI {
     constructor(kernel) {
@@ -7,45 +7,44 @@ class HomeUI {
 
     getPageView() {
         // 初始化页面控制器
-        const pageController = new PageController()
+        const navigationView = new NavigationView()
         // 设置导航条元素
-        pageController.navigationItem
-            .setTitle($l10n("HOME"))
-            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeAlways) // 一直显示大标题
-            .setRightButtons([
-                {
-                    symbol: "plus.circle",
-                    tapped: animate => {
-                        animate.start()
-                        $ui.alert({
-                            title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
-                            actions: [
-                                {
-                                    title: "OK",
-                                    handler: () => {
-                                        animate.done()
-                                    }
-                                },
-                                {
-                                    title: "Cancel",
-                                    handler: () => {
-                                        animate.cancel()
-                                    }
+        navigationView.navigationBarTitle($l10n("HOME"))
+        navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.LargeTitleDisplayModeAlways) // 一直显示大标题
+        navigationView.navigationBarItems.setRightButtons([
+            {
+                symbol: "plus.circle",
+                tapped: animate => {
+                    animate.start()
+                    $ui.alert({
+                        title: $l10n("HOME_PLUS_BUTTON_MESSAGE"),
+                        actions: [
+                            {
+                                title: "OK",
+                                handler: () => {
+                                    animate.done()
                                 }
-                            ]
-                        })
-                    }
+                            },
+                            {
+                                title: "Cancel",
+                                handler: () => {
+                                    animate.cancel()
+                                }
+                            }
+                        ]
+                    })
                 }
-            ])
+            }
+        ])
         // 添加视图
-        pageController.setView({
+        navigationView.setView({
             type: "markdown",
             props: {
                 content: `## ${$l10n("HELLO_WORLD")}`
             },
             layout: $layout.fill
         })
-        return pageController.getPage()
+        return navigationView.getPage()
     }
 }
 

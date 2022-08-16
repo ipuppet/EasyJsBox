@@ -10,10 +10,6 @@
 
 ## Methods
 
-- uuid()
-
-    返回一个 uuid
-
 - l10n(language, content, override = true)
 
     手动设置 l10n 相关的数据，可在运行时进行

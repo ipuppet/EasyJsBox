@@ -13,8 +13,14 @@ class AppKernel extends Kernel {
      * 注入设置中的脚本类型方法
      */
     initSettingMethods() {
+        // animate = {
+        //     actionStart: actionStart, // 会出现加载动画
+        //     actionCancel: actionCancel, // 会直接恢复箭头图标
+        //     actionDone: actionDone, // 会出现对号，然后恢复箭头
+        //     touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
+        //     touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
+        // }
         this.setting.method.readme = animate => {
-            animate.touchHighlight()
             const content = $file.read("/README.md").string
             const sheet = new Sheet()
             sheet
@@ -31,7 +37,6 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.tips = animate => {
-            animate.touchHighlight()
             $ui.alert("Tips.")
         }
     }
