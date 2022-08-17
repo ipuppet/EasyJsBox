@@ -1,4 +1,4 @@
-const VERSION = "1.3.0"
+const { VERSION } = require("./version")
 
 String.prototype.trim = function (char, type) {
     if (char) {
@@ -12,106 +12,8 @@ String.prototype.trim = function (char, type) {
     return this.replace(/^\s+|\s+$/g, "")
 }
 
-/**
- * 对比版本号
- * @param {string} preVersion
- * @param {string} lastVersion
- * @returns {number} 1: preVersion 大, 0: 相等, -1: lastVersion 大
- */
-function versionCompare(preVersion = "", lastVersion = "") {
-    let sources = preVersion.split(".")
-    let dests = lastVersion.split(".")
-    let maxL = Math.max(sources.length, dests.length)
-    let result = 0
-    for (let i = 0; i < maxL; i++) {
-        let preValue = sources.length > i ? sources[i] : 0
-        let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
-        let lastValue = dests.length > i ? dests[i] : 0
-        let lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue)
-        if (preNum < lastNum) {
-            result = -1
-            break
-        } else if (preNum > lastNum) {
-            result = 1
-            break
-        }
-    }
-    return result
-}
-
-function l10n(language, content, override = true) {
-    if (typeof content === "string") {
-        const strings = {}
-        const strArr = content.split(";")
-        strArr.forEach(line => {
-            line = line.trim()
-            if (line !== "") {
-                const kv = line.split("=")
-                strings[kv[0].trim().slice(1, -1)] = kv[1].trim().slice(1, -1)
-            }
-        })
-        content = strings
-    }
-    const strings = $app.strings
-    if (override) {
-        strings[language] = Object.assign($app.strings[language], content)
-    } else {
-        strings[language] = Object.assign(content, $app.strings[language])
-    }
-    $app.strings = strings
-}
-
-function objectEqual(a, b) {
-    let aProps = Object.getOwnPropertyNames(a)
-    let bProps = Object.getOwnPropertyNames(b)
-    if (aProps.length !== bProps.length) {
-        return false
-    }
-    for (let i = 0; i < aProps.length; i++) {
-        let propName = aProps[i]
-
-        let propA = a[propName]
-        let propB = b[propName]
-        if (Array.isArray(propA)) {
-            for (let i = 0; i < propA.length; i++) {
-                if (!objectEqual(propA[i], propB[i])) {
-                    return false
-                }
-            }
-        } else if (typeof propA === "object") {
-            return objectEqual(propA, propB)
-        } else if (propA !== propB) {
-            return false
-        }
-    }
-    return true
-}
-
-/**
- * 压缩图片
- * @param {$image} image $image
- * @param {number} maxSize 图片最大尺寸 单位：像素
- * @returns {$image}
- */
-function compressImage(image, maxSize = 1280 * 720) {
-    const info = $imagekit.info(image)
-    if (info.height * info.width > maxSize) {
-        const scale = maxSize / (info.height * info.width)
-        image = $imagekit.scaleBy(image, scale)
-    }
-    return image
-}
-
-/**
- * @type {boolean}
- */
-const isTaio = $app.info.bundleID.includes("taio")
-
-const { UIKit } = require("./ui-kit")
-
 class Kernel {
     startTime = Date.now()
-    version = VERSION
     // 隐藏 jsbox 默认 nav 栏
     isUseJsboxNav = false
 
@@ -121,8 +23,99 @@ class Kernel {
         }
     }
 
-    l10n(language, content, override = true) {
-        l10n(language, content, override)
+    /**
+     * @type {boolean}
+     */
+    static isTaio = $app.info.bundleID.includes("taio")
+
+    static l10n(language, content, override = true) {
+        if (typeof content === "string") {
+            const strings = {}
+            const strArr = content.split(";")
+            strArr.forEach(line => {
+                line = line.trim()
+                if (line !== "") {
+                    const kv = line.split("=")
+                    strings[kv[0].trim().slice(1, -1)] = kv[1].trim().slice(1, -1)
+                }
+            })
+            content = strings
+        }
+        const strings = $app.strings
+        if (override) {
+            strings[language] = Object.assign($app.strings[language], content)
+        } else {
+            strings[language] = Object.assign(content, $app.strings[language])
+        }
+        $app.strings = strings
+    }
+
+    /**
+     * 压缩图片
+     * @param {$image} image $image
+     * @param {number} maxSize 图片最大尺寸 单位：像素
+     * @returns {$image}
+     */
+    static compressImage(image, maxSize = 1280 * 720) {
+        const info = $imagekit.info(image)
+        if (info.height * info.width > maxSize) {
+            const scale = maxSize / (info.height * info.width)
+            image = $imagekit.scaleBy(image, scale)
+        }
+        return image
+    }
+
+    static objectEqual(a, b) {
+        let aProps = Object.getOwnPropertyNames(a)
+        let bProps = Object.getOwnPropertyNames(b)
+        if (aProps.length !== bProps.length) {
+            return false
+        }
+        for (let i = 0; i < aProps.length; i++) {
+            let propName = aProps[i]
+
+            let propA = a[propName]
+            let propB = b[propName]
+            if (Array.isArray(propA)) {
+                for (let i = 0; i < propA.length; i++) {
+                    if (!objectEqual(propA[i], propB[i])) {
+                        return false
+                    }
+                }
+            } else if (typeof propA === "object") {
+                return objectEqual(propA, propB)
+            } else if (propA !== propB) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * 对比版本号
+     * @param {string} preVersion
+     * @param {string} lastVersion
+     * @returns {number} 1: preVersion 大, 0: 相等, -1: lastVersion 大
+     */
+    static versionCompare(preVersion = "", lastVersion = "") {
+        let sources = preVersion.split(".")
+        let dests = lastVersion.split(".")
+        let maxL = Math.max(sources.length, dests.length)
+        let result = 0
+        for (let i = 0; i < maxL; ++i) {
+            let preValue = sources.length > i ? sources[i] : 0
+            let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
+            let lastValue = dests.length > i ? dests[i] : 0
+            let lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue)
+            if (preNum < lastNum) {
+                result = -1
+                break
+            } else if (preNum > lastNum) {
+                result = 1
+                break
+            }
+        }
+        return result
     }
 
     debug(print, error) {
@@ -186,6 +179,7 @@ class Kernel {
                 view.events = {}
             }
             const oldLayoutSubviews = view.events.layoutSubviews
+            const { UIKit } = require("./ui-kit")
             view.events.layoutSubviews = () => {
                 $app.notify({
                     name: "interfaceOrientationEvent",
@@ -202,27 +196,33 @@ class Kernel {
         }
     }
 
-    async checkUpdate(callback) {
+    async checkUpdate() {
         const branche = "dev" // 更新版本，可选 master, dev
-        const res = await $http.get(`https://raw.githubusercontent.com/ipuppet/EasyJsBox/${branche}/dist/easy-jsbox.js`)
-        if (res.error) throw res.error
-        const reg = new RegExp(`.*VERSION.?=.?"([0-9\.]*)"`)
-        const latestVersion = res.data.match(reg)[1]
-        this.print(`easy-jsbox latest version: ${latestVersion}`)
-        if (versionCompare(latestVersion, VERSION) > 0) {
-            if (typeof callback === "function") {
-                callback(res.data)
-            }
+        const configRes = await $http.get(
+            `https://raw.githubusercontent.com/ipuppet/EasyJsBox/${branche}/src/version.js`
+        )
+        if (configRes.error) {
+            throw configRes.error
         }
+
+        const latestVersion = srcRes.data.match(/.*VERSION.?\"([0-9\.]+)\"/)[1]
+
+        this.print(`easy-jsbox latest version: ${latestVersion}`)
+        if (Kernel.versionCompare(latestVersion, VERSION) > 0) {
+            const srcRes = await $http.get(
+                `https://raw.githubusercontent.com/ipuppet/EasyJsBox/${branche}/dist/easy-jsbox.js`
+            )
+            if (srcRes.error) {
+                throw srcRes.error
+            }
+
+            return srcRes.data
+        }
+
+        return false
     }
 }
 
 module.exports = {
-    VERSION,
-    isTaio,
-    versionCompare,
-    l10n,
-    objectEqual,
-    compressImage,
     Kernel
 }

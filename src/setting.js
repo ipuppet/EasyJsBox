@@ -1,7 +1,7 @@
 const { Controller } = require("./controller")
-const { l10n } = require("./kernel")
-const { UIKit } = require("./ui-kit")
 const { FileStorage } = require("./file-storage")
+const { Kernel } = require("./kernel")
+const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
 const { ViewController } = require("./navigation-view/view-controller")
@@ -21,6 +21,23 @@ class SettingReadonlyError extends Error {
 }
 
 /**
+ * 脚本类型的动画
+ * @typedef {Object} ScriptAnimate
+ * @property {Function} animate.actionStart
+ * @property {Function} animate.actionCancel
+ * @property {Function} animate.actionDone
+ * @property {Function} animate.touchHighlightStart
+ * @property {Function} animate.touchHighlightEnd
+ *
+ * 用于存放 script 类型用到的方法
+ * @callback SettingMethodFunction
+ * @param {ScriptAnimate} animate
+ *
+ * @typedef {Object} SettingMethod
+ * @property {SettingMethodFunction} *
+ */
+
+/**
  * @property {function(key: string, value: any)} Setting.events.onSet 键值发生改变
  * @property {function(view: Object,title: string)} Setting.events.onChildPush 进入的子页面
  */
@@ -35,7 +52,9 @@ class Setting extends Controller {
     imagePath
     // 用来控制 child 类型
     viewController = new ViewController()
-    // 用于存放 script 类型用到的方法
+    /**
+     * @type {SettingMethod}
+     */
     method = {}
     // style
     rowHeight = 50
@@ -136,7 +155,7 @@ class Setting extends Controller {
     }
 
     loadL10n() {
-        l10n(
+        Kernel.l10n(
             "zh-Hans",
             `
             "OK" = "好";
@@ -172,7 +191,7 @@ class Setting extends Controller {
             `,
             false
         )
-        l10n(
+        Kernel.l10n(
             "en",
             `
             "OK" = "OK";
@@ -810,7 +829,9 @@ class Setting extends Controller {
             ],
             events: this.#withTouchEvents(id, {
                 tapped: () => {
-                    // 生成开始事件和结束事件动画，供函数调用
+                    /**
+                     * @type {ScriptAnimate}
+                     */
                     const animate = {
                         actionStart: actionStart, // 会出现加载动画
                         actionCancel: actionCancel, // 会直接恢复箭头图标
@@ -1348,7 +1369,7 @@ class Setting extends Controller {
                                                 return
                                             }
                                             // 控制压缩图片大小
-                                            const image = compressImage(resp.data.image)
+                                            const image = Kernel.compressImage(resp.data.image)
                                             this.fileStorage.write(
                                                 this.imagePath,
                                                 this.getImageName(key, true),

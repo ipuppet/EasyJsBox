@@ -72,9 +72,7 @@
 
     类型为 `image` 的项只能通过该方法获取 `$image` 对象。
 
-    `compress` 为可选参数，若为 `true` 则返回一个经过 `compressImage()` 压缩后的图片。
-
-    `compressImage()` 为 `EasyJsBox` 全局函数。
+    `compress` 为可选参数，若为 `true` 则返回一个经过 `Utils.compressImage()` 压缩后的图片。
 
 ### events
 

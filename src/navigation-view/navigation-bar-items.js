@@ -37,7 +37,6 @@ class BarTitleView extends View {
  * @property {Function} tapped
  * @property {Object} menu
  * @property {Object} events
- *
  */
 
 class BarButtonItem extends View {

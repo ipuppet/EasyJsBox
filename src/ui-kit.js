@@ -1,4 +1,4 @@
-const { isTaio } = require("./kernel")
+const { Kernel } = require("./kernel")
 
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
@@ -54,7 +54,7 @@ class UIKit {
     }
 
     static get statusBarHeight() {
-        return $app.isDebugging || isTaio ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
+        return $app.isDebugging || Kernel.isTaio ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
     }
 
     static get statusBarOrientation() {

@@ -9,7 +9,9 @@
             "source": "src/index.js",
             "includeNodeModules": false,
             "sourceMap": false,
-            "outputFormat": "commonjs"
+            "outputFormat": "commonjs",
+            "scopeHoist": true,
+            "optimize": true
         }
     }
 }

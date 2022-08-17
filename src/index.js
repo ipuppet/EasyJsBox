@@ -1,7 +1,8 @@
+const { VERSION } = require("./version")
 const { Controller } = require("./controller")
 const { FileStorage } = require("./file-storage")
 const { FixedFooterView } = require("./fixed-footer-view")
-const { VERSION, isTaio, versionCompare, l10n, objectEqual, compressImage, Kernel } = require("./kernel")
+const { Kernel } = require("./kernel")
 const { Matrix } = require("./matrix")
 const { Setting } = require("./setting")
 const { Sheet } = require("./sheet")
@@ -17,15 +18,10 @@ const { NavigationBarItems, BarButtonItem } = require("./navigation-view/navigat
 const { SearchBar, SearchBarController } = require("./navigation-view/search-bar")
 
 module.exports = {
+    VERSION,
     Controller,
     FileStorage,
     FixedFooterView,
-    VERSION,
-    isTaio,
-    versionCompare,
-    l10n,
-    objectEqual,
-    compressImage,
     Kernel,
     Matrix,
     Setting,
