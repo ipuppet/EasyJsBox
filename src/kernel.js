@@ -118,6 +118,22 @@ class Kernel {
         return result
     }
 
+    static deleteConfirm(message, conformAction) {
+        $ui.alert({
+            title: message,
+            actions: [
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        conformAction()
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
+
     debug(print, error) {
         this.debugMode = true
         $app.idleTimerDisabled = true

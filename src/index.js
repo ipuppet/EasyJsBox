@@ -1,5 +1,6 @@
 const { VERSION } = require("./version")
 const { Controller } = require("./controller")
+const { FileManager } = require("./file-manager")
 const { FileStorage } = require("./file-storage")
 const { FixedFooterView } = require("./fixed-footer-view")
 const { Kernel } = require("./kernel")
@@ -20,6 +21,7 @@ const { SearchBar, SearchBarController } = require("./navigation-view/search-bar
 module.exports = {
     VERSION,
     Controller,
+    FileManager,
     FileStorage,
     FixedFooterView,
     Kernel,
