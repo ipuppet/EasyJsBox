@@ -111,7 +111,7 @@ class FileManager {
                                     data: $data({ string: $(id).text }),
                                     path: info.path
                                 })
-                                $ui.success("SAVE_SUCCESS")
+                                $ui.success($l10n("SAVE_SUCCESS"))
                             }
                         }
                     ]
