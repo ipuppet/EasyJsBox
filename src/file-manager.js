@@ -32,6 +32,8 @@ class FileManager {
             "CANCEL" = "取消";
             "CLOSE" = "关闭";
             "SHARE" = "分享";
+            "SAVE" = "保存";
+            "SAVE_SUCCESS" = "保存成功";
             `
         )
         Kernel.l10n(
@@ -42,6 +44,8 @@ class FileManager {
             "CANCEL" = "Cancel";
             "CLOSE" = "Close";
             "SHARE" = "Share";
+            "SAVE" = "Save";
+            "SAVE_SUCCESS" = "Save Success";
             `
         )
     }
@@ -71,6 +75,49 @@ class FileManager {
 
     delete(info) {
         $file.delete(info.path)
+    }
+
+    edit(info) {
+        const file = $file.read(info.path)
+        if (file.image) {
+            $quicklook.open({
+                image: file.image
+            })
+        } else {
+            const sheet = new Sheet()
+            const id = $text.uuid
+            sheet
+                .setView({
+                    type: "code",
+                    layout: $layout.fill,
+                    props: {
+                        id: id,
+                        lineNumbers: true,
+                        theme: $device.isDarkMode ? "atom-one-dark" : "atom-one-light",
+                        text: file.string,
+                        insets: $insets(15, 15, 15, 15)
+                    }
+                })
+                .addNavBar({
+                    title: info.file,
+                    popButton: {
+                        title: $l10n("CLOSE")
+                    },
+                    rightButtons: [
+                        {
+                            title: $l10n("SAVE"),
+                            tapped: () => {
+                                $file.write({
+                                    data: $data({ string: $(id).text }),
+                                    path: info.path
+                                })
+                                $ui.success("SAVE_SUCCESS")
+                            }
+                        }
+                    ]
+                })
+            sheet.init().present()
+        }
     }
 
     getFiles(basePath = "") {
@@ -183,34 +230,7 @@ class FileManager {
                     if (info.isDirectory) {
                         this.#pushPage(info.file, this.getListView(info.path))
                     } else {
-                        const file = $file.read(info.path)
-                        if (file.image) {
-                            $quicklook.open({
-                                image: file.image
-                            })
-                        } else {
-                            const sheet = new Sheet()
-                            sheet
-                                .setView({
-                                    type: "code",
-                                    layout: $layout.fill,
-                                    props: {
-                                        id: "code-view",
-                                        editable: false,
-                                        lineNumbers: true, // 放在此处动态获取设置的更改
-                                        theme: $device.isDarkMode ? "atom-one-dark" : "atom-one-light",
-                                        text: file.string,
-                                        insets: $insets(15, 15, 15, 15)
-                                    }
-                                })
-                                .addNavBar({
-                                    title: info.file,
-                                    popButton: {
-                                        title: $l10n("CLOSE")
-                                    }
-                                })
-                            sheet.init().present()
-                        }
+                        this.edit(info)
                     }
                 }
             }
