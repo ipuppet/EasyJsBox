@@ -1,5 +1,5 @@
 const { Controller } = require("./controller")
-const { FileStorage } = require("./file-storage")
+const { FileStorageFileNotFoundError, FileStorage } = require("./file-storage")
 const { Kernel } = require("./kernel")
 const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")

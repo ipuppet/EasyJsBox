@@ -157,5 +157,7 @@ class FileStorage {
 }
 
 module.exports = {
+    FileStorageParameterError,
+    FileStorageFileNotFoundError,
     FileStorage
 }

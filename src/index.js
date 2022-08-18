@@ -1,7 +1,7 @@
 const { VERSION } = require("./version")
 const { Controller } = require("./controller")
 const { FileManager } = require("./file-manager")
-const { FileStorage } = require("./file-storage")
+const { FileStorageParameterError, FileStorageFileNotFoundError, FileStorage } = require("./file-storage")
 const { FixedFooterView } = require("./fixed-footer-view")
 const { Kernel } = require("./kernel")
 const { Matrix } = require("./matrix")
@@ -22,6 +22,8 @@ module.exports = {
     VERSION,
     Controller,
     FileManager,
+    FileStorageParameterError,
+    FileStorageFileNotFoundError,
     FileStorage,
     FixedFooterView,
     Kernel,
