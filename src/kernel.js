@@ -78,12 +78,12 @@ class Kernel {
             let propB = b[propName]
             if (Array.isArray(propA)) {
                 for (let i = 0; i < propA.length; i++) {
-                    if (!objectEqual(propA[i], propB[i])) {
+                    if (!Kernel.objectEqual(propA[i], propB[i])) {
                         return false
                     }
                 }
             } else if (typeof propA === "object") {
-                return objectEqual(propA, propB)
+                return Kernel.objectEqual(propA, propB)
             } else if (propA !== propB) {
                 return false
             }
