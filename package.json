@@ -1,0 +1,17 @@
+{
+    "license": "MIT",
+    "scripts": {
+        "build": "npx parcel build"
+    },
+    "jsbox": "dist/easy-jsbox.js",
+    "targets": {
+        "jsbox": {
+            "source": "src/index.js",
+            "includeNodeModules": false,
+            "sourceMap": false,
+            "outputFormat": "commonjs",
+            "scopeHoist": true,
+            "optimize": true
+        }
+    }
+}
