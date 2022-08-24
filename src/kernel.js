@@ -134,6 +134,25 @@ class Kernel {
         })
     }
 
+    static byteConversion(size) {
+        const byte = 1024.0
+
+        if (size < byte) {
+            return size + " B"
+        }
+        if (size < Math.pow(byte, 2)) {
+            return (size / byte).toFixed(2) + " KB"
+        }
+        if (size < Math.pow(byte, 3)) {
+            return (size / Math.pow(byte, 2)).toFixed(2) + " MB"
+        }
+        if (size < Math.pow(byte, 4)) {
+            return (size / Math.pow(byte, 3)).toFixed(2) + " GB"
+        }
+
+        return (size / Math.pow(byte, 4)).toFixed(2) + " TB"
+    }
+
     debug(print, error) {
         this.debugMode = true
         $app.idleTimerDisabled = true
