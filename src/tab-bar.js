@@ -211,36 +211,31 @@ class TabBarController extends Controller {
 
     #pageViews() {
         return Object.values(this.#pages).map(page => {
-            const view = page.definition
-            if (UIKit.scrollViewList.indexOf(view.views[0].type) > -1) {
-                if (view.views[0].props === undefined) {
-                    view.views[0].props = {}
+            if (UIKit.scrollViewList.indexOf(page.views[0].type) > -1) {
+                if (page.views[0].props === undefined) {
+                    page.views[0].props = {}
                 }
                 // indicatorInsets
-                if (view.views[0].props.indicatorInsets) {
-                    const old = view.views[0].props.indicatorInsets
-                    view.views[0].props.indicatorInsets = $insets(
+                if (page.views[0].props.indicatorInsets) {
+                    const old = page.views[0].props.indicatorInsets
+                    page.views[0].props.indicatorInsets = $insets(
                         old.top,
                         old.left,
                         old.bottom + this.contentOffset,
                         old.right
                     )
                 } else {
-                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
+                    page.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
                 // footer
-                if (view.views[0].footer === undefined) {
-                    view.views[0].footer = { props: {} }
-                } else if (view.views[0].footer.props === undefined) {
-                    view.views[0].footer.props = {}
-                }
-                if (view.views[0].props.footer.props.height) {
-                    view.views[0].props.footer.props.height += this.contentOffset
+                page.views[0].footer = Object.assign({ props: {} }, page.views[0].footer ?? {})
+                if (page.views[0].props.footer.props.height) {
+                    page.views[0].props.footer.props.height += this.contentOffset
                 } else {
-                    view.views[0].props.footer.props.height = this.contentOffset
+                    page.views[0].props.footer.props.height = this.contentOffset
                 }
             }
-            return view
+            return page.definition
         })
     }
 

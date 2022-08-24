@@ -95,10 +95,9 @@ class NavigationView {
         }
 
         // 修饰视图底部偏移
-        if (!this.view.props.footer) this.view.props.footer = {}
-        this.view.props.footer.props = Object.assign(this.view.props.footer.props ?? {}, {
-            height: (this.navigationBarItems.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
-        })
+        this.view.props.footer = Object.assign({ props: {} }, this.view.props.footer ?? {})
+        this.view.props.footer.props.height =
+            (this.navigationBarItems.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
 
         // 重写布局
         if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
