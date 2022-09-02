@@ -1,7 +1,7 @@
 {
     "license": "MIT",
     "scripts": {
-        "build": "npx parcel build"
+        "build": "parcel build"
     },
     "jsbox": "dist/easy-jsbox.js",
     "targets": {
