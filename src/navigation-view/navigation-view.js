@@ -200,26 +200,26 @@ class NavigationView {
             let titleView = {}
             if (this.navigationBarItems.titleView) {
                 // 修改 titleView 背景与 navigationBar 相同
-                const isHideBackground = this.navigationBar.prefersLargeTitles
+                const isHideBackground = this.navigationBar.prefersLargeTitles ? 0 : 1
                 titleView = View.create({
                     views: [
                         this.navigationBar.backgroundColor
                             ? {
                                   type: "view",
                                   props: {
-                                      hidden: isHideBackground,
+                                      alpha: isHideBackground,
                                       bgcolor: this.navigationBar.backgroundColor,
                                       id: this.navigationBar.id + "-title-view-background"
                                   },
                                   layout: $layout.fill
                               }
                             : UIKit.blurBox({
-                                  hidden: isHideBackground,
+                                  alpha: isHideBackground,
                                   id: this.navigationBar.id + "-title-view-background"
                               }),
                         UIKit.separatorLine({
                             id: this.navigationBar.id + "-title-view-underline",
-                            alpha: isHideBackground ? 0 : 1
+                            alpha: isHideBackground
                         }),
                         this.navigationBarItems.titleView.definition
                     ],

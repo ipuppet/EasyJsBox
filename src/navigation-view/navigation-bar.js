@@ -161,14 +161,19 @@ class NavigationBar extends View {
                       }),
                 UIKit.separatorLine({
                     id: this.id + "-underline",
-                    hidden: isHideBackground
+                    alpha: isHideBackground ? 0 : 1
                 }),
                 {
                     type: "view",
                     props: {
-                        hidden: true,
+                        alpha: 0,
                         bgcolor: $color("clear"),
                         id: this.id + "-large-title-mask"
+                    },
+                    events: {
+                        ready: sender => {
+                            sender.bgcolor = $(this.id + "-large-title")?.prev.bgcolor
+                        }
                     },
                     layout: $layout.fill
                 },
@@ -220,12 +225,11 @@ class NavigationBarController extends Controller {
 
     toNormal(permanent = true) {
         this.updateSelector()
+        this.selector.backgroundView.hidden = false
         $ui.animate({
             duration: 0.2,
             animation: () => {
-                // 显示下划线和背景
                 this.selector.underlineView.alpha = 1
-                this.selector.backgroundView.hidden = false
                 // 隐藏大标题，显示小标题
                 this.selector.smallTitleView.alpha = 1
                 this.selector.largeTitleView.alpha = 0
@@ -238,11 +242,11 @@ class NavigationBarController extends Controller {
 
     toLargeTitle(permanent = true) {
         this.updateSelector()
-        this.selector.underlineView.alpha = 0
         this.selector.backgroundView.hidden = true
         $ui.animate({
             duration: 0.2,
             animation: () => {
+                this.selector.underlineView.alpha = 0
                 this.selector.smallTitleView.alpha = 0
                 this.selector.largeTitleView.alpha = 1
             }
@@ -296,36 +300,27 @@ class NavigationBarController extends Controller {
     }
 
     #navigationBarScrollAction(contentOffset) {
-        if (this.navigationBar.navigationBarItems.isPinTitleView) {
-            // titleView 背景
-            if (this.navigationBar.navigationBarNormalHeight - contentOffset > 0) {
-                this.selector.titleViewBackgroundView.hidden = true
-            } else {
-                this.selector.titleViewBackgroundView.hidden = false
-            }
-        }
-
-        let trigger =
+        const trigger =
             this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever
                 ? 5
                 : this.navigationBar.navigationBarNormalHeight
+
         if (contentOffset > trigger) {
-            // 隐藏遮罩
-            this.selector.largeTitleMaskView.hidden = true
+            this.selector.backgroundView.hidden = false
             $ui.animate({
                 duration: 0.2,
                 animation: () => {
-                    // 显示下划线和背景
-                    this.selector.underlineView.hidden = false
-                    this.selector.backgroundView.hidden = false
+                    if (this.navigationBar.navigationBarItems.isPinTitleView) {
+                        this.selector.titleViewBackgroundView.alpha = 1
+                    }
+                    this.selector.largeTitleMaskView.alpha = 0
+                    this.selector.underlineView.alpha = 1
                 }
             })
         } else {
-            const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
-            this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
-            this.selector.largeTitleMaskView.hidden = false
-            // 隐藏背景
-            this.selector.underlineView.hidden = true
+            this.selector.largeTitleMaskView.alpha = 1
+            this.selector.underlineView.alpha = 0
+            this.selector.titleViewBackgroundView.alpha = 0
             this.selector.backgroundView.hidden = true
         }
     }
