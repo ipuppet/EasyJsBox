@@ -318,7 +318,7 @@ class NavigationBarController extends Controller {
                 }
             })
         } else {
-            this.selector.largeTitleMaskView.alpha = 1
+            this.selector.largeTitleMaskView.alpha = contentOffset > 0 ? 1 : 0
             this.selector.underlineView.alpha = 0
             this.selector.titleViewBackgroundView.alpha = 0
             this.selector.backgroundView.hidden = true
