@@ -281,7 +281,7 @@ class Setting extends Controller {
                 info.version && info.author
                     ? {
                           type: "view",
-                          props: { height: 50 },
+                          props: { height: 70 },
                           views: [
                               {
                                   type: "label",
