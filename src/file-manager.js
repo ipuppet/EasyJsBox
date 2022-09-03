@@ -187,7 +187,7 @@ class FileManager {
                         ready: sender => {
                             const info = sender.super.get("info").info
                             if (!info.isDirectory) {
-                                sender.text = Kernel.byteConversion($file.read(info.path).info.size)
+                                sender.text = Kernel.bytesToSize($file.read(info.path).info.size)
                             }
                         }
                     }

@@ -134,23 +134,13 @@ class Kernel {
         })
     }
 
-    static byteConversion(size) {
-        const byte = 1024.0
+    static bytesToSize(bytes) {
+        if (bytes === 0) return "0 B"
+        const k = 1024,
+            sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+            i = Math.floor(Math.log(bytes) / Math.log(k))
 
-        if (size < byte) {
-            return size + " B"
-        }
-        if (size < Math.pow(byte, 2)) {
-            return (size / byte).toFixed(2) + " KB"
-        }
-        if (size < Math.pow(byte, 3)) {
-            return (size / Math.pow(byte, 2)).toFixed(2) + " MB"
-        }
-        if (size < Math.pow(byte, 4)) {
-            return (size / Math.pow(byte, 3)).toFixed(2) + " GB"
-        }
-
-        return (size / Math.pow(byte, 4)).toFixed(2) + " TB"
+        return (bytes / Math.pow(k, i)).toPrecision(3) + " " + sizes[i]
     }
 
     debug(print, error) {
