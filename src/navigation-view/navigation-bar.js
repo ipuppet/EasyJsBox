@@ -304,13 +304,14 @@ class NavigationBarController extends Controller {
             this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever
                 ? 5
                 : this.navigationBar.navigationBarNormalHeight
+        const hasTitleView = this.selector.titleViewBackgroundView !== undefined
 
         if (contentOffset > trigger) {
             this.selector.backgroundView.hidden = false
             $ui.animate({
                 duration: 0.2,
                 animation: () => {
-                    if (this.navigationBar.navigationBarItems.isPinTitleView) {
+                    if (hasTitleView && this.navigationBar.navigationBarItems.isPinTitleView) {
                         this.selector.titleViewBackgroundView.alpha = 1
                     }
                     this.selector.largeTitleMaskView.alpha = 0
@@ -320,7 +321,9 @@ class NavigationBarController extends Controller {
         } else {
             this.selector.largeTitleMaskView.alpha = contentOffset > 0 ? 1 : 0
             this.selector.underlineView.alpha = 0
-            this.selector.titleViewBackgroundView.alpha = 0
+            if (hasTitleView) {
+                this.selector.titleViewBackgroundView.alpha = 0
+            }
             this.selector.backgroundView.hidden = true
         }
     }
