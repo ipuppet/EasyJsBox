@@ -8,6 +8,7 @@ const { Matrix } = require("./matrix")
 const { Setting } = require("./setting")
 const { Sheet } = require("./sheet")
 const { TabBarCellView, TabBarHeaderView, TabBarController } = require("./tab-bar")
+const { Tasks } = require("./tasks")
 const { UIKit } = require("./ui-kit")
 const { UILoading } = require("./ui-loading")
 const { ValidationError } = require("./validation-error")
@@ -33,6 +34,7 @@ module.exports = {
     TabBarCellView,
     TabBarHeaderView,
     TabBarController,
+    Tasks,
     UIKit,
     UILoading,
     ValidationError,
