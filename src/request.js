@@ -61,7 +61,7 @@ class Request {
      * @param {number} cacheLife ms
      * @returns
      */
-    async request(path, method, body = {}, cacheLife = this.cacheLife) {
+    async request(path, method, body = {}, header = {}, cacheLife = this.cacheLife) {
         const url = this.baseUrl + path
 
         let cacheKey
@@ -81,7 +81,14 @@ class Request {
             if (this.isLogRequest) {
                 this.kernel.print(`sending request [${method}]: ${url}`)
             }
+
             const resp = await $http.request({
+                header: Object.assign(
+                    {
+                        "Content-Type": "application/json"
+                    },
+                    header
+                ),
                 url,
                 method,
                 body
