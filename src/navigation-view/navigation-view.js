@@ -83,9 +83,8 @@ class NavigationView {
                         props: { clipsToBounds: true },
                         views: [this.view.props.header],
                         layout: (make, view) => {
-                            make.top.inset(height)
-                            make.height.equalTo(this.view.props.header?.props?.height ?? 0)
-                            make.width.equalTo(view.super)
+                            make.top.equalTo(height)
+                            make.bottom.width.equalTo(view.super)
                         }
                     }
                 ]
