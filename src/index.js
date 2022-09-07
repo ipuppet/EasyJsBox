@@ -5,6 +5,7 @@ const { FileStorageParameterError, FileStorageFileNotFoundError, FileStorage } =
 const { FixedFooterView } = require("./fixed-footer-view")
 const { Kernel } = require("./kernel")
 const { Matrix } = require("./matrix")
+const { Request } = require("./request")
 const { Setting } = require("./setting")
 const { Sheet } = require("./sheet")
 const { TabBarCellView, TabBarHeaderView, TabBarController } = require("./tab-bar")
@@ -29,6 +30,7 @@ module.exports = {
     FixedFooterView,
     Kernel,
     Matrix,
+    Request,
     Setting,
     Sheet,
     TabBarCellView,

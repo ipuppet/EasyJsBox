@@ -1127,43 +1127,34 @@ class Setting extends Controller {
             views: [
                 this.createLineLabel(title, icon),
                 {
-                    type: "view",
-                    views: [
-                        {
-                            type: "input",
-                            props: {
-                                align: $align.right,
-                                bgcolor: $color("clear"),
-                                textColor: $color("secondaryText"),
-                                text: this.get(key)
-                            },
-                            layout: function (make, view) {
-                                make.right.inset(0)
-                                make.size.equalTo(view.super)
-                            },
-                            events: {
-                                didBeginEditing: () => {
-                                    // 防止键盘遮挡
-                                    if (!$app.autoKeyboardEnabled) {
-                                        $app.autoKeyboardEnabled = true
-                                    }
-                                },
-                                returned: sender => {
-                                    // 结束编辑，由 didEndEditing 进行保存
-                                    sender.blur()
-                                },
-                                didEndEditing: sender => {
-                                    this.set(key, sender.text)
-                                    sender.blur()
-                                }
-                            }
-                        }
-                    ],
+                    type: "input",
+                    props: {
+                        align: $align.right,
+                        bgcolor: $color("clear"),
+                        textColor: $color("secondaryText"),
+                        text: this.get(key)
+                    },
                     layout: (make, view) => {
                         // 与标题间距 this.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
                         make.height.equalTo(view.super)
+                    },
+                    events: {
+                        didBeginEditing: () => {
+                            // 防止键盘遮挡
+                            if (!$app.autoKeyboardEnabled) {
+                                $app.autoKeyboardEnabled = true
+                            }
+                        },
+                        returned: sender => {
+                            // 结束编辑，由 didEndEditing 进行保存
+                            sender.blur()
+                        },
+                        didEndEditing: sender => {
+                            this.set(key, sender.text)
+                            sender.blur()
+                        }
                     }
                 }
             ],
