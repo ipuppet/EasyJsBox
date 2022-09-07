@@ -12,6 +12,7 @@ class Request {
     #ignoreCacheExp = false
     cacheLife = 1000 * 60 * 60 * 24 * 30 // ms
     isLogRequest = true
+    timeout = 5
     /**
      * @type {Kernel}
      */
@@ -91,7 +92,8 @@ class Request {
                 ),
                 url,
                 method,
-                body
+                body,
+                timeout: this.timeout
             })
             if (resp?.response?.statusCode >= 400) {
                 let errMsg = resp.data
