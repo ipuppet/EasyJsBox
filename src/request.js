@@ -11,6 +11,7 @@ class Request {
     #useCache = false
     #ignoreCacheExp = false
     cacheLife = 1000 * 60 * 60 * 24 * 30 // ms
+    isLogRequest = true
     /**
      * @type {Kernel}
      */
@@ -69,14 +70,16 @@ class Request {
             cacheKey = this.getCacheKey(path)
             const cache = this.getCache(cacheKey)
             if (cache && (this.#ignoreCacheExp || cache.exp > Date.now())) {
-                this.kernel.print("get data from cache: " + url)
+                if (this.isLogRequest) {
+                    this.kernel.print("get data from cache: " + url)
+                }
                 return cache.data
             }
         }
 
         try {
-            if (useCache) {
-                this.kernel.print("sending request: " + url)
+            if (this.isLogRequest) {
+                this.kernel.print(`sending request [${method}]: ${url}`)
             }
             const resp = await $http.request({
                 url,
