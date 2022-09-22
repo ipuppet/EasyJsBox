@@ -171,6 +171,26 @@ class FileManager {
                         make.centerY.equalTo(view.super)
                         make.left.equalTo(view.prev.right).offset(this.edges)
                     }
+                },
+                {
+                    type: "label",
+                    props: {
+                        id: "size",
+                        color: $color("secondaryText"),
+                        lines: 1
+                    },
+                    layout: (make, view) => {
+                        make.centerY.equalTo(view.super)
+                        make.right.inset(this.edges)
+                    },
+                    events: {
+                        ready: sender => {
+                            const info = sender.super.get("info").info
+                            if (!info.isDirectory) {
+                                sender.text = Kernel.bytesToSize($file.read(info.path).info.size)
+                            }
+                        }
+                    }
                 }
             ]
         }

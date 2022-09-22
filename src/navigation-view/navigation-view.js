@@ -83,9 +83,8 @@ class NavigationView {
                         props: { clipsToBounds: true },
                         views: [this.view.props.header],
                         layout: (make, view) => {
-                            make.top.inset(height)
-                            make.height.equalTo(this.view.props.header?.props?.height ?? 0)
-                            make.width.equalTo(view.super)
+                            make.top.equalTo(height)
+                            make.bottom.width.equalTo(view.super)
                         }
                     }
                 ]
@@ -95,10 +94,9 @@ class NavigationView {
         }
 
         // 修饰视图底部偏移
-        if (!this.view.props.footer) this.view.props.footer = {}
-        this.view.props.footer.props = Object.assign(this.view.props.footer.props ?? {}, {
-            height: (this.navigationBarItems.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
-        })
+        this.view.props.footer = Object.assign({ props: {} }, this.view.props.footer ?? {})
+        this.view.props.footer.props.height =
+            (this.navigationBarItems.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
 
         // 重写布局
         if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
@@ -201,26 +199,26 @@ class NavigationView {
             let titleView = {}
             if (this.navigationBarItems.titleView) {
                 // 修改 titleView 背景与 navigationBar 相同
-                const isHideBackground = this.navigationBar.prefersLargeTitles
+                const isHideBackground = this.navigationBar.prefersLargeTitles ? 0 : 1
                 titleView = View.create({
                     views: [
                         this.navigationBar.backgroundColor
                             ? {
                                   type: "view",
                                   props: {
-                                      hidden: isHideBackground,
+                                      alpha: isHideBackground,
                                       bgcolor: this.navigationBar.backgroundColor,
                                       id: this.navigationBar.id + "-title-view-background"
                                   },
                                   layout: $layout.fill
                               }
                             : UIKit.blurBox({
-                                  hidden: isHideBackground,
+                                  alpha: isHideBackground,
                                   id: this.navigationBar.id + "-title-view-background"
                               }),
                         UIKit.separatorLine({
                             id: this.navigationBar.id + "-title-view-underline",
-                            alpha: isHideBackground ? 0 : 1
+                            alpha: isHideBackground
                         }),
                         this.navigationBarItems.titleView.definition
                     ],

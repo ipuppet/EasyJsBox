@@ -281,6 +281,8 @@ const animate = {
 
 #### input
 
+`secure` 为 `true` 时将以密码框的形式显示。
+
 ```json
 {
     "icon": [
@@ -289,6 +291,7 @@ const animate = {
     ],
     "title": "TITLE",
     "type": "input",
+    "secure": false,
     "key": "title",
     "value": "Title"
 }

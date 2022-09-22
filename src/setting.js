@@ -2,6 +2,7 @@ const { Controller } = require("./controller")
 const { FileStorageFileNotFoundError, FileStorage } = require("./file-storage")
 const { Kernel } = require("./kernel")
 const { UIKit } = require("./ui-kit")
+const { Sheet } = require("./sheet")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
 const { ViewController } = require("./navigation-view/view-controller")
@@ -55,7 +56,29 @@ class Setting extends Controller {
     /**
      * @type {SettingMethod}
      */
-    method = {}
+    method = {
+        readme: () => {
+            const content = (() => {
+                const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
+                try {
+                    return __README__[file] ?? __README__["README.md"]
+                } catch {
+                    return $file.read(file)?.string ?? $file.read("README.md")?.string
+                }
+            })()
+            const sheet = new Sheet()
+            sheet
+                .setView({
+                    type: "markdown",
+                    props: { content: content },
+                    layout: (make, view) => {
+                        make.size.equalTo(view.super)
+                    }
+                })
+                .init()
+                .present()
+        }
+    }
     // style
     rowHeight = 50
     edgeOffset = 10
@@ -159,6 +182,7 @@ class Setting extends Controller {
             "zh-Hans",
             `
             "OK" = "好";
+            "DONE" = "完成";
             "CANCEL" = "取消";
             "CLEAR" = "清除";
             "BACK" = "返回";
@@ -166,6 +190,7 @@ class Setting extends Controller {
             "SUCCESS" = "成功";
             "LOADING" = "加载中";
             "INVALID_VALUE" = "非法参数";
+            "CONFIRM_CHANGES" = "数据已变化，确认修改？";
             
             "SETTING" = "设置";
             "GENERAL" = "一般";
@@ -195,6 +220,7 @@ class Setting extends Controller {
             "en",
             `
             "OK" = "OK";
+            "DONE" = "Done";
             "CANCEL" = "Cancel";
             "CLEAR" = "Clear";
             "BACK" = "Back";
@@ -202,6 +228,7 @@ class Setting extends Controller {
             "SUCCESS" = "Success";
             "LOADING" = "Loading";
             "INVALID_VALUE" = "Invalid value";
+            "CONFIRM_CHANGES" = "The data has changed, confirm the modification?";
 
             "SETTING" = "Setting";
             "GENERAL" = "General";
@@ -277,31 +304,31 @@ class Setting extends Controller {
                     info = __INFO__
                 } catch {}
             }
-            this.#footer =
-                info.version && info.author
-                    ? {
-                          type: "view",
-                          props: { height: 130 },
-                          views: [
-                              {
-                                  type: "label",
-                                  props: {
-                                      font: $font(14),
-                                      text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
-                                      textColor: $color({
-                                          light: "#C0C0C0",
-                                          dark: "#545454"
-                                      }),
-                                      align: $align.center
-                                  },
-                                  layout: make => {
-                                      make.left.right.inset(0)
-                                      make.top.inset(10)
-                                  }
-                              }
-                          ]
-                      }
-                    : {}
+            this.#footer = {}
+            if (info.version && info.author) {
+                this.#footer = {
+                    type: "view",
+                    props: { height: 70 },
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                font: $font(14),
+                                text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
+                                textColor: $color({
+                                    light: "#C0C0C0",
+                                    dark: "#545454"
+                                }),
+                                align: $align.center
+                            },
+                            layout: make => {
+                                make.left.right.inset(0)
+                                make.top.inset(10)
+                            }
+                        }
+                    ]
+                }
+            }
         }
         return this.#footer
     }
@@ -448,6 +475,7 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.super)
                         make.height.equalTo(view.super)
                         make.left.equalTo(view.prev.right).offset(this.edgeOffset)
+                        make.width.greaterThanOrEqualTo(100)
                     }
                 }
             ],
@@ -616,58 +644,6 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.prev)
                         make.right.inset(0)
                         make.size.equalTo(50)
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
-    }
-
-    createNumber(key, icon, title) {
-        const id = this.getId(key)
-        const labelId = `${id}-label`
-        return {
-            type: "view",
-            props: {
-                id,
-                selectable: true
-            },
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "label",
-                    props: {
-                        id: labelId,
-                        align: $align.right,
-                        text: this.get(key)
-                    },
-                    events: {
-                        tapped: () => {
-                            $input.text({
-                                type: $kbType.decimal,
-                                text: this.get(key),
-                                placeholder: title,
-                                handler: text => {
-                                    const isNumber = str => {
-                                        const reg = /^[0-9]+.?[0-9]*$/
-                                        return reg.test(str)
-                                    }
-                                    if (text === "" || !isNumber(text)) {
-                                        $ui.toast($l10n("INVALID_VALUE"))
-                                        return
-                                    }
-
-                                    this.set(key, text)
-                                    $(labelId).text = text
-                                }
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.centerY.equalTo(view.prev)
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
-                        make.width.equalTo(100)
                     }
                 }
             ],
@@ -1116,8 +1092,29 @@ class Setting extends Controller {
         }
     }
 
-    createInput(key, icon, title) {
+    createNumber(key, icon, title) {
+        return this.createInput(key, icon, title, false, $kbType.decimal, text => {
+            const isNumber = str => {
+                const reg = /^[0-9]+.?[0-9]*$/
+                return reg.test(str)
+            }
+            if (text === "" || !isNumber(text)) {
+                $ui.toast($l10n("INVALID_VALUE"))
+                return false
+            }
+
+            return this.set(key, Number(text))
+        })
+    }
+
+    createInput(key, icon, title, secure = false, kbType = $kbType.default, saveFunc) {
+        if (saveFunc === undefined) {
+            saveFunc = data => {
+                return this.set(key, data)
+            }
+        }
         const id = this.getId(key)
+        const inputId = id + "-input"
         return {
             type: "view",
             props: {
@@ -1127,43 +1124,104 @@ class Setting extends Controller {
             views: [
                 this.createLineLabel(title, icon),
                 {
-                    type: "view",
-                    views: [
-                        {
-                            type: "input",
-                            props: {
-                                align: $align.right,
-                                bgcolor: $color("clear"),
-                                textColor: $color("secondaryText"),
-                                text: this.get(key)
-                            },
-                            layout: function (make, view) {
-                                make.right.inset(0)
-                                make.size.equalTo(view.super)
-                            },
-                            events: {
-                                didBeginEditing: () => {
-                                    // 防止键盘遮挡
-                                    if (!$app.autoKeyboardEnabled) {
-                                        $app.autoKeyboardEnabled = true
+                    type: "input",
+                    props: {
+                        id: inputId,
+                        type: kbType,
+                        align: $align.right,
+                        bgcolor: $color("clear"),
+                        textColor: $color("secondaryText"),
+                        text: this.get(key),
+                        secure: secure,
+                        accessoryView: UIKit.blurBox({ height: 44 }, [
+                            UIKit.separatorLine({}, UIKit.align.top),
+                            {
+                                type: "button",
+                                props: {
+                                    title: $l10n("DONE"),
+                                    bgcolor: $color("clear"),
+                                    titleColor: $color("primaryText")
+                                },
+                                layout: (make, view) => {
+                                    make.right.inset(this.edgeOffset)
+                                    make.centerY.equalTo(view.super)
+                                },
+                                events: {
+                                    tapped: () => {
+                                        const sender = $(inputId)
+                                        if (saveFunc(sender.text)) {
+                                            sender.blur()
+                                        }
                                     }
+                                }
+                            },
+                            {
+                                type: "button",
+                                props: {
+                                    title: $l10n("CANCEL"),
+                                    bgcolor: $color("clear"),
+                                    titleColor: $color("primaryText")
                                 },
-                                returned: sender => {
-                                    // 结束编辑，由 didEndEditing 进行保存
-                                    sender.blur()
+                                layout: (make, view) => {
+                                    make.left.inset(this.edgeOffset)
+                                    make.centerY.equalTo(view.super)
                                 },
-                                didEndEditing: sender => {
-                                    this.set(key, sender.text)
-                                    sender.blur()
+                                events: {
+                                    tapped: () => {
+                                        const sender = $(inputId)
+                                        const savedData = this.get(key, "")
+                                        if (sender.text !== savedData) {
+                                            sender.text = savedData
+                                        }
+                                        sender.blur()
+                                    }
                                 }
                             }
-                        }
-                    ],
+                        ])
+                    },
                     layout: (make, view) => {
                         // 与标题间距 this.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
+                        make.width.greaterThanOrEqualTo(50)
                         make.height.equalTo(view.super)
+                    },
+                    events: {
+                        didBeginEditing: sender => {
+                            // 使输入可见
+                            sender.secure = false
+                            // 防止键盘遮挡
+                            if (!$app.autoKeyboardEnabled) {
+                                $app.autoKeyboardEnabled = true
+                            }
+                        },
+                        returned: sender => {
+                            if (saveFunc(sender.text)) {
+                                sender.blur()
+                            }
+                        },
+                        didEndEditing: async sender => {
+                            const savedData = this.get(key, "")
+                            if (sender.text !== String(savedData)) {
+                                const res = await $ui.alert({
+                                    title: $l10n("CONFIRM_CHANGES"),
+                                    message: `${savedData}\n===============\n${sender.text}`,
+                                    actions: [{ title: $l10n("OK") }, { title: $l10n("CANCEL") }]
+                                })
+                                if (res.index === 0) {
+                                    if (!saveFunc(sender.text)) {
+                                        sender.text = savedData
+                                    }
+                                } else {
+                                    sender.text = savedData
+                                }
+                            }
+
+                            // 恢复 secure
+                            if (secure) {
+                                sender.secure = secure
+                            }
+                        }
                     }
                 }
             ],
@@ -1424,9 +1482,6 @@ class Setting extends Controller {
                     case "string":
                         row = this.createString(item.key, item.icon, item.title)
                         break
-                    case "number":
-                        row = this.createNumber(item.key, item.icon, item.title)
-                        break
                     case "info":
                         row = this.createInfo(item.icon, item.title, value)
                         break
@@ -1445,8 +1500,11 @@ class Setting extends Controller {
                     case "date":
                         row = this.createDate(item.key, item.icon, item.title, item.mode)
                         break
+                    case "number":
+                        row = this.createNumber(item.key, item.icon, item.title)
+                        break
                     case "input":
-                        row = this.createInput(item.key, item.icon, item.title)
+                        row = this.createInput(item.key, item.icon, item.title, item.secure)
                         break
                     case "icon":
                         row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
