@@ -452,6 +452,7 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.super)
                         make.height.equalTo(view.super)
                         make.left.equalTo(view.prev.right).offset(this.edgeOffset)
+                        make.width.greaterThanOrEqualTo(100)
                     }
                 }
             ],
@@ -628,55 +629,18 @@ class Setting extends Controller {
     }
 
     createNumber(key, icon, title) {
-        const id = this.getId(key)
-        const labelId = `${id}-label`
-        return {
-            type: "view",
-            props: {
-                id,
-                selectable: true
-            },
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "label",
-                    props: {
-                        id: labelId,
-                        align: $align.right,
-                        text: this.get(key)
-                    },
-                    events: {
-                        tapped: () => {
-                            $input.text({
-                                type: $kbType.decimal,
-                                text: this.get(key),
-                                placeholder: title,
-                                handler: text => {
-                                    const isNumber = str => {
-                                        const reg = /^[0-9]+.?[0-9]*$/
-                                        return reg.test(str)
-                                    }
-                                    if (text === "" || !isNumber(text)) {
-                                        $ui.toast($l10n("INVALID_VALUE"))
-                                        return
-                                    }
+        return this.createInput(key, icon, title, false, $kbType.decimal, text => {
+            const isNumber = str => {
+                const reg = /^[0-9]+.?[0-9]*$/
+                return reg.test(str)
+            }
+            if (text === "" || !isNumber(text)) {
+                $ui.toast($l10n("INVALID_VALUE"))
+                return false
+            }
 
-                                    this.set(key, text)
-                                    $(labelId).text = text
-                                }
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.centerY.equalTo(view.prev)
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
-                        make.width.equalTo(100)
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
+            return this.set(key, Number(text))
+        })
     }
 
     createStepper(key, icon, title, min, max) {
@@ -1120,7 +1084,12 @@ class Setting extends Controller {
         }
     }
 
-    createInput(key, icon, title, secure = false) {
+    createInput(key, icon, title, secure = false, kbType = $kbType.default, saveFunc) {
+        if (saveFunc === undefined) {
+            saveFunc = data => {
+                return this.set(key, data)
+            }
+        }
         const id = this.getId(key)
         const inputId = id + "-input"
         return {
@@ -1135,6 +1104,7 @@ class Setting extends Controller {
                     type: "input",
                     props: {
                         id: inputId,
+                        type: kbType,
                         align: $align.right,
                         bgcolor: $color("clear"),
                         textColor: $color("secondaryText"),
@@ -1156,8 +1126,9 @@ class Setting extends Controller {
                                 events: {
                                     tapped: () => {
                                         const sender = $(inputId)
-                                        this.set(key, sender.text)
-                                        sender.blur()
+                                        if (saveFunc(sender.text)) {
+                                            sender.blur()
+                                        }
                                     }
                                 }
                             },
@@ -1175,7 +1146,10 @@ class Setting extends Controller {
                                 events: {
                                     tapped: () => {
                                         const sender = $(inputId)
-                                        sender.text = this.get(key)
+                                        const savedData = this.get(key)
+                                        if (sender.text !== savedData) {
+                                            sender.text = savedData
+                                        }
                                         sender.blur()
                                     }
                                 }
@@ -1199,26 +1173,31 @@ class Setting extends Controller {
                             }
                         },
                         returned: sender => {
-                            this.set(key, sender.text)
-                            sender.blur()
+                            if (saveFunc(sender.text)) {
+                                sender.blur()
+                            }
                         },
                         didEndEditing: async sender => {
                             const savedData = this.get(key)
-                            if (sender.text !== savedData) {
+                            if (sender.text !== String(savedData)) {
                                 const res = await $ui.alert({
                                     title: $l10n("CONFIRM_CHANGES"),
                                     message: `${savedData}\n===============\n${sender.text}`,
                                     actions: [{ title: $l10n("OK") }, { title: $l10n("CANCEL") }]
                                 })
                                 if (res.index === 0) {
-                                    this.set(key, sender.text)
+                                    if (!saveFunc(sender.text)) {
+                                        sender.text = savedData
+                                    }
                                 } else {
                                     sender.text = savedData
                                 }
                             }
 
                             // 恢复 secure
-                            sender.secure = secure
+                            if (secure) {
+                                sender.secure = secure
+                            }
                         }
                     }
                 }
