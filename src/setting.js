@@ -475,7 +475,7 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.super)
                         make.height.equalTo(view.super)
                         make.left.equalTo(view.prev.right).offset(this.edgeOffset)
-                        make.width.greaterThanOrEqualTo(100)
+                        make.width.greaterThanOrEqualTo(10)
                     }
                 }
             ],
