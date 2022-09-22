@@ -1146,7 +1146,7 @@ class Setting extends Controller {
                                 events: {
                                     tapped: () => {
                                         const sender = $(inputId)
-                                        const savedData = this.get(key)
+                                        const savedData = this.get(key, "")
                                         if (sender.text !== savedData) {
                                             sender.text = savedData
                                         }
@@ -1178,7 +1178,7 @@ class Setting extends Controller {
                             }
                         },
                         didEndEditing: async sender => {
-                            const savedData = this.get(key)
+                            const savedData = this.get(key, "")
                             if (sender.text !== String(savedData)) {
                                 const res = await $ui.alert({
                                     title: $l10n("CONFIRM_CHANGES"),
