@@ -2,6 +2,7 @@ const { Controller } = require("./controller")
 const { FileStorageFileNotFoundError, FileStorage } = require("./file-storage")
 const { Kernel } = require("./kernel")
 const { UIKit } = require("./ui-kit")
+const { Sheet } = require("./sheet")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
 const { ViewController } = require("./navigation-view/view-controller")
@@ -55,7 +56,29 @@ class Setting extends Controller {
     /**
      * @type {SettingMethod}
      */
-    method = {}
+    method = {
+        readme: () => {
+            const content = (() => {
+                const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
+                try {
+                    return __README__[file] ?? __README__["README.md"]
+                } catch {
+                    return $file.read(file)?.string ?? $file.read("README.md")?.string
+                }
+            })()
+            const sheet = new Sheet()
+            sheet
+                .setView({
+                    type: "markdown",
+                    props: { content: content },
+                    layout: (make, view) => {
+                        make.size.equalTo(view.super)
+                    }
+                })
+                .init()
+                .present()
+        }
+    }
     // style
     rowHeight = 50
     edgeOffset = 10
@@ -281,31 +304,31 @@ class Setting extends Controller {
                     info = __INFO__
                 } catch {}
             }
-            this.#footer =
-                info.version && info.author
-                    ? {
-                          type: "view",
-                          props: { height: 70 },
-                          views: [
-                              {
-                                  type: "label",
-                                  props: {
-                                      font: $font(14),
-                                      text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
-                                      textColor: $color({
-                                          light: "#C0C0C0",
-                                          dark: "#545454"
-                                      }),
-                                      align: $align.center
-                                  },
-                                  layout: make => {
-                                      make.left.right.inset(0)
-                                      make.top.inset(10)
-                                  }
-                              }
-                          ]
-                      }
-                    : {}
+            this.#footer = {}
+            if (info.version && info.author) {
+                this.#footer = {
+                    type: "view",
+                    props: { height: 70 },
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                font: $font(14),
+                                text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
+                                textColor: $color({
+                                    light: "#C0C0C0",
+                                    dark: "#545454"
+                                }),
+                                align: $align.center
+                            },
+                            layout: make => {
+                                make.left.right.inset(0)
+                                make.top.inset(10)
+                            }
+                        }
+                    ]
+                }
+            }
         }
         return this.#footer
     }
@@ -626,21 +649,6 @@ class Setting extends Controller {
             ],
             layout: $layout.fill
         }
-    }
-
-    createNumber(key, icon, title) {
-        return this.createInput(key, icon, title, false, $kbType.decimal, text => {
-            const isNumber = str => {
-                const reg = /^[0-9]+.?[0-9]*$/
-                return reg.test(str)
-            }
-            if (text === "" || !isNumber(text)) {
-                $ui.toast($l10n("INVALID_VALUE"))
-                return false
-            }
-
-            return this.set(key, Number(text))
-        })
     }
 
     createStepper(key, icon, title, min, max) {
@@ -1084,6 +1092,21 @@ class Setting extends Controller {
         }
     }
 
+    createNumber(key, icon, title) {
+        return this.createInput(key, icon, title, false, $kbType.decimal, text => {
+            const isNumber = str => {
+                const reg = /^[0-9]+.?[0-9]*$/
+                return reg.test(str)
+            }
+            if (text === "" || !isNumber(text)) {
+                $ui.toast($l10n("INVALID_VALUE"))
+                return false
+            }
+
+            return this.set(key, Number(text))
+        })
+    }
+
     createInput(key, icon, title, secure = false, kbType = $kbType.default, saveFunc) {
         if (saveFunc === undefined) {
             saveFunc = data => {
@@ -1459,9 +1482,6 @@ class Setting extends Controller {
                     case "string":
                         row = this.createString(item.key, item.icon, item.title)
                         break
-                    case "number":
-                        row = this.createNumber(item.key, item.icon, item.title)
-                        break
                     case "info":
                         row = this.createInfo(item.icon, item.title, value)
                         break
@@ -1479,6 +1499,9 @@ class Setting extends Controller {
                         break
                     case "date":
                         row = this.createDate(item.key, item.icon, item.title, item.mode)
+                        break
+                    case "number":
+                        row = this.createNumber(item.key, item.icon, item.title)
                         break
                     case "input":
                         row = this.createInput(item.key, item.icon, item.title, item.secure)
