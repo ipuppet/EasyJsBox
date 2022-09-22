@@ -159,6 +159,7 @@ class Setting extends Controller {
             "zh-Hans",
             `
             "OK" = "好";
+            "DONE" = "完成";
             "CANCEL" = "取消";
             "CLEAR" = "清除";
             "BACK" = "返回";
@@ -166,6 +167,7 @@ class Setting extends Controller {
             "SUCCESS" = "成功";
             "LOADING" = "加载中";
             "INVALID_VALUE" = "非法参数";
+            "CONFIRM_CHANGES" = "数据已变化，确认修改？";
             
             "SETTING" = "设置";
             "GENERAL" = "一般";
@@ -195,6 +197,7 @@ class Setting extends Controller {
             "en",
             `
             "OK" = "OK";
+            "DONE" = "Done";
             "CANCEL" = "Cancel";
             "CLEAR" = "Clear";
             "BACK" = "Back";
@@ -202,6 +205,7 @@ class Setting extends Controller {
             "SUCCESS" = "Success";
             "LOADING" = "Loading";
             "INVALID_VALUE" = "Invalid value";
+            "CONFIRM_CHANGES" = "The data has changed, confirm the modification?";
 
             "SETTING" = "Setting";
             "GENERAL" = "General";
@@ -1116,8 +1120,9 @@ class Setting extends Controller {
         }
     }
 
-    createInput(key, icon, title) {
+    createInput(key, icon, title, secure = false) {
         const id = this.getId(key)
+        const inputId = id + "-input"
         return {
             type: "view",
             props: {
@@ -1129,31 +1134,91 @@ class Setting extends Controller {
                 {
                     type: "input",
                     props: {
+                        id: inputId,
                         align: $align.right,
                         bgcolor: $color("clear"),
                         textColor: $color("secondaryText"),
-                        text: this.get(key)
+                        text: this.get(key),
+                        secure: secure,
+                        accessoryView: UIKit.blurBox({ height: 44 }, [
+                            UIKit.separatorLine({}, UIKit.align.top),
+                            {
+                                type: "button",
+                                props: {
+                                    title: $l10n("DONE"),
+                                    bgcolor: $color("clear"),
+                                    titleColor: $color("primaryText")
+                                },
+                                layout: (make, view) => {
+                                    make.right.inset(this.edgeOffset)
+                                    make.centerY.equalTo(view.super)
+                                },
+                                events: {
+                                    tapped: () => {
+                                        const sender = $(inputId)
+                                        this.set(key, sender.text)
+                                        sender.blur()
+                                    }
+                                }
+                            },
+                            {
+                                type: "button",
+                                props: {
+                                    title: $l10n("CANCEL"),
+                                    bgcolor: $color("clear"),
+                                    titleColor: $color("primaryText")
+                                },
+                                layout: (make, view) => {
+                                    make.left.inset(this.edgeOffset)
+                                    make.centerY.equalTo(view.super)
+                                },
+                                events: {
+                                    tapped: () => {
+                                        const sender = $(inputId)
+                                        sender.text = this.get(key)
+                                        sender.blur()
+                                    }
+                                }
+                            }
+                        ])
                     },
                     layout: (make, view) => {
                         // 与标题间距 this.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
+                        make.width.greaterThanOrEqualTo(50)
                         make.height.equalTo(view.super)
                     },
                     events: {
-                        didBeginEditing: () => {
+                        didBeginEditing: sender => {
+                            // 使输入可见
+                            sender.secure = false
                             // 防止键盘遮挡
                             if (!$app.autoKeyboardEnabled) {
                                 $app.autoKeyboardEnabled = true
                             }
                         },
                         returned: sender => {
-                            // 结束编辑，由 didEndEditing 进行保存
-                            sender.blur()
-                        },
-                        didEndEditing: sender => {
                             this.set(key, sender.text)
                             sender.blur()
+                        },
+                        didEndEditing: async sender => {
+                            const savedData = this.get(key)
+                            if (sender.text !== savedData) {
+                                const res = await $ui.alert({
+                                    title: $l10n("CONFIRM_CHANGES"),
+                                    message: `${savedData}\n===============\n${sender.text}`,
+                                    actions: [{ title: $l10n("OK") }, { title: $l10n("CANCEL") }]
+                                })
+                                if (res.index === 0) {
+                                    this.set(key, sender.text)
+                                } else {
+                                    sender.text = savedData
+                                }
+                            }
+
+                            // 恢复 secure
+                            sender.secure = secure
                         }
                     }
                 }
@@ -1437,7 +1502,7 @@ class Setting extends Controller {
                         row = this.createDate(item.key, item.icon, item.title, item.mode)
                         break
                     case "input":
-                        row = this.createInput(item.key, item.icon, item.title)
+                        row = this.createInput(item.key, item.icon, item.title, item.secure)
                         break
                     case "icon":
                         row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
