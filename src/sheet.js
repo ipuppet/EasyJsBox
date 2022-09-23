@@ -22,6 +22,21 @@ class SheetViewTypeError extends ValidationError {
 class Sheet extends View {
     #present = () => {}
     #dismiss = () => {}
+    style = Sheet.UIModalPresentationStyle.PageSheet
+    #preventDismiss = false
+
+    static UIModalPresentationStyle = {
+        Automatic: -2,
+        FullScreen: 0,
+        PageSheet: 1,
+        FormSheet: 2,
+        CurrentContext: 3,
+        Custom: 4,
+        OverFullScreen: 5,
+        OverCurrentContext: 6,
+        Popover: 7,
+        BlurOverFullScreen: 8
+    }
 
     /**
      * @type {NavigationView}
@@ -29,19 +44,29 @@ class Sheet extends View {
     navigationView
 
     init() {
-        const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
         const { width, height } = $device.info.screen
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
-        const PSViewController = $objc("UIViewController").invoke("alloc.init")
-        const PSViewControllerView = PSViewController.$view()
-        PSViewControllerView.$setBackgroundColor($color("primarySurface"))
-        PSViewControllerView.$addSubview(UIView)
-        PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
+        const ViewController = $objc("UIViewController").invoke("alloc.init")
+        const ViewControllerView = ViewController.$view()
+        ViewControllerView.$setBackgroundColor(UIKit.primaryViewBackgroundColor)
+        ViewControllerView.$addSubview(UIView)
+        ViewController.$setModalPresentationStyle(this.style)
+        ViewController.$setModalInPresentation(this.#preventDismiss)
         this.#present = () => {
-            PSViewControllerView.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
-            $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
+            ViewControllerView.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
+            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", ViewController, true, undefined)
         }
-        this.#dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        this.#dismiss = () => ViewController.invoke("dismissViewControllerAnimated:completion:", true, undefined)
+        return this
+    }
+
+    preventDismiss() {
+        this.#preventDismiss = true
+        return this
+    }
+
+    setStyle(style) {
+        this.style = style
         return this
     }
 
@@ -66,7 +91,7 @@ class Sheet extends View {
      *  }
      * @returns {this}
      */
-    addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
+    addNavBar({ title = "", popButton = { title: $l10n("DONE") }, rightButtons = [] } = {}) {
         if (this.view === undefined) throw new SheetAddNavBarError()
         this.navigationView = new NavigationView()
         // 返回按钮
