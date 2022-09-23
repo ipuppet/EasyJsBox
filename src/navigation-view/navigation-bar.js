@@ -258,12 +258,11 @@ class NavigationBarController extends Controller {
 
     #changeLargeTitleView(largeTitleViewMode) {
         const isSmallMode = largeTitleViewMode === NavigationBarController.largeTitleViewSmallMode
+        this.selector.largeTitleView.alpha = isSmallMode ? 0 : 1
         $ui.animate({
             duration: 0.2,
             animation: () => {
-                // 隐藏大标题，显示小标题
                 this.selector.smallTitleView.alpha = isSmallMode ? 1 : 0
-                this.selector.largeTitleView.alpha = isSmallMode ? 0 : 1
             }
         })
     }
@@ -308,16 +307,23 @@ class NavigationBarController extends Controller {
 
         if (contentOffset > trigger) {
             this.selector.backgroundView.hidden = false
-            $ui.animate({
-                duration: 0.2,
-                animation: () => {
-                    if (hasTitleView && this.navigationBar.navigationBarItems.isPinTitleView) {
-                        this.selector.titleViewBackgroundView.alpha = 1
-                    }
-                    this.selector.largeTitleMaskView.alpha = 0
-                    this.selector.underlineView.alpha = 1
+            const uiAction = () => {
+                if (hasTitleView && this.navigationBar.navigationBarItems.isPinTitleView) {
+                    this.selector.titleViewBackgroundView.alpha = 1
                 }
-            })
+                this.selector.largeTitleMaskView.alpha = 0
+                this.selector.underlineView.alpha = 1
+            }
+            if ((contentOffset - trigger) / 3 >= 1) {
+                uiAction()
+            } else {
+                $ui.animate({
+                    duration: 0.2,
+                    animation: () => {
+                        uiAction()
+                    }
+                })
+            }
         } else {
             this.selector.largeTitleMaskView.alpha = contentOffset > 0 ? 1 : 0
             this.selector.underlineView.alpha = 0
