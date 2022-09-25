@@ -41,6 +41,7 @@ class BarTitleView extends View {
 
 class BarButtonItem extends View {
     static size = $size(38, 38)
+    static fontSize = 16
     static iconSize = $size(23, 23) // 比 size 小 edges
     static edges = 15
 
@@ -48,14 +49,14 @@ class BarButtonItem extends View {
      * 标题
      * @type {string}
      */
-    title = ""
+    title
 
     /**
      * 对齐方式
      */
     align = UIKit.align.right
 
-    setTitle(title = "") {
+    setTitle(title) {
         this.title = title
         return this
     }
@@ -144,6 +145,7 @@ class BarButtonItem extends View {
                         {
                             id: this.id,
                             bgcolor: $color("clear"),
+                            font: $font(BarButtonItem.fontSize),
                             tintColor: UIKit.textColor,
                             titleColor: UIKit.textColor,
                             contentEdgeInsets: $insets(0, 0, 0, 0),
@@ -151,7 +153,7 @@ class BarButtonItem extends View {
                             imageEdgeInsets: $insets(0, 0, 0, 0)
                         },
                         this.menu ? { menu: this.menu } : {},
-                        this.title?.length > 0 ? { title: this.title } : {},
+                        this.title ? { title: this.title } : {},
                         this.props
                     ),
                     views: [
@@ -202,6 +204,16 @@ class BarButtonItem extends View {
                 }
             ],
             layout: (make, view) => {
+                if (this.title) {
+                    const width = $text.sizeThatFits({
+                        text: this.title,
+                        width: UIKit.windowSize.width,
+                        font: $font(BarButtonItem.fontSize)
+                    })
+                    make.size.equalTo($size(Math.ceil(width.width), BarButtonItem.size.height))
+                } else {
+                    make.size.equalTo(BarButtonItem.size)
+                }
                 make.size.equalTo(BarButtonItem.size)
                 make.centerY.equalTo(view.super)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
@@ -222,7 +234,7 @@ class BarButtonItem extends View {
      * @param {BarButtonItemProperties} param0
      * @returns {BarButtonItem}
      */
-    static creat({ symbol, title, tapped, menu, events, align = UIKit.align.right }) {
+    static creat({ symbol, title, tapped, menu, events, align = UIKit.align.right } = {}) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvents(
@@ -293,7 +305,7 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addRightButton({ symbol, title, tapped, menu, events }) {
+    addRightButton({ symbol, title, tapped, menu, events } = {}) {
         this.rightButtons.push(
             BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }).definition
         )
@@ -306,7 +318,7 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addLeftButton({ symbol, title, tapped, menu, events }) {
+    addLeftButton({ symbol, title, tapped, menu, events } = {}) {
         this.leftButtons.push(
             BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }).definition
         )
