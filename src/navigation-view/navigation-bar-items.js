@@ -40,16 +40,25 @@ class BarTitleView extends View {
  */
 
 class BarButtonItem extends View {
+    static edges = 15
     static size = $size(38, 38)
     static fontSize = 16
-    static iconSize = $size(23, 23) // 比 size 小 edges
-    static edges = 15
+    static iconSize = $size(
+        BarButtonItem.size.width - BarButtonItem.edges,
+        BarButtonItem.size.height - BarButtonItem.edges
+    ) // 比 size 小 edges
 
     /**
      * 标题
      * @type {string}
      */
     title
+
+    /**
+     * SF Symbol 或者 $image 对象
+     * @type {string|$image}
+     */
+    symbol
 
     /**
      * 对齐方式
@@ -61,6 +70,11 @@ class BarButtonItem extends View {
         return this
     }
 
+    /**
+     * 设置图标
+     * @param {string|$image} symbol SF Symbol 或者 $image 对象
+     * @returns
+     */
     setSymbol(symbol) {
         this.symbol = symbol
         return this
@@ -205,23 +219,23 @@ class BarButtonItem extends View {
             ],
             layout: (make, view) => {
                 if (this.title) {
-                    const width = $text.sizeThatFits({
+                    const fontSize = $text.sizeThatFits({
                         text: this.title,
                         width: UIKit.windowSize.width,
                         font: $font(BarButtonItem.fontSize)
                     })
-                    make.size.equalTo($size(Math.ceil(width.width), BarButtonItem.size.height))
+                    const width = Math.ceil(fontSize.width) + BarButtonItem.edges // 文本按钮增加内边距
+                    make.size.equalTo($size(width, BarButtonItem.size.height))
                 } else {
                     make.size.equalTo(BarButtonItem.size)
                 }
-                make.size.equalTo(BarButtonItem.size)
                 make.centerY.equalTo(view.super)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {
-                    // 图片类型留一半边距，图标和按钮边距是另一半
-                    const edges = this.symbol ? BarButtonItem.edges / 2 : BarButtonItem.edges
+                    // 留一半边距，按钮内边距是另一半
+                    const edges = BarButtonItem.edges / 2
                     if (this.align === UIKit.align.right) make.right.inset(edges)
                     else make.left.inset(edges)
                 }
