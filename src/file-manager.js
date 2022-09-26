@@ -129,7 +129,8 @@ class FileManager {
                 return {
                     info: { info: { path, file, isDirectory } },
                     icon: { symbol: isDirectory ? "folder.fill" : "doc" },
-                    name: { text: file }
+                    name: { text: file },
+                    size: { text: isDirectory ? "" : "--" }
                 }
             })
             .sort((a, b) => {
@@ -143,6 +144,20 @@ class FileManager {
             })
 
         return files
+    }
+
+    async loadFileSize(data) {
+        data.map((item, i) => {
+            const info = item.info.info
+            if (!info.isDirectory) {
+                try {
+                    data[i].size.text = Kernel.bytesToSize($file.read(info.path).info.size)
+                } catch (error) {
+                    data[i].size.text = error
+                }
+            }
+        })
+        return data
     }
 
     get listTemplate() {
@@ -182,14 +197,6 @@ class FileManager {
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(this.edges)
-                    },
-                    events: {
-                        ready: sender => {
-                            const info = sender.super.get("info").info
-                            if (!info.isDirectory) {
-                                sender.text = Kernel.bytesToSize($file.read(info.path).info.size)
-                            }
-                        }
                     }
                 }
             ]
@@ -220,7 +227,7 @@ class FileManager {
                 info: { basePath },
                 bgcolor: UIKit.primaryViewBackgroundColor,
                 separatorInset: $insets(0, this.edges, 0, 0),
-                data: this.getFiles(basePath),
+                data: [],
                 template: this.listTemplate,
                 actions: [
                     {
@@ -239,9 +246,18 @@ class FileManager {
             },
             layout: $layout.fill,
             events: {
-                pulled: sender => {
-                    $delay(0.6, () => {
-                        $(this.listId).data = this.getFiles($(this.listId).info.basePath)
+                ready: () => {
+                    const data = this.getFiles(basePath)
+                    $(this.listId).data = data
+                    this.loadFileSize(data).then(data => {
+                        $(this.listId).data = data
+                    })
+                },
+                pulled: async sender => {
+                    const data = this.getFiles($(this.listId).info.basePath)
+                    $(this.listId).data = data
+                    $(this.listId).data = await this.loadFileSize(data)
+                    $delay(0.5, () => {
                         sender.endRefreshing()
                     })
                 },
