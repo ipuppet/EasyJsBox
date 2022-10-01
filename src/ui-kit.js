@@ -1,5 +1,3 @@
-const { Kernel } = require("./kernel")
-
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
 
@@ -53,12 +51,31 @@ class UIKit {
         return UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
     }
 
-    static get statusBarHeight() {
-        return $app.isDebugging || Kernel.isTaio ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
+    static get topSafeAreaInsets() {
+        return UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.top ?? 0
+    }
+
+    static get bottomSafeAreaInsets() {
+        return UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.bottom ?? 0
     }
 
     static get statusBarOrientation() {
         return UIKit.#sharedApplication.$statusBarOrientation()
+    }
+
+    /**
+     * 调试模式控制台高度
+     * @type {number}
+     */
+    static get consoleBarHeight() {
+        if ($app.isDebugging) {
+            let height = UIKit.#sharedApplication.$statusBarFrame().height + 26
+            if ($device.isIphoneX) {
+                height += 30
+            }
+            return height
+        }
+        return 0
     }
 
     static get isHorizontal() {

@@ -112,6 +112,9 @@ class TabBarController extends Controller {
     #cells = {}
     #header
     #selected
+    #blurBoxId = $text.uuid
+    #separatorLineId = $text.uuid
+    bottomSafeAreaInsets = $app.isDebugging ? 0 : UIKit.bottomSafeAreaInsets
 
     get selected() {
         return this.#selected
@@ -164,6 +167,42 @@ class TabBarController extends Controller {
             this.#pages[key].show()
             this.callEvent("onChange", this.#selected, key)
             this.#selected = key
+            // 调整背景
+            this.initBackground()
+        }
+    }
+
+    hideBackground(animate = true) {
+        $(this.#separatorLineId).hidden = true
+        $ui.animate({
+            duration: animate ? 0.2 : 0.0001,
+            animation: () => {
+                $(this.#blurBoxId).alpha = 0
+            }
+        })
+    }
+
+    showBackground(animate = true) {
+        $(this.#separatorLineId).hidden = false
+        $ui.animate({
+            duration: animate ? 0.2 : 0.0001,
+            animation: () => {
+                $(this.#blurBoxId).alpha = 1
+            }
+        })
+    }
+
+    initBackground() {
+        const selectedPage = this.#pages[this.selected]
+        if (selectedPage.scrollable()) {
+            const scrollableViewId = selectedPage.scrollableView.id
+            const contentHeight = $(selectedPage.id).get(scrollableViewId).contentSize.height
+            const contentSize = contentHeight + this.bottomSafeAreaInsets
+            if (contentSize <= UIKit.windowSize.height) {
+                this.hideBackground(false)
+            } else {
+                this.showBackground(false)
+            }
         }
     }
 
@@ -211,28 +250,42 @@ class TabBarController extends Controller {
 
     #pageViews() {
         return Object.values(this.#pages).map(page => {
-            if (UIKit.scrollViewList.indexOf(page.views[0].type) > -1) {
-                if (page.views[0].props === undefined) {
-                    page.views[0].props = {}
+            if (page.scrollable()) {
+                const scrollView = page.scrollableView
+                if (scrollView.props === undefined) {
+                    scrollView.props = {}
                 }
                 // indicatorInsets
-                if (page.views[0].props.indicatorInsets) {
-                    const old = page.views[0].props.indicatorInsets
-                    page.views[0].props.indicatorInsets = $insets(
+                if (scrollView.props.indicatorInsets) {
+                    const old = scrollView.props.indicatorInsets
+                    scrollView.props.indicatorInsets = $insets(
                         old.top,
                         old.left,
                         old.bottom + this.contentOffset,
                         old.right
                     )
                 } else {
-                    page.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
+                    scrollView.props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
                 // footer
-                page.views[0].footer = Object.assign({ props: {} }, page.views[0].footer ?? {})
-                if (page.views[0].props.footer.props.height) {
-                    page.views[0].props.footer.props.height += this.contentOffset
+                scrollView.footer = Object.assign({ props: {} }, scrollView.footer ?? {})
+                if (scrollView.props.footer.props.height) {
+                    scrollView.props.footer.props.height += this.contentOffset
                 } else {
-                    page.views[0].props.footer.props.height = this.contentOffset
+                    scrollView.props.footer.props.height = this.contentOffset
+                }
+                // Scroll
+                if (typeof scrollView.assignEvent === "function") {
+                    scrollView.assignEvent("didScroll", sender => {
+                        const contentOffset = sender.contentOffset.y - UIKit.consoleBarHeight
+                        const contentSize = sender.contentSize.height + this.bottomSafeAreaInsets
+                        const nextSize = contentSize - UIKit.windowSize.height
+                        if (nextSize - contentOffset <= 0) {
+                            this.hideBackground()
+                        } else {
+                            this.showBackground()
+                        }
+                    })
                 }
             }
             return page.definition
@@ -249,22 +302,24 @@ class TabBarController extends Controller {
                 make.bottom.equalTo(view.super)
             },
             views: [
-                UIKit.blurBox({}, [
-                    {
-                        type: "stack",
-                        layout: $layout.fillSafeArea,
-                        props: {
-                            axis: $stackViewAxis.horizontal,
-                            distribution: $stackViewDistribution.fillEqually,
-                            spacing: 0,
-                            stack: {
-                                views: this.#cellViews()
-                            }
+                UIKit.blurBox({ id: this.#blurBoxId }),
+                {
+                    type: "stack",
+                    layout: $layout.fillSafeArea,
+                    props: {
+                        axis: $stackViewAxis.horizontal,
+                        distribution: $stackViewDistribution.fillEqually,
+                        spacing: 0,
+                        stack: {
+                            views: this.#cellViews()
                         }
                     }
-                ]),
-                UIKit.separatorLine({}, UIKit.align.top)
-            ]
+                },
+                UIKit.separatorLine({ id: this.#separatorLineId }, UIKit.align.top)
+            ],
+            events: {
+                ready: () => this.initBackground()
+            }
         }
         return View.createByViews(this.#pageViews().concat(this.#header?.definition ?? [], tabBarView))
     }

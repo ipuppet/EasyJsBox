@@ -32,7 +32,7 @@ class NavigationBar extends View {
         font: $font(this.largeTitleFontFamily, this.largeTitleFontSize)
     }).height
     navigationBarTitleFontSize = 17
-    addStatusBarHeight = true
+    topSafeArea = true
     contentViewHeightOffset = 10
     navigationBarNormalHeight = UIKit.NavigationBarNormalHeight
     navigationBarLargeTitleHeight = UIKit.NavigationBarLargeTitleHeight
@@ -41,17 +41,17 @@ class NavigationBar extends View {
         this.navigationBarLargeTitleHeight -= this.navigationBarNormalHeight
         this.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
         this.navigationBarLargeTitleHeight += this.navigationBarNormalHeight
-        this.addStatusBarHeight = false
+        this.topSafeArea = false
         return this
     }
 
-    withStatusBarHeight() {
-        this.addStatusBarHeight = true
+    setTopSafeArea() {
+        this.topSafeArea = true
         return this
     }
 
-    withoutStatusBarHeight() {
-        this.addStatusBarHeight = false
+    removeTopSafeArea() {
+        this.topSafeArea = false
         return this
     }
 
