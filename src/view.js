@@ -1,3 +1,5 @@
+const { UIKit } = require("./ui-kit")
+
 /**
  * 视图基类
  */
@@ -139,6 +141,18 @@ class PageView extends View {
     constructor(args = {}) {
         super(args)
         this.activeStatus = true
+    }
+
+    scrollable() {
+        let type = this.type
+        if (this.views.length > 0) {
+            type = this.views[0].type
+        }
+        return UIKit.scrollViewList.indexOf(type) > -1
+    }
+
+    get scrollableView() {
+        return this.views[0]
     }
 
     show() {

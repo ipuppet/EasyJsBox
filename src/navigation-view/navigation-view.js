@@ -1,5 +1,6 @@
 const { View, PageView } = require("../view")
 const { ValidationError } = require("../validation-error")
+const { Kernel } = require("../kernel")
 const { UIKit } = require("../ui-kit")
 
 const { NavigationBar, NavigationBarController } = require("./navigation-bar")
@@ -52,6 +53,8 @@ class NavigationView {
         if (!(this.view instanceof View)) {
             throw new NavigationViewTypeError("view", "View")
         }
+
+        const topSafeAreaInsets = $app.isDebugging || Kernel.isTaio ? 0 : UIKit.topSafeAreaInsets
 
         // 计算偏移高度
         let height = this.navigationBar.contentViewHeightOffset
@@ -112,8 +115,8 @@ class NavigationView {
                     topOffset +=
                         this.navigationBarItems.titleView.topOffset + this.navigationBarItems.titleView.bottomOffset
                 }
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.addStatusBarHeight) {
-                    topOffset += UIKit.statusBarHeight
+                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.topSafeArea) {
+                    topOffset += topSafeAreaInsets
                 }
                 make.top.equalTo(this.navigationBar.navigationBarNormalHeight + topOffset)
             }
@@ -158,10 +161,10 @@ class NavigationView {
                     let contentOffset = sender.contentOffset.y
                     if (
                         (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
-                        this.navigationBar.addStatusBarHeight &&
+                        this.navigationBar.topSafeArea &&
                         !this.view.props.stickyHeader
                     ) {
-                        contentOffset += UIKit.statusBarHeight
+                        contentOffset += topSafeAreaInsets
                     }
                     this.navigationController.didScroll(contentOffset)
                 })
@@ -170,11 +173,11 @@ class NavigationView {
                     let zeroOffset = 0
                     if (
                         (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
-                        this.navigationBar.addStatusBarHeight &&
+                        this.navigationBar.topSafeArea &&
                         !this.view.props.stickyHeader
                     ) {
-                        contentOffset += UIKit.statusBarHeight
-                        zeroOffset = UIKit.statusBarHeight
+                        contentOffset += topSafeAreaInsets
+                        zeroOffset = topSafeAreaInsets
                     }
                     this.navigationController.didEndDragging(
                         contentOffset,
@@ -250,7 +253,6 @@ class NavigationView {
         } else {
             this.page.setProp("bgcolor", UIKit.defaultBackgroundColor(this.view.type))
         }
-        return this
     }
 
     getPage() {
