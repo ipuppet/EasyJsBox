@@ -1132,6 +1132,7 @@ class Setting extends Controller {
                         bgcolor: $color("clear"),
                         textColor: $color("secondaryText"),
                         text: this.get(key),
+                        font: $font(16),
                         secure: secure,
                         accessoryView: UIKit.blurBox({ height: 44 }, [
                             UIKit.separatorLine({}, UIKit.align.top),
@@ -1180,7 +1181,8 @@ class Setting extends Controller {
                         // 与标题间距 this.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
-                        make.width.greaterThanOrEqualTo(80)
+                        const width = UIKit.getContentSize($font(16), this.get(key)).width
+                        make.width.greaterThanOrEqualTo(width + 30)
                         make.height.equalTo(view.super)
                     },
                     events: {
