@@ -1148,10 +1148,7 @@ class Setting extends Controller {
                                 },
                                 events: {
                                     tapped: () => {
-                                        const sender = $(inputId)
-                                        if (saveFunc(sender.text)) {
-                                            sender.blur()
-                                        }
+                                        $(inputId).blur()
                                     }
                                 }
                             },
@@ -1183,7 +1180,7 @@ class Setting extends Controller {
                         // 与标题间距 this.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
-                        make.width.greaterThanOrEqualTo(50)
+                        make.width.greaterThanOrEqualTo(80)
                         make.height.equalTo(view.super)
                     },
                     events: {
@@ -1196,25 +1193,12 @@ class Setting extends Controller {
                             }
                         },
                         returned: sender => {
-                            if (saveFunc(sender.text)) {
-                                sender.blur()
-                            }
+                            sender.blur()
                         },
                         didEndEditing: async sender => {
                             const savedData = this.get(key, "")
-                            if (sender.text !== String(savedData)) {
-                                const res = await $ui.alert({
-                                    title: $l10n("CONFIRM_CHANGES"),
-                                    message: `${savedData}\n===============\n${sender.text}`,
-                                    actions: [{ title: $l10n("OK") }, { title: $l10n("CANCEL") }]
-                                })
-                                if (res.index === 0) {
-                                    if (!saveFunc(sender.text)) {
-                                        sender.text = savedData
-                                    }
-                                } else {
-                                    sender.text = savedData
-                                }
+                            if (!saveFunc(sender.text)) {
+                                sender.text = savedData
                             }
 
                             // 恢复 secure
