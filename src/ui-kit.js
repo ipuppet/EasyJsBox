@@ -169,6 +169,20 @@ class UIKit {
     }
 
     /**
+     * 计算文本尺寸
+     * @param {$font} font
+     * @param {string} content
+     * @returns
+     */
+    static getContentSize(font, content = "A") {
+        return $text.sizeThatFits({
+            text: content,
+            width: content.length * content,
+            font: font
+        })
+    }
+
+    /**
      * 建议仅在使用 JSBox nav 时使用，便于统一风格
      */
     static push({
