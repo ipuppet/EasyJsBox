@@ -250,7 +250,6 @@ class NavigationView {
         } else {
             this.page.setProp("bgcolor", UIKit.defaultBackgroundColor(this.view.type))
         }
-        return this
     }
 
     getPage() {
