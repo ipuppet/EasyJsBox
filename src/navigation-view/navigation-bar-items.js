@@ -2,9 +2,6 @@ const { View } = require("../view")
 const { UIKit } = require("../ui-kit")
 
 class BarTitleView extends View {
-    height = 20
-    topOffset = 15
-    bottomOffset = 10
     controller = {}
 
     setController(controller) {
