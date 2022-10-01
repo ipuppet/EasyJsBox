@@ -9,7 +9,7 @@ class UIKit {
     /**
      * 默认文本颜色
      */
-    static textColor = $color("primaryText", "secondaryText")
+    static textColor = $color("primaryText")
 
     /**
      * 默认链接颜色
