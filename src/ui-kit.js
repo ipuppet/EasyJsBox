@@ -177,7 +177,7 @@ class UIKit {
     static getContentSize(font, content = "A") {
         return $text.sizeThatFits({
             text: content,
-            width: content.length * content,
+            width: UIKit.windowSize.width,
             font: font
         })
     }

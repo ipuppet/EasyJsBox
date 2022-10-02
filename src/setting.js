@@ -1182,7 +1182,7 @@ class Setting extends Controller {
                         make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
                         make.right.inset(this.edgeOffset)
                         const width = UIKit.getContentSize($font(16), this.get(key)).width
-                        make.width.greaterThanOrEqualTo((isNaN(width) ? 0 : width) + 30)
+                        make.width.greaterThanOrEqualTo(width + 30) // 30 大约是清空按钮的宽度
                         make.height.equalTo(view.super)
                     },
                     events: {
