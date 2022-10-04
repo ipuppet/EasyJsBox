@@ -5,7 +5,7 @@ class HomeUI {
         this.kernel = kernel
     }
 
-    getPageView() {
+    getPage() {
         // 初始化页面控制器
         const navigationView = new NavigationView()
         // 设置导航条元素
