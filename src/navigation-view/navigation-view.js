@@ -238,7 +238,7 @@ class NavigationView {
             }
 
             // 初始化 PageView
-            this.page = PageView.createByViews([
+            this.page = PageView.createFromViews([
                 this.view,
                 this.navigationBar.getLargeTitleView(),
                 titleView,
@@ -246,7 +246,7 @@ class NavigationView {
                 this.navigationBarItems.fixedFooterView?.definition ?? {}
             ])
         } else {
-            this.page = PageView.createByViews([this.view])
+            this.page = PageView.createFromViews([this.view])
         }
         if (this.view.props?.bgcolor) {
             this.page.setProp("bgcolor", this.view.props.bgcolor)

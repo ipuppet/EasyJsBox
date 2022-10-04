@@ -16,6 +16,7 @@ class Kernel {
     startTime = Date.now()
     // 隐藏 jsbox 默认 nav 栏
     isUseJsboxNav = false
+    title = $addin.current.name
 
     constructor() {
         if ($app.isDebugging) {
@@ -187,6 +188,13 @@ class Kernel {
 
     setNavButtons(buttons) {
         this.navButtons = buttons
+    }
+
+    /**
+     * 在 JSBox 主程序打开自己，用于键盘等其他环境
+     */
+    openInJsbox() {
+        $app.openURL(`jsbox://run?name=${$addin.current.name}`)
     }
 
     UIRender(view) {
