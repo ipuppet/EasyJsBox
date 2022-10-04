@@ -5,7 +5,7 @@ class ListUI {
         this.kernel = kernel
     }
 
-    getPageView() {
+    getPage() {
         // 初始化搜索条
         const searchBar = new SearchBar()
         searchBar.controller.setEvent("onChange", text => {

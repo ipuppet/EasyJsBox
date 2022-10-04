@@ -59,7 +59,7 @@ class View {
         return new this(args)
     }
 
-    static createByViews(views) {
+    static createFromViews(views) {
         return new this({ views })
     }
 

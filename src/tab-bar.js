@@ -143,7 +143,7 @@ class TabBarController extends Controller {
         if (page instanceof PageView) {
             this.#pages[key] = page
         } else {
-            this.#pages[key] = PageView.createByViews(page)
+            this.#pages[key] = PageView.createFromViews(page)
         }
         if (this.#selected !== key) this.#pages[key].activeStatus = false
         return this
@@ -321,7 +321,7 @@ class TabBarController extends Controller {
                 ready: () => this.initBackground()
             }
         }
-        return View.createByViews(this.#pageViews().concat(this.#header?.definition ?? [], tabBarView))
+        return View.createFromViews(this.#pageViews().concat(this.#header?.definition ?? [], tabBarView))
     }
 }
 

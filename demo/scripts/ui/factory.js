@@ -9,17 +9,17 @@ class Factory {
     home() {
         const InterfaceUI = require("./home")
         const interfaceUi = new InterfaceUI(this.kernel)
-        return interfaceUi.getPageView()
+        return interfaceUi.getPage()
     }
 
     list() {
         const InterfaceUI = require("./list")
         const interfaceUi = new InterfaceUI(this.kernel)
-        return interfaceUi.getPageView()
+        return interfaceUi.getPage()
     }
 
     setting() {
-        return this.kernel.setting.getPageView()
+        return this.kernel.setting.getPage()
     }
 
     /**

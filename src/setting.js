@@ -1535,7 +1535,7 @@ class Setting extends Controller {
         }
     }
 
-    getPageView() {
+    getPage() {
         const navigationView = new NavigationView()
         navigationView.setView(this.getListView(this.structure)).navigationBarTitle($l10n("SETTING"))
         if (this.hasSectionTitle(this.structure)) {
