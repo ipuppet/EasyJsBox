@@ -101,7 +101,13 @@ class NavigationBar extends View {
                       make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
                   }
               }
-            : { props: { id: this.id + "-large-title" } }
+            : {
+                  props: { id: this.id + "-large-title" },
+                  layout: (make, view) => {
+                      make.left.top.right.inset(0)
+                      make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                  }
+              }
     }
 
     getNavigationBarView() {

@@ -107,18 +107,11 @@ class NavigationView {
             this.view.layout = (make, view) => {
                 make.left.right.equalTo(view.super.safeArea)
                 make.bottom.equalTo(view.super)
-                let topOffset = this.navigationBar.contentViewHeightOffset
-                if (this.navigationBar.largeTitleDisplayMode !== NavigationBar.largeTitleDisplayModeNever) {
-                    topOffset += this.navigationBar.largeTitleFontHeight
-                }
-                if (this.navigationBarItems.titleView) {
-                    topOffset +=
-                        this.navigationBarItems.titleView.topOffset + this.navigationBarItems.titleView.bottomOffset
-                }
+                let topOffset = height - this.navigationBar.contentViewHeightOffset
                 if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.topSafeArea) {
                     topOffset += topSafeAreaInsets
                 }
-                make.top.equalTo(this.navigationBar.navigationBarNormalHeight + topOffset)
+                make.top.equalTo(topOffset)
             }
         } else {
             // indicatorInsets
@@ -202,7 +195,8 @@ class NavigationView {
             let titleView = {}
             if (this.navigationBarItems.titleView) {
                 // 修改 titleView 背景与 navigationBar 相同
-                const isHideBackground = this.navigationBar.prefersLargeTitles ? 0 : 1
+                const isHideBackground =
+                    this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever ? 1 : 0
                 titleView = View.create({
                     views: [
                         this.navigationBar.backgroundColor
