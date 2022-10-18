@@ -143,7 +143,7 @@ class TabBarController extends Controller {
         if (page instanceof PageView) {
             this.#pages[key] = page
         } else {
-            this.#pages[key] = PageView.createFromViews(page)
+            this.#pages[key] = PageView.create(page)
         }
         if (this.#selected !== key) this.#pages[key].activeStatus = false
         return this
@@ -195,14 +195,18 @@ class TabBarController extends Controller {
     initBackground() {
         const selectedPage = this.#pages[this.selected]
         if (selectedPage.scrollable()) {
-            const scrollableViewId = selectedPage.scrollableView.id
-            const contentHeight = $(selectedPage.id).get(scrollableViewId).contentSize.height
-            const contentSize = contentHeight + this.bottomSafeAreaInsets
-            if (contentSize <= UIKit.windowSize.height) {
-                this.hideBackground(false)
-            } else {
-                this.showBackground(false)
-            }
+            $delay(0, () => {
+                const scrollableView = $(selectedPage.id).get(selectedPage.scrollableView.id)
+
+                const contentOffset = scrollableView.contentOffset.y
+                const contentSize = scrollableView.contentSize.height + this.bottomSafeAreaInsets
+                const nextSize = contentSize - scrollableView.frame.height
+                if (nextSize - contentOffset <= 0) {
+                    this.hideBackground(false)
+                } else {
+                    this.showBackground(false)
+                }
+            })
         }
     }
 
@@ -252,9 +256,6 @@ class TabBarController extends Controller {
         return Object.values(this.#pages).map(page => {
             if (page.scrollable()) {
                 const scrollView = page.scrollableView
-                if (scrollView.props === undefined) {
-                    scrollView.props = {}
-                }
                 // indicatorInsets
                 if (scrollView.props.indicatorInsets) {
                     const old = scrollView.props.indicatorInsets
@@ -265,10 +266,10 @@ class TabBarController extends Controller {
                         old.right
                     )
                 } else {
-                    scrollView.props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
+                    scrollView.props.indicatorInsets = $insets(0, 0, this.contentOffset, 0)
                 }
                 // footer
-                scrollView.footer = Object.assign({ props: {} }, scrollView.footer ?? {})
+                scrollView.props.footer = Object.assign({ props: {} }, scrollView.props.footer ?? {})
                 if (scrollView.props.footer.props.height) {
                     scrollView.props.footer.props.height += this.contentOffset
                 } else {
@@ -277,9 +278,9 @@ class TabBarController extends Controller {
                 // Scroll
                 if (typeof scrollView.assignEvent === "function") {
                     scrollView.assignEvent("didScroll", sender => {
-                        const contentOffset = sender.contentOffset.y - UIKit.consoleBarHeight
+                        const contentOffset = sender.contentOffset.y
                         const contentSize = sender.contentSize.height + this.bottomSafeAreaInsets
-                        const nextSize = contentSize - UIKit.windowSize.height
+                        const nextSize = contentSize - sender.frame.height
                         if (nextSize - contentOffset <= 0) {
                             this.hideBackground()
                         } else {

@@ -40,6 +40,9 @@ class View {
      */
     layout
 
+    #scrollable = undefined
+    scrollableView = null
+
     constructor({ type = "view", props = {}, views = [], events = {}, layout = $layout.fill } = {}) {
         // 属性
         this.type = type
@@ -63,6 +66,39 @@ class View {
         return new this({ views })
     }
 
+    scrollable() {
+        if (this.#scrollable === undefined) {
+            this.#scrollable = false
+
+            if (UIKit.scrollViewList.indexOf(this.type) > -1) {
+                this.scrollableView = this
+                this.#scrollable = true
+            } else if (this.views.length > 0) {
+                const check = views => {
+                    if (this.#scrollable) return
+
+                    if (views.length > 0) {
+                        for (let i = 0; i < views.length; i++) {
+                            if (UIKit.scrollViewList.indexOf(views[i].type) > -1) {
+                                if (typeof views[i] !== View) {
+                                    views[i] = View.create(views[i])
+                                }
+                                this.scrollableView = views[i]
+                                this.#scrollable = true
+                                return
+                            } else {
+                                check(views[i].views)
+                            }
+                        }
+                    }
+                }
+                check(this.views)
+            }
+        }
+
+        return this.#scrollable
+    }
+
     setProps(props) {
         Object.keys(props).forEach(key => this.setProp(key, props[key]))
         return this
@@ -78,6 +114,7 @@ class View {
 
     setViews(views) {
         this.views = views
+        this.#scrollable = undefined // 重置滚动视图检查状态
         return this
     }
 
@@ -141,18 +178,6 @@ class PageView extends View {
     constructor(args = {}) {
         super(args)
         this.activeStatus = true
-    }
-
-    scrollable() {
-        let type = this.type
-        if (this.views.length > 0) {
-            type = this.views[0].type
-        }
-        return UIKit.scrollViewList.indexOf(type) > -1
-    }
-
-    get scrollableView() {
-        return this.views[0]
     }
 
     show() {
