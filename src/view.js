@@ -77,7 +77,7 @@ class View {
                 const check = views => {
                     if (this.#scrollable) return
 
-                    if (views.length > 0) {
+                    if (views?.length > 0) {
                         for (let i = 0; i < views.length; i++) {
                             if (UIKit.scrollViewList.indexOf(views[i].type) > -1) {
                                 if (typeof views[i] !== View) {
