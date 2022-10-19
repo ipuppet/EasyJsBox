@@ -48,6 +48,17 @@ class SearchBar extends BarTitleView {
         }
     }
 
+    /**
+     * 重定向 event 到 input 组件
+     * @param {*} event
+     * @param {*} action
+     * @returns
+     */
+    setEvent(event, action) {
+        this.views[0].events[event] = action
+        return this
+    }
+
     setPlaceholder(placeholder) {
         this.placeholder = placeholder
         return this
