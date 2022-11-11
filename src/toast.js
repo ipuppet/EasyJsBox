@@ -4,24 +4,28 @@ class Toast {
     static Type = {
         info: undefined,
         success: "checkmark",
-        warning: "excalmationmark.triangle",
-        error: "xmark"
+        warning: "exclamationmark.triangle",
+        error: "xmark.circle"
     }
-    static font = $font("default", 26)
     static edges = 40
     static iconSize = 100
     static labelTopMargin = 10
     static width = Math.min(UIKit.windowSize.width * 0.6, 260)
+    static labelWidth = Toast.width - Toast.edges * 2
 
     id = $text.uuid
 
     #message = ""
     type = Toast.Type.info
+    labelLines = 2
+    font = $font("default", 26)
 
-    constructor(message, type = Toast.Type.info) {
+    constructor(message, type = Toast.Type.info, labelLines = 2, font = $font("default", 26)) {
         // 先确定类型，用于高度计算
         this.type = type
         this.message = message
+        this.labelLines = labelLines
+        this.font = font
     }
 
     get message() {
@@ -30,7 +34,7 @@ class Toast {
 
     set message(message) {
         this.#message = message
-        this.fontHeight = UIKit.getContentSize(Toast.font, this.message, Toast.width).height
+        this.fontHeight = UIKit.getContentSize(this.font, this.message, Toast.labelWidth, this.labelLines).height
         this.height = (this.hasIcon ? Toast.labelTopMargin + Toast.iconSize : 0) + this.fontHeight + Toast.edges * 2
     }
 
@@ -56,14 +60,15 @@ class Toast {
             {
                 type: "label",
                 props: {
-                    font: Toast.font,
+                    font: this.font,
                     text: this.message,
                     align: $align.center,
+                    lines: this.labelLines,
                     color: $color("lightGray")
                 },
                 layout: (make, view) => {
                     make.bottom.equalTo(view.supper).offset(-Toast.edges)
-                    make.width.equalTo(Toast.width - Toast.edges * 2)
+                    make.width.equalTo(Toast.labelWidth)
                     make.height.equalTo(this.fontHeight)
                     make.centerX.equalTo(view.super)
                 }
@@ -108,25 +113,25 @@ class Toast {
         })
     }
 
-    static toast(message, type = Toast.Type.info, displayTime = 3) {
-        const toast = new Toast(message, type)
+    static toast({ message, type = Toast.Type.info, displayTime = 2, labelLines = 2, font = $font("default", 26) }) {
+        const toast = new Toast(message, type, labelLines, font)
 
         toast.show()
         $delay(displayTime, () => {
             toast.remove()
         })
     }
-    static info(message, displayTime) {
-        Toast.toast(message, Toast.Type.info, displayTime)
+    static info(message, opts = {}) {
+        Toast.toast(Object.assign({ message, type: Toast.Type.info }, opts))
     }
-    static success(message, displayTime) {
-        Toast.toast(message, Toast.Type.success, displayTime)
+    static success(message, opts = {}) {
+        Toast.toast(Object.assign({ message, type: Toast.Type.success }, opts))
     }
-    static warning(message, displayTime) {
-        Toast.toast(message, Toast.Type.warning, displayTime)
+    static warning(message, opts = {}) {
+        Toast.toast(Object.assign({ message, type: Toast.Type.warning }, opts))
     }
-    static error(message, displayTime) {
-        Toast.toast(message, Toast.Type.error, displayTime)
+    static error(message, opts = {}) {
+        Toast.toast(Object.assign({ message, type: Toast.Type.error }, opts))
     }
 }
 
