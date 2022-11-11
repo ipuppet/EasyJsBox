@@ -1,4 +1,4 @@
-const { Kernel, Setting, Sheet } = require("./libs/easy-jsbox")
+const { Kernel, Setting, Sheet, Toast } = require("./libs/easy-jsbox")
 
 class AppKernel extends Kernel {
     constructor() {
@@ -37,7 +37,7 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.tips = animate => {
-            $ui.alert("Tips.")
+            Toast.info("Tips.")
         }
     }
 }

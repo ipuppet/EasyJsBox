@@ -10,6 +10,7 @@ const { Setting } = require("./setting")
 const { Sheet } = require("./sheet")
 const { TabBarCellView, TabBarHeaderView, TabBarController } = require("./tab-bar")
 const { Tasks } = require("./tasks")
+const { Toast } = require("./toast")
 const { UIKit } = require("./ui-kit")
 const { UILoading } = require("./ui-loading")
 const { ValidationError } = require("./validation-error")
@@ -37,6 +38,7 @@ module.exports = {
     TabBarHeaderView,
     TabBarController,
     Tasks,
+    Toast,
     UIKit,
     UILoading,
     ValidationError,
