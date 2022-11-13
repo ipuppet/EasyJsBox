@@ -6,7 +6,7 @@ class Request {
         patch: "PATCH",
         head: "HEAD"
     }
-    static cacheContainerKey = $addin.current.name + ".request.cache"
+    static cacheContainerKey = $addin?.current?.name + ".request.cache"
     static get cache() {
         return $cache.get(Request.cacheContainerKey) ?? {}
     }
