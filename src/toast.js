@@ -1,7 +1,7 @@
 const { UIKit } = require("./ui-kit")
 
 class Toast {
-    static Type = {
+    static type = {
         info: undefined,
         success: "checkmark",
         warning: "exclamationmark.triangle",
@@ -16,11 +16,11 @@ class Toast {
     id = $text.uuid
 
     #message = ""
-    type = Toast.Type.info
+    type = Toast.type.info
     labelLines = 2
     font = $font("default", 26)
 
-    constructor(message, type = Toast.Type.info, labelLines = 2, font = $font("default", 26)) {
+    constructor(message, type = Toast.type.info, labelLines = 2, font = $font("default", 26)) {
         // 先确定类型，用于高度计算
         this.type = type
         this.message = message
@@ -113,7 +113,7 @@ class Toast {
         })
     }
 
-    static toast({ message, type = Toast.Type.info, displayTime = 2, labelLines = 2, font = $font("default", 26) }) {
+    static toast({ message, type = Toast.type.info, displayTime = 2, labelLines = 2, font = $font("default", 26) }) {
         const toast = new Toast(message, type, labelLines, font)
 
         toast.show()
@@ -122,16 +122,16 @@ class Toast {
         })
     }
     static info(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.Type.info }, opts))
+        Toast.toast(Object.assign({ message, type: Toast.type.info }, opts))
     }
     static success(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.Type.success }, opts))
+        Toast.toast(Object.assign({ message, type: Toast.type.success }, opts))
     }
     static warning(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.Type.warning }, opts))
+        Toast.toast(Object.assign({ message, type: Toast.type.warning }, opts))
     }
     static error(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.Type.error }, opts))
+        Toast.toast(Object.assign({ message, type: Toast.type.error }, opts))
     }
 }
 

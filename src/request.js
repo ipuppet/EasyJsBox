@@ -1,48 +1,79 @@
-/**
- * @typedef {import("./kernel").Kernel} Kernel
- */
-
 class Request {
-    static Method = {
+    static method = {
         get: "GET",
-        post: "POST"
+        post: "POST",
+        delete: "DELETE",
+        patch: "PATCH",
+        head: "HEAD"
     }
-    #baseUrlMd5
+    static cacheContainerKey = $addin.current.name + ".request.cache"
+    static get cache() {
+        return $cache.get(Request.cacheContainerKey) ?? {}
+    }
+
     #useCache = false
     #ignoreCacheExp = false
     cacheLife = 1000 * 60 * 60 * 24 * 30 // ms
-    isLogRequest = true
+    isLogRequest = false
     timeout = 5
-    /**
-     * @type {Kernel}
-     */
-    kernel
+
+    logger
 
     /**
      *
-     * @param {Kernel} kernel
+     * @param {Function} logger
      */
-    constructor(kernel) {
-        this.kernel = kernel
-    }
-
-    getCacheKey(path) {
-        if (!this.#baseUrlMd5) {
-            this.#baseUrlMd5 = $text.MD5(this.baseUrl)
+    constructor(logger) {
+        if (typeof logger === "function") {
+            this.logger = logger
         }
-        return this.#baseUrlMd5 + $text.MD5(path)
     }
 
-    setCache(cacheKey, data) {
-        $cache.set(cacheKey, data)
+    #logRequest(message) {
+        if (this.isLogRequest && typeof logger === "function") {
+            this.logger(message)
+        }
     }
 
-    getCache(cacheKey, _default = null) {
-        return $cache.get(cacheKey) ?? _default
+    /**
+     * 记录请求
+     * @param {Function} logger
+     * @returns
+     */
+    logRequest(logger) {
+        this.isLogRequest = true
+        if (typeof logger === "function") {
+            this.logger = logger
+        }
+        return this
     }
 
-    removeCache(cacheKey) {
-        $cache.remove(cacheKey)
+    getCacheKey(url) {
+        return $text.MD5(url)
+    }
+
+    getCache(key, _default = null) {
+        const cache = Request.cache
+        return cache[key] ?? _default
+    }
+
+    setCache(key, data) {
+        if (!data || typeof data !== "string") {
+            return
+        }
+        const cache = Request.cache
+        cache[key] = data
+        $cache.set(Request.cacheContainerKey, cache)
+    }
+
+    removeCache(key) {
+        let cache = Request.cache
+        delete cache[key]
+        $cache.set(Request.cacheContainerKey, cache)
+    }
+
+    clearCache() {
+        $cache.remove(Request.cacheContainerKey)
     }
 
     useCache() {
@@ -62,53 +93,45 @@ class Request {
      * @param {number} cacheLife ms
      * @returns
      */
-    async request(path, method, body = {}, header = {}, cacheLife = this.cacheLife) {
-        const url = this.baseUrl + path
-
+    async request(url, method, body = {}, header = {}, cacheLife = this.cacheLife) {
         let cacheKey
-        const useCache = this.#useCache && method === Request.Method.get
+        const useCache = this.#useCache && method === Request.method.get
         if (useCache) {
-            cacheKey = this.getCacheKey(path)
+            cacheKey = this.getCacheKey(url)
             const cache = this.getCache(cacheKey)
             if (cache && (this.#ignoreCacheExp || cache.exp > Date.now())) {
-                if (this.isLogRequest) {
-                    this.kernel.print("get data from cache: " + url)
-                }
+                this.#logRequest("get data from cache: " + url)
                 return cache.data
             }
         }
 
         try {
-            if (this.isLogRequest) {
-                this.kernel.print(`sending request [${method}]: ${url}`)
-            }
-
+            this.#logRequest(`sending request [${method}]: ${url}`)
             const resp = await $http.request({
-                header: Object.assign(
-                    {
-                        "Content-Type": "application/json"
-                    },
-                    header
-                ),
+                header,
                 url,
                 method,
                 body,
                 timeout: this.timeout
             })
-            if (resp?.response?.statusCode >= 400) {
+
+            if (resp.error) {
+                throw resp.error
+            } else if (resp?.response?.statusCode >= 400) {
                 let errMsg = resp.data
                 if (typeof errMsg === "object") {
                     errMsg = JSON.stringify(errMsg)
                 }
                 throw new Error("http error: [" + resp.response.statusCode + "] " + errMsg)
             }
+
             if (useCache) {
                 this.setCache(cacheKey, {
                     exp: Date.now() + cacheLife,
-                    data: resp.data
+                    data: resp
                 })
             }
-            return resp.data
+            return resp
         } catch (error) {
             if (error.code) {
                 error = new Error("network error: [" + error.code + "] " + error.localizedDescription)
