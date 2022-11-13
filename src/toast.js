@@ -10,8 +10,9 @@ class Toast {
     static edges = 40
     static iconSize = 100
     static labelTopMargin = 10
-    static width = Math.min(UIKit.windowSize.width * 0.6, 260)
-    static labelWidth = Toast.width - Toast.edges * 2
+
+    width = Math.min(UIKit.windowSize.width * 0.6, 260)
+    labelWidth = this.width - Toast.edges * 2
 
     id = $text.uuid
 
@@ -34,7 +35,7 @@ class Toast {
 
     set message(message) {
         this.#message = message
-        this.fontHeight = UIKit.getContentSize(this.font, this.message, Toast.labelWidth, this.labelLines).height
+        this.fontHeight = UIKit.getContentSize(this.font, this.message, this.labelWidth, this.labelLines).height
         this.height = (this.hasIcon ? Toast.labelTopMargin + Toast.iconSize : 0) + this.fontHeight + Toast.edges * 2
     }
 
@@ -68,7 +69,7 @@ class Toast {
                 },
                 layout: (make, view) => {
                     make.bottom.equalTo(view.supper).offset(-Toast.edges)
-                    make.width.equalTo(Toast.labelWidth)
+                    make.width.equalTo(this.labelWidth)
                     make.height.equalTo(this.fontHeight)
                     make.centerX.equalTo(view.super)
                 }
@@ -88,7 +89,7 @@ class Toast {
         const toast = $(this.id)
         toast.layout((make, view) => {
             make.center.equalTo(view.super)
-            make.size.equalTo($size(Toast.width, this.height))
+            make.size.equalTo($size(this.width, this.height))
         })
         toast.moveToFront()
         $ui.animate({
