@@ -36,6 +36,21 @@ class FileStorage {
     }
 
     write(path = "", fileName, data) {
+        return new Promise((resolve, reject) => {
+            try {
+                const success = this.writeSync(path, fileName, data)
+                if (success) {
+                    resolve(success)
+                } else {
+                    reject(success)
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    writeSync(path = "", fileName, data) {
         if (!fileName) {
             throw new FileStorageParameterError("fileName")
         }
@@ -45,21 +60,6 @@ class FileStorage {
         return $file.write({
             data: data,
             path: this.#filePath(path, fileName)
-        })
-    }
-
-    writeSync(path = "", fileName, data) {
-        return new Promise((resolve, reject) => {
-            try {
-                const success = this.write(path, fileName, data)
-                if (success) {
-                    resolve(success)
-                } else {
-                    reject(success)
-                }
-            } catch (error) {
-                reject(error)
-            }
         })
     }
 
@@ -77,6 +77,21 @@ class FileStorage {
     }
 
     read(path = "", fileName) {
+        return new Promise((resolve, reject) => {
+            try {
+                const file = this.readSync(path, fileName)
+                if (file) {
+                    resolve(file)
+                } else {
+                    reject()
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    readSync(path = "", fileName) {
         if (!fileName) {
             throw new FileStorageParameterError("fileName")
         }
@@ -90,10 +105,19 @@ class FileStorage {
         return $file.read(path)
     }
 
-    readSync(path = "", fileName) {
+    readAsJSON(path = "", fileName, _default = null) {
+        try {
+            const fileString = this.readSync(path, fileName)?.string
+            return JSON.parse(fileString)
+        } catch (error) {
+            return _default
+        }
+    }
+
+    static readFromRoot(path = "") {
         return new Promise((resolve, reject) => {
             try {
-                const file = this.read(path, fileName)
+                const file = FileStorage.readFromRootSync(path)
                 if (file) {
                     resolve(file)
                 } else {
@@ -105,16 +129,7 @@ class FileStorage {
         })
     }
 
-    readAsJSON(path = "", fileName, _default = null) {
-        try {
-            const fileString = this.read(path, fileName)?.string
-            return JSON.parse(fileString)
-        } catch (error) {
-            return _default
-        }
-    }
-
-    static readFromRoot(path) {
+    static readFromRootSync(path = "") {
         if (!path) {
             throw new FileStorageParameterError("path")
         }
@@ -127,24 +142,9 @@ class FileStorage {
         return $file.read(path)
     }
 
-    static readFromRootSync(path = "") {
-        return new Promise((resolve, reject) => {
-            try {
-                const file = FileStorage.readFromRoot(path)
-                if (file) {
-                    resolve(file)
-                } else {
-                    reject()
-                }
-            } catch (error) {
-                reject(error)
-            }
-        })
-    }
-
     static readFromRootAsJSON(path = "", _default = null) {
         try {
-            const fileString = FileStorage.readFromRoot(path)?.string
+            const fileString = FileStorage.readFromRootSync(path)?.string
             return JSON.parse(fileString)
         } catch (error) {
             return _default

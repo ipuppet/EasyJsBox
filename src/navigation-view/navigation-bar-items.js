@@ -149,6 +149,7 @@ class BarButtonItem extends View {
         }
         return {
             type: "view",
+            props: { info: { align: this.align } },
             views: [
                 {
                     type: "button",
@@ -227,7 +228,7 @@ class BarButtonItem extends View {
                     make.size.equalTo(BarButtonItem.size)
                 }
                 make.centerY.equalTo(view.super)
-                if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
+                if (view.prev && view.prev?.info?.align === this.align) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {

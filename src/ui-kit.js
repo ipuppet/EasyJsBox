@@ -109,8 +109,8 @@ class UIKit {
                 $ui.controller.view.insertAtIndex(loading, 0)
                 loading.layout((make, view) => {
                     make.center.equalTo(view.super)
-                    const width = Math.min(UIKit.windowSize.width * 0.6, 300)
-                    make.size.equalTo($size(width, width))
+                    const size = Math.min(Math.min(UIKit.windowSize.width, UIKit.windowSize.height) * 0.6, 300)
+                    make.size.equalTo($size(size, size))
                 })
                 loading.moveToFront()
             },
@@ -163,8 +163,8 @@ class UIKit {
                 },
                 props
             ),
-            views: views,
-            layout: layout
+            views,
+            layout
         }
     }
 
@@ -174,12 +174,16 @@ class UIKit {
      * @param {string} content
      * @returns
      */
-    static getContentSize(font, content = "A") {
-        return $text.sizeThatFits({
+    static getContentSize(font, content = "A", width = UIKit.windowSize.width, lineSpacing = undefined) {
+        const options = {
             text: content,
-            width: UIKit.windowSize.width,
+            width,
             font: font
-        })
+        }
+        if (lineSpacing !== undefined) {
+            options.lineSpacing = lineSpacing
+        }
+        return $text.sizeThatFits(options)
     }
 
     /**
