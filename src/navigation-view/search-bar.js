@@ -71,7 +71,8 @@ class SearchBar extends BarTitleView {
                 layout: $layout.fill,
                 events: Object.assign(
                     {
-                        changed: sender => this.controller.callEvent("onChange", sender.text)
+                        changed: sender => this.controller.callEvent("onChange", sender.text),
+                        returned: sender => this.controller.callEvent("onReturn", sender.text)
                     },
                     this.inputEvents
                 )
