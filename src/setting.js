@@ -370,7 +370,7 @@ class Setting extends Controller {
     getImage(key, compress = false) {
         try {
             const name = this.getImageName(key, compress)
-            return this.fileStorage.read(this.imagePath, name).image
+            return this.fileStorage.readSync(this.imagePath, name).image
         } catch (error) {
             if (error instanceof FileStorageFileNotFoundError) {
                 return null
@@ -1364,6 +1364,7 @@ class Setting extends Controller {
     createImage(key, icon, title) {
         const id = this.getId(key)
         const imageId = `${id}-image`
+        const noneImage = $image("questionmark.square.dashed")
         return {
             type: "view",
             props: {
@@ -1379,7 +1380,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: imageId,
-                                image: this.getImage(key, true) ?? $image("questionmark.square.dashed")
+                                image: this.getImage(key, true) ?? noneImage
                             },
                             layout: (make, view) => {
                                 make.right.inset(this.edgeOffset)
@@ -1426,7 +1427,7 @@ class Setting extends Controller {
                                     } else if (idx === 2) {
                                         this.fileStorage.delete(this.imagePath, this.getImageName(key, true))
                                         this.fileStorage.delete(this.imagePath, this.getImageName(key))
-                                        $(imageId).image = $image("questionmark.square.dashed")
+                                        $(imageId).image = noneImage
                                         $ui.success($l10n("SUCCESS"))
                                     }
                                 },

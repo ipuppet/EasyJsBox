@@ -109,7 +109,7 @@ class UIKit {
                 $ui.controller.view.insertAtIndex(loading, 0)
                 loading.layout((make, view) => {
                     make.center.equalTo(view.super)
-                    const size = Math.min(Math.min(UIKit.windowSize.width, UIKit.windowSize.height) * 0.6, 300)
+                    const size = Math.min(Math.min(UIKit.windowSize.width, UIKit.windowSize.height) * 0.6, 260)
                     make.size.equalTo($size(size, size))
                 })
                 loading.moveToFront()

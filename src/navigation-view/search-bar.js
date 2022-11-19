@@ -8,17 +8,49 @@ class SearchBar extends BarTitleView {
     bottomOffset = 10
     kbType = $kbType.search
     placeholder = $l10n("SEARCH")
+    inputEvents = {}
+    keyboardView
+    accessoryView
 
     constructor(args) {
         super(args)
 
         this.setController(new SearchBarController())
         this.controller.setSearchBar(this)
-
-        this.init()
     }
 
-    init() {
+    /**
+     * 重定向 event 到 input 组件
+     * @param {*} event
+     * @param {*} action
+     * @returns
+     */
+    setEvent(event, action) {
+        this.inputEvents[event] = action
+        return this
+    }
+
+    setPlaceholder(placeholder) {
+        this.placeholder = placeholder
+        return this
+    }
+
+    setKbType(kbType) {
+        this.kbType = kbType
+        return this
+    }
+
+    setKeyboardView(keyboardView) {
+        this.keyboardView = keyboardView
+        return this
+    }
+
+    setAccessoryView(accessoryView) {
+        this.accessoryView = accessoryView
+        return this
+    }
+
+    getView() {
         this.props = {
             id: this.id,
             smoothCorners: true,
@@ -32,12 +64,18 @@ class SearchBar extends BarTitleView {
                     id: this.id + "-input",
                     type: this.kbType,
                     bgcolor: $color("clear"),
-                    placeholder: this.placeholder
+                    placeholder: this.placeholder,
+                    keyboardView: this.keyboardView,
+                    accessoryView: this.accessoryView
                 },
                 layout: $layout.fill,
-                events: {
-                    changed: sender => this.controller.callEvent("onChange", sender.text)
-                }
+                events: Object.assign(
+                    {
+                        changed: sender => this.controller.callEvent("onChange", sender.text),
+                        returned: sender => this.controller.callEvent("onReturn", sender.text)
+                    },
+                    this.inputEvents
+                )
             }
         ]
         this.layout = (make, view) => {
@@ -46,26 +84,7 @@ class SearchBar extends BarTitleView {
             make.left.equalTo(view.super.safeArea).offset(15)
             make.right.equalTo(view.super.safeArea).offset(-15)
         }
-    }
 
-    /**
-     * 重定向 event 到 input 组件
-     * @param {*} event
-     * @param {*} action
-     * @returns
-     */
-    setEvent(event, action) {
-        this.views[0].events[event] = action
-        return this
-    }
-
-    setPlaceholder(placeholder) {
-        this.placeholder = placeholder
-        return this
-    }
-
-    setKbType(kbType) {
-        this.kbType = kbType
         return this
     }
 }
