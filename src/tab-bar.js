@@ -130,7 +130,7 @@ class TabBarController extends Controller {
 
     /**
      *
-     * @param {Object} pages
+     * @param {object} pages
      * @returns {this}
      */
     setPages(pages = {}) {
@@ -212,7 +212,7 @@ class TabBarController extends Controller {
 
     /**
      *
-     * @param {Object} cells
+     * @param {object} cells
      * @returns {this}
      */
     setCells(cells = {}) {

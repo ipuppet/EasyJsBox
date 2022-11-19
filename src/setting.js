@@ -23,7 +23,7 @@ class SettingReadonlyError extends Error {
 
 /**
  * 脚本类型的动画
- * @typedef {Object} ScriptAnimate
+ * @typedef {object} ScriptAnimate
  * @property {Function} animate.actionStart
  * @property {Function} animate.actionCancel
  * @property {Function} animate.actionDone
@@ -34,7 +34,7 @@ class SettingReadonlyError extends Error {
  * @callback SettingMethodFunction
  * @param {ScriptAnimate} animate
  *
- * @typedef {Object} SettingMethod
+ * @typedef {object} SettingMethod
  * @property {SettingMethodFunction} *
  */
 
@@ -93,13 +93,13 @@ class Setting extends Controller {
 
     /**
      *
-     * @param {Object} args
+     * @param {object} args
      * @param {Function} args.set 自定义 set 方法，定义后将忽略 fileStorage 和 dataFile
      * @param {Function} args.get 自定义 get 方法，定义后将忽略 fileStorage 和 dataFile
-     * @param {Object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
+     * @param {object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
      * @param {FileStorage} args.fileStorage FileStorage 对象，用于文件操作
      * @param {string} args.dataFile 持久化数据保存文件
-     * @param {Object} args.structure 设置项结构
+     * @param {object} args.structure 设置项结构
      * @param {string} args.structurePath 结构路径，优先级低于 structure
      * @param {boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
      * @param {string} args.name 唯一名称，默认分配一个 UUID
@@ -146,6 +146,7 @@ class Setting extends Controller {
      */
     loadConfig() {
         const exclude = [
+            "push",
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
@@ -1220,9 +1221,9 @@ class Setting extends Controller {
      * @param {string} key
      * @param {string} icon
      * @param {string} title
-     * @param {Object} events
+     * @param {object} events
      * @param {string|Object} bgcolor 指定预览时的背景色，默认 "#000000"
-     * @returns {Object}
+     * @returns {object}
      */
     createIcon(key, icon, title, bgcolor = "#000000") {
         const id = this.getId(key)
@@ -1305,7 +1306,10 @@ class Setting extends Controller {
         }
     }
 
-    createChild(key, icon, title, children) {
+    createPush(key, icon, title, view, tapped) {
+        if (typeof view === "string" && view.startsWith("this.method")) {
+            view = eval(`(()=>{return ${view}()})()`)
+        }
         const id = this.getId(key)
         return {
             type: "view",
@@ -1332,33 +1336,46 @@ class Setting extends Controller {
             ],
             events: {
                 tapped: () => {
-                    setTimeout(() => {
-                        if (this.events?.onChildPush) {
-                            this.callEvent("onChildPush", this.getListView(children, {}), title)
-                        } else {
+                    $delay(0, () => {
+                        const push = () => {
                             if (this.isUseJsboxNav) {
                                 UIKit.push({
                                     title: title,
-                                    bgcolor: UIKit.scrollViewBackgroundColor,
-                                    views: [this.getListView(children, {})]
+                                    props: view.props ?? {},
+                                    views: [view]
                                 })
                             } else {
                                 const navigationView = new NavigationView()
-                                navigationView.setView(this.getListView(children, {})).navigationBarTitle(title)
+                                navigationView.setView(view).navigationBarTitle(title)
                                 navigationView.navigationBarItems.addPopButton()
                                 navigationView.navigationBar.setLargeTitleDisplayMode(
                                     NavigationBar.largeTitleDisplayModeNever
                                 )
-                                if (this.hasSectionTitle(children)) {
+                                if (this.hasSectionTitle(view)) {
                                     navigationView.navigationBar.setContentViewHeightOffset(-10)
                                 }
                                 this.viewController.push(navigationView)
                             }
                         }
+                        if (typeof tapped === "function") {
+                            tapped(push)
+                        } else {
+                            push()
+                        }
                     })
                 }
             }
         }
+    }
+
+    createChild(key, icon, title, children) {
+        return this.createPush(key, icon, title, this.getListView(children, {}), push => {
+            if (this.events?.onChildPush) {
+                this.callEvent("onChildPush", view, title)
+            } else {
+                push()
+            }
+        })
     }
 
     createImage(key, icon, title) {
@@ -1495,6 +1512,9 @@ class Setting extends Controller {
                         break
                     case "icon":
                         row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
+                        break
+                    case "push":
+                        row = this.createPush(item.key, item.icon, item.title, item.view)
                         break
                     case "child":
                         row = this.createChild(item.key, item.icon, item.title, item.children)

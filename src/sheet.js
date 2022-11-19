@@ -72,7 +72,7 @@ class Sheet extends View {
 
     /**
      * 设置 view
-     * @param {Object} view 视图对象
+     * @param {object} view 视图对象
      * @returns {this}
      */
     setView(view = {}) {
@@ -83,10 +83,10 @@ class Sheet extends View {
 
     /**
      * 为 view 添加一个 navBar
-     * @param {Object} param
+     * @param {object} param
      *  {
      *      {string} title
-     *      {Object} popButton 参数与 BarButtonItem 一致
+     *      {object} popButton 参数与 BarButtonItem 一致
      *      {Array} rightButtons
      *  }
      * @returns {this}

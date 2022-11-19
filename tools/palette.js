@@ -401,8 +401,8 @@ class Palette {
      * @param {String} id 各组件id前缀
      * @param {String} title 标题
      * @param {Array} value 左侧显示数值 0: 当前数值, 1: 单位
-     * @param {Object} gradient 渐变色条
-     * @param {Object} slider value: 当前数值, events: value=>{ your code; return value} return的value用于显示
+     * @param {object} gradient 渐变色条
+     * @param {object} slider value: 当前数值, events: value=>{ your code; return value} return的value用于显示
      * @param {*} cover 是否需要遮盖层，覆盖在渐变色条上方控制透明度和明度
      */
     templateSlider(id, title, value, gradient, slider, cover = false) {

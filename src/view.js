@@ -18,7 +18,7 @@ class View {
 
     /**
      * 属性
-     * @type {Object}
+     * @type {object}
      */
     props
 
@@ -30,7 +30,7 @@ class View {
 
     /**
      * 事件
-     * @type {Object}
+     * @type {object}
      */
     events
 
