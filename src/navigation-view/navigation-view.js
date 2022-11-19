@@ -38,7 +38,7 @@ class NavigationView {
 
     /**
      *
-     * @param {Object} view
+     * @param {object} view
      * @returns {this}
      */
     setView(view) {

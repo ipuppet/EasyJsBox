@@ -174,14 +174,21 @@
 
 #### script
 
-如果`value`以`this.method`开头且结尾无括号，则会自动向该函数传递一个`animate`对象。
+如果 `value` 以 `this.method` 开头且结尾无括号，则会自动向该函数传递一个 `animate` 对象。
+
+`this` 为 `Setting` 实例，需要向 `setting.method` 写入方法，如：
+
+```js
+setting.method.readme = animate => {
+    console.log("Hello World!")
+}
+```
 
 ```js
 const animate = {
     actionStart: callable(), // 会出现加载动画
     actionCancel: callable(), // 会直接恢复箭头图标
     actionDone: callable(), // 会出现对号，然后恢复箭头
-    touchHighlight: callable(), // 被点击的一行颜色加深，然后颜色恢复
     touchHighlightStart: callable(), // 被点击的一行颜色加深
     touchHighlightEnd: callable() // 被点击的一行颜色恢复
 }
@@ -308,6 +315,31 @@ const animate = {
     "type": "icon",
     "key": "icon",
     "value": "plus"
+}
+```
+
+#### push
+
+如果 `view` 以 `this.method` 开头且结尾无括号，则会执函数获取子视图，和 `script` 一样需要向 `setting.method` 写入方法。
+
+```json
+{
+    "icon": [
+        "rectangle.3.offgrid.fill"
+    ],
+    "title": "CHILD",
+    "type": "push",
+    "key": "push",
+    "view": [
+        {
+            "title": "Section 1",
+            "items": []
+        },
+        {
+            "title": "Section 2",
+            "items": []
+        }
+    ]
 }
 ```
 

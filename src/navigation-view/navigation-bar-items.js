@@ -28,12 +28,12 @@ class BarTitleView extends View {
  */
 
 /**
- * @typedef {Object} BarButtonItemProperties
+ * @typedef {object} BarButtonItemProperties
  * @property {string} title
  * @property {string} symbol
  * @property {Function} tapped
- * @property {Object} menu
- * @property {Object} events
+ * @property {object} menu
+ * @property {object} events
  */
 
 class BarButtonItem extends View {
@@ -341,10 +341,11 @@ class NavigationBarItems {
     /**
      * 覆盖左侧按钮
      * @param {string} parent 父页面标题，将会显示为文本按钮
-     * @param {Object} view 自定义按钮视图
+     * @param {object} view 自定义按钮视图
+     * @param {function} onPop 自定义按钮视图
      * @returns {this}
      */
-    addPopButton(parent, view) {
+    addPopButton(parent, view, onPop) {
         if (!parent) {
             parent = $l10n("BACK")
         }
@@ -366,6 +367,9 @@ class NavigationBarItems {
             events: {
                 tapped: () => {
                     $ui.pop()
+                    if (typeof onPop === "function") {
+                        onPop()
+                    }
                 }
             }
         }
