@@ -1307,9 +1307,6 @@ class Setting extends Controller {
     }
 
     createPush(key, icon, title, view, tapped) {
-        if (typeof view === "string" && view.startsWith("this.method")) {
-            view = eval(`(()=>{return ${view}()})()`)
-        }
         const id = this.getId(key)
         return {
             type: "view",
@@ -1336,33 +1333,34 @@ class Setting extends Controller {
             ],
             events: {
                 tapped: () => {
-                    $delay(0, () => {
-                        const push = () => {
-                            if (this.isUseJsboxNav) {
-                                UIKit.push({
-                                    title: title,
-                                    props: view.props ?? {},
-                                    views: [view]
-                                })
-                            } else {
-                                const navigationView = new NavigationView()
-                                navigationView.setView(view).navigationBarTitle(title)
-                                navigationView.navigationBarItems.addPopButton()
-                                navigationView.navigationBar.setLargeTitleDisplayMode(
-                                    NavigationBar.largeTitleDisplayModeNever
-                                )
-                                if (this.hasSectionTitle(view)) {
-                                    navigationView.navigationBar.setContentViewHeightOffset(-10)
-                                }
-                                this.viewController.push(navigationView)
-                            }
-                        }
-                        if (typeof tapped === "function") {
-                            tapped(push)
+                    if (typeof view === "string" && view.startsWith("this.method")) {
+                        view = eval(`(()=>{return ${view}()})()`)
+                    }
+                    const push = () => {
+                        if (this.isUseJsboxNav) {
+                            UIKit.push({
+                                title: title,
+                                props: view.props ?? {},
+                                views: [view]
+                            })
                         } else {
-                            push()
+                            const navigationView = new NavigationView()
+                            navigationView.setView(view).navigationBarTitle(title)
+                            navigationView.navigationBarItems.addPopButton()
+                            navigationView.navigationBar.setLargeTitleDisplayMode(
+                                NavigationBar.largeTitleDisplayModeNever
+                            )
+                            if (this.hasSectionTitle(view)) {
+                                navigationView.navigationBar.setContentViewHeightOffset(-10)
+                            }
+                            this.viewController.push(navigationView)
                         }
-                    })
+                    }
+                    if (typeof tapped === "function") {
+                        tapped(push)
+                    } else {
+                        push()
+                    }
                 }
             }
         }
