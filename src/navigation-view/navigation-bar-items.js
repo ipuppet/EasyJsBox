@@ -366,7 +366,7 @@ class NavigationBarItems {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(this.edges)
+                make.left.equalTo(view.super.safeArea).offset(new BarButtonItem().edges)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: {

@@ -175,7 +175,7 @@ class Setting extends Controller {
 
     hasSectionTitle(structure) {
         this.#checkLoadConfigError()
-        return structure[0]["title"] ? true : false
+        return structure[0]?.title ? true : false
     }
 
     loadL10n() {
