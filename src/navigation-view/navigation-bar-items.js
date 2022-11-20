@@ -37,13 +37,9 @@ class BarTitleView extends View {
  */
 
 class BarButtonItem extends View {
-    static edges = 15
-    static size = $size(38, 38)
-    static fontSize = 16
-    static iconSize = $size(
-        BarButtonItem.size.width - BarButtonItem.edges,
-        BarButtonItem.size.height - BarButtonItem.edges
-    ) // 比 size 小 edges
+    edges = 15
+    iconSize = $size(23, 23)
+    fontSize = 16
 
     /**
      * 标题
@@ -61,6 +57,29 @@ class BarButtonItem extends View {
      * 对齐方式
      */
     align = UIKit.align.right
+
+    get width() {
+        if (this.title) {
+            const fontSize = $text.sizeThatFits({
+                text: this.title,
+                width: UIKit.windowSize.width,
+                font: $font(this.fontSize)
+            })
+            return Math.ceil(fontSize.width) + this.edges // 文本按钮增加内边距
+        }
+
+        return this.iconSize.width + this.edges
+    }
+
+    setEdges(edges) {
+        this.edges = edges
+        return this
+    }
+
+    setFontSize(fontSize) {
+        this.fontSize = fontSize
+        return this
+    }
 
     setTitle(title) {
         this.title = title
@@ -157,7 +176,7 @@ class BarButtonItem extends View {
                         {
                             id: this.id,
                             bgcolor: $color("clear"),
-                            font: $font(BarButtonItem.fontSize),
+                            font: $font(this.fontSize),
                             tintColor: UIKit.textColor,
                             titleColor: UIKit.textColor,
                             contentEdgeInsets: $insets(0, 0, 0, 0),
@@ -185,7 +204,7 @@ class BarButtonItem extends View {
                             ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
-                                make.size.equalTo(BarButtonItem.iconSize)
+                                make.size.equalTo(this.iconSize)
                             }
                         },
                         {
@@ -198,7 +217,7 @@ class BarButtonItem extends View {
                             },
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
-                                make.size.equalTo(BarButtonItem.iconSize)
+                                make.size.equalTo(this.iconSize)
                             }
                         }
                     ],
@@ -216,24 +235,14 @@ class BarButtonItem extends View {
                 }
             ],
             layout: (make, view) => {
-                if (this.title) {
-                    const fontSize = $text.sizeThatFits({
-                        text: this.title,
-                        width: UIKit.windowSize.width,
-                        font: $font(BarButtonItem.fontSize)
-                    })
-                    const width = Math.ceil(fontSize.width) + BarButtonItem.edges // 文本按钮增加内边距
-                    make.size.equalTo($size(width, BarButtonItem.size.height))
-                } else {
-                    make.size.equalTo(BarButtonItem.size)
-                }
+                make.size.equalTo($size(this.width, UIKit.NavigationBarNormalHeight))
                 make.centerY.equalTo(view.super)
                 if (view.prev && view.prev?.info?.align === this.align) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {
                     // 留一半边距，按钮内边距是另一半
-                    const edges = BarButtonItem.edges / 2
+                    const edges = this.edges / 2
                     if (this.align === UIKit.align.right) make.right.inset(edges)
                     else make.left.inset(edges)
                 }
@@ -318,9 +327,7 @@ class NavigationBarItems {
      * @returns {this}
      */
     addRightButton({ symbol, title, tapped, menu, events } = {}) {
-        this.rightButtons.push(
-            BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }).definition
-        )
+        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -331,9 +338,7 @@ class NavigationBarItems {
      * @returns {this}
      */
     addLeftButton({ symbol, title, tapped, menu, events } = {}) {
-        this.leftButtons.push(
-            BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }).definition
-        )
+        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -361,7 +366,7 @@ class NavigationBarItems {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(BarButtonItem.edges)
+                make.left.equalTo(view.super.safeArea).offset(this.edges)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: {
