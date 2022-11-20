@@ -111,6 +111,7 @@ class Sheet extends View {
             .setAlign(UIKit.align.left)
             .setSymbol(popButton.symbol)
             .setTitle(popButton.title)
+            .setColor(popButton.color)
             .setMenu(popButton.menu)
         const button = barButtonItem.definition.views[0]
         button.layout = (make, view) => {
