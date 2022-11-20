@@ -112,22 +112,23 @@ class NavigationBar extends View {
 
     getNavigationBarView() {
         const getButtonView = (buttons, align) => {
+            let width = 0
+            const buttonsView = []
+            buttons.forEach(button => {
+                width += button.width
+                buttonsView.push(button.definition)
+            })
+            width += buttons[0]?.edges ?? 0
             return buttons.length > 0
                 ? {
                       type: "view",
-                      views: [
-                          {
-                              type: "view",
-                              views: buttons,
-                              layout: $layout.fill
-                          }
-                      ],
+                      views: buttonsView,
                       layout: (make, view) => {
                           make.top.equalTo(view.super.safeAreaTop)
                           make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
                           if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea)
                           else make.right.equalTo(view.super.safeArea)
-                          make.width.equalTo(buttons.length * BarButtonItem.size.width)
+                          make.width.equalTo(width)
                       }
                   }
                 : {}
