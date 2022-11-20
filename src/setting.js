@@ -1333,10 +1333,12 @@ class Setting extends Controller {
             ],
             events: {
                 tapped: () => {
-                    if (typeof view === "string" && view.startsWith("this.method")) {
-                        view = eval(`(()=>{return ${view}()})()`)
-                    }
-                    const push = () => {
+                    const push = view => {
+                        if (typeof view === "string" && view.startsWith("this.method")) {
+                            view = eval(`(()=>{return ${view}()})()`)
+                        } else if (typeof view === "function") {
+                            view = view()
+                        }
                         if (this.isUseJsboxNav) {
                             UIKit.push({
                                 title: title,
@@ -1359,7 +1361,7 @@ class Setting extends Controller {
                     if (typeof tapped === "function") {
                         tapped(push)
                     } else {
-                        push()
+                        push(view)
                     }
                 }
             }
@@ -1367,11 +1369,11 @@ class Setting extends Controller {
     }
 
     createChild(key, icon, title, children) {
-        return this.createPush(key, icon, title, this.getListView(children, {}), push => {
+        return this.createPush(key, icon, title, undefined, push => {
             if (this.events?.onChildPush) {
-                this.callEvent("onChildPush", view, title)
+                this.callEvent("onChildPush", this.getListView(children, {}), title)
             } else {
-                push()
+                push(this.getListView(children, {}))
             }
         })
     }
