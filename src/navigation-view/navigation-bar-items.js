@@ -37,6 +37,8 @@ class BarTitleView extends View {
  */
 
 class BarButtonItem extends View {
+    static #instance
+
     edges = 15
     iconSize = $size(23, 23)
     fontSize = 16
@@ -71,6 +73,14 @@ class BarButtonItem extends View {
         }
 
         return this.iconSize.width + this.edges
+    }
+
+    static get style() {
+        if (this.#instance === undefined) {
+            this.#instance = new BarButtonItem()
+        }
+
+        return this.#instance
     }
 
     setEdges(edges) {
@@ -377,7 +387,7 @@ class NavigationBarItems {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(new BarButtonItem().edges)
+                make.left.equalTo(view.super.safeArea).offset(BarButtonItem.style.edges)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: {
