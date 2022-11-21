@@ -146,8 +146,7 @@ class Setting extends Controller {
      */
     loadConfig() {
         const exclude = [
-            "push",
-            "script", // script 类型永远使用setting结构文件内的值
+            "script", // script 类型永远使用 setting 结构文件内的值
             "info"
         ]
         const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
