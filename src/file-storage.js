@@ -26,19 +26,44 @@ class FileStorage {
         }
     }
 
-    #filePath(path = "", fileName) {
-        path = `${this.basePath}/${path.trim("/")}`.trim("/")
+    filePath(path = "", createPath = true) {
+        if (path.startsWith("/")) {
+            path = path.substring(1)
+        }
+        path = `${this.basePath}/${path}`
 
-        this.#createDirectory(path)
+        let fileName = ""
 
-        path = `${path}/${fileName}`
-        return path
+        if (!path.endsWith("/")) {
+            const lastSlash = path.lastIndexOf("/")
+            const lastPoint = path.lastIndexOf(".")
+            if (lastPoint > lastSlash) {
+                fileName = path.substring(lastSlash + 1)
+                path = path.substring(0, lastSlash + 1)
+            }
+        }
+
+        if (createPath) {
+            this.#createDirectory(path)
+        }
+
+        return path + fileName
     }
 
-    write(path = "", fileName, data) {
+    exists(path = "") {
+        path = this.filePath(path, false)
+
+        if ($file.exists(path)) {
+            return true
+        }
+
+        return false
+    }
+
+    write(path = "", data) {
         return new Promise((resolve, reject) => {
             try {
-                const success = this.writeSync(path, fileName, data)
+                const success = this.writeSync(path, data)
                 if (success) {
                     resolve(success)
                 } else {
@@ -50,36 +75,20 @@ class FileStorage {
         })
     }
 
-    writeSync(path = "", fileName, data) {
-        if (!fileName) {
-            throw new FileStorageParameterError("fileName")
-        }
+    writeSync(path = "", data) {
         if (!data) {
             throw new FileStorageParameterError("data")
         }
         return $file.write({
             data: data,
-            path: this.#filePath(path, fileName)
+            path: this.filePath(path)
         })
     }
 
-    exists(path = "", fileName) {
-        if (!fileName) {
-            throw new FileStorageParameterError("fileName")
-        }
-        path = this.#filePath(path, fileName)
-
-        if ($file.exists(path)) {
-            return path
-        }
-
-        return false
-    }
-
-    read(path = "", fileName) {
+    read(path = "") {
         return new Promise((resolve, reject) => {
             try {
-                const file = this.readSync(path, fileName)
+                const file = this.readSync(path)
                 if (file) {
                     resolve(file)
                 } else {
@@ -91,11 +100,8 @@ class FileStorage {
         })
     }
 
-    readSync(path = "", fileName) {
-        if (!fileName) {
-            throw new FileStorageParameterError("fileName")
-        }
-        path = this.#filePath(path, fileName)
+    readSync(path = "") {
+        path = this.filePath(path)
         if (!$file.exists(path)) {
             throw new FileStorageFileNotFoundError(path)
         }
@@ -105,9 +111,9 @@ class FileStorage {
         return $file.read(path)
     }
 
-    readAsJSON(path = "", fileName, _default = null) {
+    readAsJSON(path = "", _default = null) {
         try {
-            const fileString = this.readSync(path, fileName)?.string
+            const fileString = this.readSync(path)?.string
             return JSON.parse(fileString)
         } catch (error) {
             return _default
@@ -151,8 +157,20 @@ class FileStorage {
         }
     }
 
-    delete(path = "", fileName = "") {
-        return $file.delete(this.#filePath(path, fileName))
+    delete(path = "") {
+        return $file.delete(this.filePath(path, false))
+    }
+
+    copy(from, to) {
+        from = this.filePath(from)
+        to = this.filePath(to)
+        $file.copy({ src: from, dst: to })
+    }
+
+    move(from, to) {
+        from = this.filePath(from)
+        to = this.filePath(to)
+        $file.move({ src: from, dst: to })
     }
 }
 
