@@ -123,7 +123,7 @@ class Setting extends Controller {
         }
         this.isUseJsboxNav = args.isUseJsboxNav ?? false
         // 不能使用 uuid
-        this.imagePath = (args.name ?? "default") + ".image"
+        this.imagePath = (args.name ?? "default") + ".image" + "/"
         this.setName(args.name ?? $text.uuid)
         // l10n
         this.loadL10n()
@@ -150,7 +150,7 @@ class Setting extends Controller {
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
-        const userData = this.userData ?? this.fileStorage.readAsJSON("", this.dataFile, {})
+        const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
         function setValue(structure) {
             const setting = {}
             for (let section of structure) {
@@ -345,7 +345,7 @@ class Setting extends Controller {
         }
         this.#checkLoadConfigError()
         this.setting[key] = value
-        this.fileStorage.write("", this.dataFile, $data({ string: JSON.stringify(this.setting) }))
+        this.fileStorage.write(this.dataFile, $data({ string: JSON.stringify(this.setting) }))
         this.callEvent("onSet", key, value)
         return true
     }
@@ -360,18 +360,18 @@ class Setting extends Controller {
         return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
     }
 
-    getImageName(key, compress = false) {
+    getImagePath(key, compress = false) {
         let name = $text.MD5(key) + ".jpg"
         if (compress) {
             name = "compress." + name
         }
-        return name
+
+        return this.imagePath + name
     }
 
     getImage(key, compress = false) {
         try {
-            const name = this.getImageName(key, compress)
-            return this.fileStorage.readSync(this.imagePath, name).image
+            return this.fileStorage.readSync(this.getImagePath(key, compress)).image
         } catch (error) {
             if (error instanceof FileStorageFileNotFoundError) {
                 return null
@@ -1432,18 +1432,14 @@ class Setting extends Controller {
                                             }
                                             // 控制压缩图片大小
                                             const image = Kernel.compressImage(resp.data.image)
-                                            this.fileStorage.write(
-                                                this.imagePath,
-                                                this.getImageName(key, true),
-                                                image.jpg(0.8)
-                                            )
-                                            this.fileStorage.write(this.imagePath, this.getImageName(key), resp.data)
+                                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
+                                            this.fileStorage.write(this.getImagePath(key), resp.data)
                                             $(imageId).image = image
                                             $ui.success($l10n("SUCCESS"))
                                         })
                                     } else if (idx === 2) {
-                                        this.fileStorage.delete(this.imagePath, this.getImageName(key, true))
-                                        this.fileStorage.delete(this.imagePath, this.getImageName(key))
+                                        this.fileStorage.delete(this.getImagePath(key, true))
+                                        this.fileStorage.delete(this.getImagePath(key))
                                         $(imageId).image = noneImage
                                         $ui.success($l10n("SUCCESS"))
                                     }

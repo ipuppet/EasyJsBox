@@ -37,9 +37,13 @@ class BarTitleView extends View {
  */
 
 class BarButtonItem extends View {
+    static #instance
+
     edges = 15
     iconSize = $size(23, 23)
     fontSize = 16
+
+    color = UIKit.textColor
 
     /**
      * 标题
@@ -71,6 +75,14 @@ class BarButtonItem extends View {
         return this.iconSize.width + this.edges
     }
 
+    static get style() {
+        if (this.#instance === undefined) {
+            this.#instance = new BarButtonItem()
+        }
+
+        return this.#instance
+    }
+
     setEdges(edges) {
         this.edges = edges
         return this
@@ -78,6 +90,11 @@ class BarButtonItem extends View {
 
     setFontSize(fontSize) {
         this.fontSize = fontSize
+        return this
+    }
+
+    setColor(color = UIKit.textColor) {
+        this.color = color
         return this
     }
 
@@ -177,8 +194,7 @@ class BarButtonItem extends View {
                             id: this.id,
                             bgcolor: $color("clear"),
                             font: $font(this.fontSize),
-                            tintColor: UIKit.textColor,
-                            titleColor: UIKit.textColor,
+                            titleColor: this.color,
                             contentEdgeInsets: $insets(0, 0, 0, 0),
                             titleEdgeInsets: $insets(0, 0, 0, 0),
                             imageEdgeInsets: $insets(0, 0, 0, 0)
@@ -194,7 +210,7 @@ class BarButtonItem extends View {
                                 {
                                     id: `icon-button-${this.id}`,
                                     hidden: this.symbol === undefined,
-                                    tintColor: UIKit.textColor
+                                    tintColor: this.color
                                 },
                                 this.symbol === undefined
                                     ? {}
@@ -212,7 +228,7 @@ class BarButtonItem extends View {
                             props: {
                                 id: `icon-checkmark-${this.id}`,
                                 alpha: 0,
-                                tintColor: UIKit.textColor,
+                                tintColor: this.color,
                                 symbol: "checkmark"
                             },
                             layout: (make, view) => {
@@ -255,7 +271,7 @@ class BarButtonItem extends View {
      * @param {BarButtonItemProperties} param0
      * @returns {BarButtonItem}
      */
-    static creat({ symbol, title, tapped, menu, events, align = UIKit.align.right } = {}) {
+    static creat({ symbol, title, tapped, menu, events, color, align = UIKit.align.right } = {}) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvents(
@@ -269,6 +285,7 @@ class BarButtonItem extends View {
             .setAlign(align)
             .setSymbol(symbol)
             .setTitle(title)
+            .setColor(color)
             .setMenu(menu)
         return barButtonItem
     }
@@ -326,8 +343,10 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addRightButton({ symbol, title, tapped, menu, events } = {}) {
-        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }))
+    addRightButton({ symbol, title, tapped, menu, events, color } = {}) {
+        this.rightButtons.push(
+            BarButtonItem.creat({ symbol, title, tapped, menu, events, color, align: UIKit.align.right })
+        )
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -337,8 +356,10 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addLeftButton({ symbol, title, tapped, menu, events } = {}) {
-        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }))
+    addLeftButton({ symbol, title, tapped, menu, events, color } = {}) {
+        this.leftButtons.push(
+            BarButtonItem.creat({ symbol, title, tapped, menu, events, color, align: UIKit.align.left })
+        )
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -366,7 +387,7 @@ class NavigationBarItems {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(new BarButtonItem().edges)
+                make.left.equalTo(view.super.safeArea).offset(BarButtonItem.style.edges)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: {
