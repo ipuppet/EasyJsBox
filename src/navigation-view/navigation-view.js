@@ -1,3 +1,4 @@
+const { Controller } = require("../controller")
 const { View, PageView } = require("../view")
 const { ValidationError } = require("../validation-error")
 const { Kernel } = require("../kernel")
@@ -16,7 +17,7 @@ class NavigationViewTypeError extends ValidationError {
 /**
  * @typedef {NavigationView} NavigationView
  */
-class NavigationView {
+class NavigationView extends Controller {
     /**
      * @type {PageView}
      */
@@ -27,6 +28,7 @@ class NavigationView {
     navigationBarItems = new NavigationBarItems()
 
     constructor() {
+        super()
         this.navigationBar.navigationBarItems = this.navigationBarItems
         this.navigationController.navigationBar = this.navigationBar
     }

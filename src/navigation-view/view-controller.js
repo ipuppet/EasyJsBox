@@ -17,6 +17,7 @@ class ViewController extends Controller {
      * @param {NavigationView} navigationView
      */
     #onPop(navigationView) {
+        navigationView.callEvent("onPop")
         this.callEvent("onPop", navigationView) // 被弹出的对象
         this.#navigationViews.pop()
     }
