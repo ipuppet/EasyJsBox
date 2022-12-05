@@ -26,27 +26,29 @@ class FileManager {
     loadL10n() {
         Kernel.l10n(
             "zh-Hans",
-            `
-            "CONFIRM_DELETE_MSG" = "确认要删除吗";
-            "DELETE" = "删除";
-            "CANCEL" = "取消";
-            "CLOSE" = "关闭";
-            "SHARE" = "分享";
-            "SAVE" = "保存";
-            "SAVE_SUCCESS" = "保存成功";
-            `
+            {
+                FILE_MANAGER_DELETE_CONFIRM_MSG: "确认要删除吗",
+                DELETE: "删除",
+                CANCEL: "取消",
+                CLOSE: "关闭",
+                SHARE: "分享",
+                SAVE: "保存",
+                SAVE_SUCCESS: "保存成功"
+            },
+            false
         )
         Kernel.l10n(
             "en",
-            `
-            "CONFIRM_DELETE_MSG" = "Are you sure you want to delete";
-            "DELETE" = "Delete";
-            "CANCEL" = "Cancel";
-            "CLOSE" = "Close";
-            "SHARE" = "Share";
-            "SAVE" = "Save";
-            "SAVE_SUCCESS" = "Save Success";
-            `
+            {
+                FILE_MANAGER_DELETE_CONFIRM_MSG: "Are you sure you want to delete",
+                DELETE: "Delete",
+                CANCEL: "Cancel",
+                CLOSE: "Close",
+                SHARE: "Share",
+                SAVE: "Save",
+                SAVE_SUCCESS: "Save Success"
+            },
+            false
         )
     }
 
@@ -236,10 +238,13 @@ class FileManager {
                         color: $color("red"),
                         handler: (sender, indexPath) => {
                             const info = sender.object(indexPath).info.info
-                            Kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG") + ' "' + info.file + '" ?', () => {
-                                this.delete(info)
-                                sender.delete(indexPath)
-                            })
+                            Kernel.deleteConfirm(
+                                $l10n("FILE_MANAGER_DELETE_CONFIRM_MSG") + ' "' + info.file + '" ?',
+                                () => {
+                                    this.delete(info)
+                                    sender.delete(indexPath)
+                                }
+                            )
                         }
                     }
                 ]
