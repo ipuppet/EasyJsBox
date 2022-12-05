@@ -41,7 +41,7 @@ class View {
     layout
 
     #scrollable = undefined
-    scrollableView = null
+    #scrollableView = null
 
     constructor({ type = "view", props = {}, views = [], events = {}, layout = $layout.fill } = {}) {
         // 属性
@@ -66,7 +66,15 @@ class View {
         return new this({ views })
     }
 
-    scrollable() {
+    get scrollableView() {
+        return this.scrollable ? this.#scrollableView : null
+    }
+
+    set scrollableView(view) {
+        this.#scrollableView = view
+    }
+
+    get scrollable() {
         if (this.#scrollable === undefined) {
             this.#scrollable = false
 
@@ -97,6 +105,13 @@ class View {
         }
 
         return this.#scrollable
+    }
+
+    /**
+     * 只读属性
+     */
+    set scrollable(scrollable) {
+        throw new Error("[scrollable] is readonly prop.")
     }
 
     setProps(props) {

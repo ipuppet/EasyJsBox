@@ -56,56 +56,24 @@ class NavigationView extends Controller {
             throw new NavigationViewTypeError("view", "View")
         }
 
+        const scrollView = this.view.scrollableView
         const topSafeAreaInsets = $app.isDebugging || Kernel.isTaio ? 0 : UIKit.topSafeAreaInsets
+        const navigationBarHeight =
+            this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever
+                ? this.navigationBar.navigationBarNormalHeight
+                : this.navigationBar.navigationBarLargeTitleHeight
 
         // 计算偏移高度
-        let height = this.navigationBar.contentViewHeightOffset
+        let height = this.navigationBar.contentViewHeightOffset + navigationBarHeight
         if (this.navigationBarItems.titleView) {
             height += this.navigationBarItems.titleView.topOffset
             height += this.navigationBarItems.titleView.height
             height += this.navigationBarItems.titleView.bottomOffset
         }
-        if (this.view.props.stickyHeader) {
-            height += this.navigationBar.largeTitleFontHeight
-        } else {
-            if (this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever) {
-                height += this.navigationBar.navigationBarNormalHeight
-            } else {
-                height += this.navigationBar.navigationBarLargeTitleHeight
-            }
-        }
 
-        // 修饰视图顶部偏移
-        if (this.view.props.header) {
-            this.view.props.header = {
-                type: "view",
-                props: {
-                    height: height + (this.view.props.header?.props?.height ?? 0)
-                },
-                views: [
-                    {
-                        type: "view",
-                        props: { clipsToBounds: true },
-                        views: [this.view.props.header],
-                        layout: (make, view) => {
-                            make.top.equalTo(height)
-                            make.bottom.width.equalTo(view.super)
-                        }
-                    }
-                ]
-            }
-        } else {
-            this.view.props.header = { props: { height: height } }
-        }
-
-        // 修饰视图底部偏移
-        this.view.props.footer = Object.assign({ props: {} }, this.view.props.footer ?? {})
-        this.view.props.footer.props.height =
-            (this.navigationBarItems.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
-
-        // 重写布局
-        if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
-            // 非滚动视图
+        // 非滚动视图
+        // 对于子视图可滚动的项目，必须手动指定滚动视图 props.associateWithNavigationBar 为 false 才会跳过绑定
+        if (!this.view.scrollable || scrollView.props.associateWithNavigationBar === false) {
             this.view.layout = (make, view) => {
                 make.left.right.equalTo(view.super.safeArea)
                 make.bottom.equalTo(view.super)
@@ -115,79 +83,113 @@ class NavigationView extends Controller {
                 }
                 make.top.equalTo(topOffset)
             }
-        } else {
-            // indicatorInsets
-            const pinTitleViewOffset = this.navigationBarItems.isPinTitleView
-                ? this.navigationBarItems.titleView.height +
-                  this.navigationBarItems.titleView.bottomOffset +
-                  this.navigationBar.contentViewHeightOffset
-                : 0
-            if (this.view.props.indicatorInsets) {
-                const old = this.view.props.indicatorInsets
-                this.view.props.indicatorInsets = $insets(
-                    old.top + this.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
-                    old.left,
-                    old.bottom + (this.navigationBarItems.fixedFooterView?.height ?? 0),
-                    old.right
-                )
-            } else {
-                this.view.props.indicatorInsets = $insets(
-                    this.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
-                    0,
-                    this.navigationBarItems.fixedFooterView?.height ?? 0,
-                    0
-                )
-            }
-
-            // layout
-            this.view.layout = (make, view) => {
-                if (this.view.props.stickyHeader) {
-                    make.top.equalTo(view.super.safeArea).offset(this.navigationBar.navigationBarNormalHeight)
-                } else {
-                    make.top.equalTo(view.super)
-                }
-                make.left.right.equalTo(view.super.safeArea)
-                make.bottom.equalTo(view.super)
-            }
-
-            // 重写滚动事件
-            this.view
-                .assignEvent("didScroll", sender => {
-                    let contentOffset = sender.contentOffset.y
-                    if (
-                        (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
-                        this.navigationBar.topSafeArea &&
-                        !this.view.props.stickyHeader
-                    ) {
-                        contentOffset += topSafeAreaInsets
-                    }
-                    this.navigationController.didScroll(contentOffset)
-                })
-                .assignEvent("didEndDragging", (sender, decelerate) => {
-                    let contentOffset = sender.contentOffset.y
-                    let zeroOffset = 0
-                    if (
-                        (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
-                        this.navigationBar.topSafeArea &&
-                        !this.view.props.stickyHeader
-                    ) {
-                        contentOffset += topSafeAreaInsets
-                        zeroOffset = topSafeAreaInsets
-                    }
-                    this.navigationController.didEndDragging(
-                        contentOffset,
-                        decelerate,
-                        (...args) => sender.scrollToOffset(...args),
-                        zeroOffset
-                    )
-                })
-                .assignEvent("didEndDecelerating", (...args) => {
-                    if (args[0].tracking) {
-                        return
-                    }
-                    this.view.events?.didEndDragging(...args)
-                })
+            return
         }
+
+        if (scrollView.props.stickyHeader) {
+            height -= navigationBarHeight
+            height += this.navigationBar.largeTitleFontHeight
+        }
+
+        // 修饰视图顶部偏移
+        if (scrollView.props.header) {
+            scrollView.props.header = {
+                type: "view",
+                props: {
+                    height: height + (scrollView.props.header?.props?.height ?? 0)
+                },
+                views: [
+                    {
+                        type: "view",
+                        props: { clipsToBounds: true },
+                        views: [scrollView.props.header],
+                        layout: (make, view) => {
+                            make.top.equalTo(height)
+                            make.bottom.width.equalTo(view.super)
+                        }
+                    }
+                ]
+            }
+        } else {
+            scrollView.props.header = { props: { height: height } }
+        }
+
+        // 修饰视图底部偏移
+        scrollView.props.footer = Object.assign({ props: {} }, scrollView.props.footer ?? {})
+        scrollView.props.footer.props.height =
+            (this.navigationBarItems.fixedFooterView?.height ?? 0) + (scrollView.props.footer.props?.height ?? 0)
+
+        // indicatorInsets
+        const pinTitleViewOffset = this.navigationBarItems.isPinTitleView
+            ? this.navigationBarItems.titleView.height +
+              this.navigationBarItems.titleView.bottomOffset +
+              this.navigationBar.contentViewHeightOffset
+            : 0
+        if (scrollView.props.indicatorInsets) {
+            const old = scrollView.props.indicatorInsets
+            scrollView.props.indicatorInsets = $insets(
+                old.top + this.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
+                old.left,
+                old.bottom + (this.navigationBarItems.fixedFooterView?.height ?? 0),
+                old.right
+            )
+        } else {
+            scrollView.props.indicatorInsets = $insets(
+                this.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
+                0,
+                this.navigationBarItems.fixedFooterView?.height ?? 0,
+                0
+            )
+        }
+
+        // layout
+        scrollView.layout = (make, view) => {
+            if (scrollView.props.stickyHeader) {
+                make.top.equalTo(view.super.safeArea).offset(this.navigationBar.navigationBarNormalHeight)
+            } else {
+                make.top.equalTo(view.super)
+            }
+            make.left.right.equalTo(view.super.safeArea)
+            make.bottom.equalTo(view.super)
+        }
+
+        // 重写滚动事件
+        scrollView
+            .assignEvent("didScroll", sender => {
+                let contentOffset = sender.contentOffset.y
+                if (
+                    (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
+                    this.navigationBar.topSafeArea &&
+                    !scrollView.props.stickyHeader
+                ) {
+                    contentOffset += topSafeAreaInsets
+                }
+                this.navigationController.didScroll(contentOffset)
+            })
+            .assignEvent("didEndDragging", (sender, decelerate) => {
+                let contentOffset = sender.contentOffset.y
+                let zeroOffset = 0
+                if (
+                    (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
+                    this.navigationBar.topSafeArea &&
+                    !scrollView.props.stickyHeader
+                ) {
+                    contentOffset += topSafeAreaInsets
+                    zeroOffset = topSafeAreaInsets
+                }
+                this.navigationController.didEndDragging(
+                    contentOffset,
+                    decelerate,
+                    (...args) => sender.scrollToOffset(...args),
+                    zeroOffset
+                )
+            })
+            .assignEvent("didEndDecelerating", (...args) => {
+                if (args[0].tracking) {
+                    return
+                }
+                scrollView.events?.didEndDragging(...args)
+            })
     }
 
     #initPage() {
