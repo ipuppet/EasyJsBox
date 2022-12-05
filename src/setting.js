@@ -180,78 +180,78 @@ class Setting extends Controller {
     loadL10n() {
         Kernel.l10n(
             "zh-Hans",
-            `
-            "OK" = "好";
-            "DONE" = "完成";
-            "CANCEL" = "取消";
-            "CLEAR" = "清除";
-            "BACK" = "返回";
-            "ERROR" = "发生错误";
-            "SUCCESS" = "成功";
-            "LOADING" = "加载中";
-            "INVALID_VALUE" = "非法参数";
-            "CONFIRM_CHANGES" = "数据已变化，确认修改？";
-            
-            "SETTING" = "设置";
-            "GENERAL" = "一般";
-            "ADVANCED" = "高级";
-            "TIPS" = "小贴士";
-            "COLOR" = "颜色";
-            "COPY" = "复制";
-            "COPIED" = "复制成功";
-            
-            "JSBOX_ICON" = "JSBox 内置图标";
-            "SF_SYMBOLS" = "SF Symbols";
-            "IMAGE_BASE64" = "图片 / base64";
+            {
+                OK: "好",
+                DONE: "完成",
+                CANCEL: "取消",
+                CLEAR: "清除",
+                BACK: "返回",
+                ERROR: "发生错误",
+                SUCCESS: "成功",
+                LOADING: "加载中",
+                INVALID_VALUE: "非法参数",
+                CONFIRM_CHANGES: "数据已变化，确认修改？",
 
-            "PREVIEW" = "预览";
-            "SELECT_IMAGE" = "选择图片";
-            "CLEAR_IMAGE" = "清除图片";
-            "NO_IMAGE" = "无图片";
-            
-            "ABOUT" = "关于";
-            "VERSION" = "Version";
-            "AUTHOR" = "作者";
-            "AT_BOTTOM" = "已经到底啦~";
-            `,
+                SETTING: "设置",
+                GENERAL: "一般",
+                ADVANCED: "高级",
+                TIPS: "小贴士",
+                COLOR: "颜色",
+                COPY: "复制",
+                COPIED: "复制成功",
+
+                JSBOX_ICON: "JSBox 内置图标",
+                SF_SYMBOLS: "SF Symbols",
+                IMAGE_BASE64: "图片 / base64",
+
+                PREVIEW: "预览",
+                SELECT_IMAGE: "选择图片",
+                CLEAR_IMAGE: "清除图片",
+                NO_IMAGE: "无图片",
+
+                ABOUT: "关于",
+                VERSION: "Version",
+                AUTHOR: "作者",
+                AT_BOTTOM: "已经到底啦~"
+            },
             false
         )
         Kernel.l10n(
             "en",
-            `
-            "OK" = "OK";
-            "DONE" = "Done";
-            "CANCEL" = "Cancel";
-            "CLEAR" = "Clear";
-            "BACK" = "Back";
-            "ERROR" = "Error";
-            "SUCCESS" = "Success";
-            "LOADING" = "Loading";
-            "INVALID_VALUE" = "Invalid value";
-            "CONFIRM_CHANGES" = "The data has changed, confirm the modification?";
+            {
+                OK: "OK",
+                DONE: "Done",
+                CANCEL: "Cancel",
+                CLEAR: "Clear",
+                BACK: "Back",
+                ERROR: "Error",
+                SUCCESS: "Success",
+                LOADING: "Loading",
+                INVALID_VALUE: "Invalid value",
+                CONFIRM_CHANGES: "The data has changed, confirm the modification?",
 
-            "SETTING" = "Setting";
-            "GENERAL" = "General";
-            "ADVANCED" = "Advanced";
-            "TIPS" = "Tips";
-            "COLOR" = "Color";
-            "COPY" = "Copy";
-            "COPIED" = "Copide";
+                SETTING: "Setting",
+                GENERAL: "General",
+                ADVANCED: "Advanced",
+                TIPS: "Tips",
+                COLOR: "Color",
+                COPY: "Copy",
+                COPIED: "Copide",
 
-            "JSBOX_ICON" = "JSBox in app icon";
-            "SF_SYMBOLS" = "SF Symbols";
-            "IMAGE_BASE64" = "Image / base64";
+                JSBOX_ICON: "JSBox in app icon",
+                SF_SYMBOLS: "SF Symbols",
+                IMAGE_BASE64: "Image / base64",
 
-            "PREVIEW" = "Preview";
-            "SELECT_IMAGE" = "Select Image";
-            "CLEAR_IMAGE" = "Clear Image";
-            "NO_IMAGE" = "No Image";
+                PREVIEW: "Preview",
+                SELECT_IMAGE: "Select Image",
+                CLEAR_IMAGE: "Clear Image",
+                NO_IMAGE: "No Image",
 
-            "ABOUT" = "About";
-            "VERSION" = "Version";
-            "AUTHOR" = "Author";
-            "AT_BOTTOM" = "It's the end~";
-            `,
+                ABOUT: "About",
+                VERSION: "Version",
+                AUTHOR: "Author",
+                AT_BOTTOM: "It's the end~"
+            },
             false
         )
     }

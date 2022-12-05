@@ -109,7 +109,8 @@ class Kernel {
 
     static deleteConfirm(message, conformAction) {
         $ui.alert({
-            title: message,
+            title: $l10n("DELETE_CONFIRM_TITLE"),
+            message,
             actions: [
                 {
                     title: $l10n("DELETE"),
@@ -243,6 +244,9 @@ class Kernel {
         return false
     }
 }
+
+Kernel.l10n("zh-Hans", { DELETE_CONFIRM_TITLE: "删除前确认" }, false)
+Kernel.l10n("en", { DELETE_CONFIRM_TITLE: "Delete Confirmation" }, false)
 
 module.exports = {
     Kernel
