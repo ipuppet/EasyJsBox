@@ -1,8 +1,5 @@
 const { VERSION } = require("./version")
 
-Kernel.l10n("zh-Hans", { DELETE_CONFIRM_TITLE: "删除前确认" }, false)
-Kernel.l10n("en", { DELETE_CONFIRM_TITLE: "Delete Confirmation" }, false)
-
 class Kernel {
     startTime = Date.now()
     // 隐藏 jsbox 默认 nav 栏
@@ -247,6 +244,9 @@ class Kernel {
         return false
     }
 }
+
+Kernel.l10n("zh-Hans", { DELETE_CONFIRM_TITLE: "删除前确认" }, false)
+Kernel.l10n("en", { DELETE_CONFIRM_TITLE: "Delete Confirmation" }, false)
 
 module.exports = {
     Kernel
