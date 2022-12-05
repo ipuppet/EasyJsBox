@@ -1,5 +1,13 @@
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
+    static #feedbackGenerator = $objc("UINotificationFeedbackGenerator").$new()
+
+    static feedbackSuccess() {
+        UIKit.#feedbackGenerator.$notificationOccurred(0)
+    }
+    static feedbackError() {
+        UIKit.#feedbackGenerator.$notificationOccurred(2)
+    }
 
     /**
      * 对齐方式

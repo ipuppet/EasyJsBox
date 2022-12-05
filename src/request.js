@@ -6,10 +6,8 @@ class Request {
         patch: "PATCH",
         head: "HEAD"
     }
-    static cacheContainerKey = $addin?.current?.name + ".request.cache"
-    static get cache() {
-        return $cache.get(Request.cacheContainerKey) ?? {}
-    }
+
+    cacheContainerKey = $addin?.current?.name + ".request.cache"
 
     #useCache = false
     #ignoreCacheExp = false
@@ -27,6 +25,10 @@ class Request {
         if (typeof logger === "function") {
             this.logger = logger
         }
+    }
+
+    get cache() {
+        return $cache.get(this.cacheContainerKey) ?? {}
     }
 
     #logRequest(message) {
@@ -53,27 +55,27 @@ class Request {
     }
 
     getCache(key, _default = null) {
-        const cache = Request.cache
+        const cache = this.cache
         return cache[key] ?? _default
     }
 
     setCache(key, data) {
-        if (!data || typeof data !== "string") {
+        if (!data) {
             return
         }
-        const cache = Request.cache
+        const cache = this.cache
         cache[key] = data
-        $cache.set(Request.cacheContainerKey, cache)
+        $cache.set(this.cacheContainerKey, cache)
     }
 
     removeCache(key) {
-        let cache = Request.cache
+        let cache = this.cache
         delete cache[key]
-        $cache.set(Request.cacheContainerKey, cache)
+        $cache.set(this.cacheContainerKey, cache)
     }
 
     clearCache() {
-        $cache.remove(Request.cacheContainerKey)
+        $cache.remove(this.cacheContainerKey)
     }
 
     useCache() {

@@ -194,7 +194,7 @@ class TabBarController extends Controller {
 
     initBackground() {
         const selectedPage = this.#pages[this.selected]
-        if (selectedPage.scrollable()) {
+        if (selectedPage.scrollable) {
             $delay(0, () => {
                 const scrollableView = $(selectedPage.id).get(selectedPage.scrollableView.id)
 
@@ -254,7 +254,7 @@ class TabBarController extends Controller {
 
     #pageViews() {
         return Object.values(this.#pages).map(page => {
-            if (page.scrollable()) {
+            if (page.scrollable) {
                 const scrollView = page.scrollableView
                 // indicatorInsets
                 if (scrollView.props.indicatorInsets) {
@@ -281,7 +281,7 @@ class TabBarController extends Controller {
                         const contentOffset = sender.contentOffset.y
                         const contentSize = sender.contentSize.height + this.bottomSafeAreaInsets
                         const nextSize = contentSize - sender.frame.height
-                        if (nextSize - contentOffset <= 0) {
+                        if (nextSize - contentOffset <= 1) {
                             this.hideBackground()
                         } else {
                             this.showBackground()
