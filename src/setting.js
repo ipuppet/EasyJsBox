@@ -1551,13 +1551,17 @@ class Setting extends Controller {
         }
     }
 
-    getPage() {
+    getNavigationView() {
         const navigationView = new NavigationView()
         navigationView.setView(this.getListView(this.structure)).navigationBarTitle($l10n("SETTING"))
         if (this.hasSectionTitle(this.structure)) {
             navigationView.navigationBar.setContentViewHeightOffset(-10)
         }
-        return navigationView.getPage()
+        return navigationView
+    }
+
+    getPage() {
+        return this.getNavigationView().getPage()
     }
 }
 
