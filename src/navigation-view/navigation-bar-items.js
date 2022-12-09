@@ -123,13 +123,18 @@ class BarButtonItem extends View {
         return this
     }
 
-    #actionStart() {
-        // 隐藏button，显示spinner
-        $(this.id).hidden = true
-        $("spinner-" + this.id).hidden = false
+    setLoading(loading) {
+        if (loading) {
+            // 隐藏button，显示spinner
+            $(this.id).hidden = true
+            $("spinner-" + this.id).hidden = false
+        } else {
+            $(this.id).hidden = false
+            $("spinner-" + this.id).hidden = true
+        }
     }
 
-    #actionDone() {
+    #checkMark() {
         const buttonIcon = $(`icon-button-${this.id}`)
         const checkmarkIcon = $(`icon-checkmark-${this.id}`)
         buttonIcon.alpha = 0
@@ -165,20 +170,15 @@ class BarButtonItem extends View {
         })
     }
 
-    #actionCancel() {
-        $(this.id).hidden = false
-        $("spinner-" + this.id).hidden = true
-    }
-
     getView() {
         const userTapped = this.events.tapped
         this.events.tapped = sender => {
             if (!userTapped) return
             userTapped(
                 {
-                    start: () => this.#actionStart(),
-                    done: () => this.#actionDone(),
-                    cancel: () => this.#actionCancel()
+                    start: () => this.setLoading(true),
+                    done: () => this.#checkMark(),
+                    cancel: () => this.setLoading(false)
                 },
                 sender
             )
@@ -271,22 +271,18 @@ class BarButtonItem extends View {
      * @param {BarButtonItemProperties} param0
      * @returns {BarButtonItem}
      */
-    static creat({ symbol, title, tapped, menu, events, color, align = UIKit.align.right } = {}) {
+    static creat({ id, symbol, title, tapped, menu, events, color, align = UIKit.align.right } = {}) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvents(
-                Object.assign(
-                    {
-                        tapped: tapped
-                    },
-                    events
-                )
-            )
+            .setEvents(Object.assign({ tapped: tapped }, events))
             .setAlign(align)
             .setSymbol(symbol)
             .setTitle(title)
             .setColor(color)
             .setMenu(menu)
+        if (id) {
+            barButtonItem.setProp("id", id)
+        }
         return barButtonItem
     }
 }
@@ -297,6 +293,7 @@ class BarButtonItem extends View {
 class NavigationBarItems {
     rightButtons = []
     leftButtons = []
+    #buttonIndex = {}
     hasbutton = false
 
     isPinTitleView = false
@@ -343,10 +340,10 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addRightButton({ symbol, title, tapped, menu, events, color } = {}) {
-        this.rightButtons.push(
-            BarButtonItem.creat({ symbol, title, tapped, menu, events, color, align: UIKit.align.right })
-        )
+    addRightButton({ id, symbol, title, tapped, menu, events, color } = {}) {
+        const button = BarButtonItem.creat({ id, symbol, title, tapped, menu, events, color, align: UIKit.align.right })
+        this.rightButtons.push(button)
+        this.#buttonIndex[id ?? button.id] = button
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -356,12 +353,16 @@ class NavigationBarItems {
      * @param {BarButtonItemProperties} param0
      * @returns {this}
      */
-    addLeftButton({ symbol, title, tapped, menu, events, color } = {}) {
-        this.leftButtons.push(
-            BarButtonItem.creat({ symbol, title, tapped, menu, events, color, align: UIKit.align.left })
-        )
+    addLeftButton({ id, symbol, title, tapped, menu, events, color } = {}) {
+        const button = BarButtonItem.creat({ id, symbol, title, tapped, menu, events, color, align: UIKit.align.left })
+        this.leftButtons.push(button)
+        this.#buttonIndex[id ?? button.id] = button
         if (!this.hasbutton) this.hasbutton = true
         return this
+    }
+
+    getButton(id) {
+        return this.#buttonIndex[id]
     }
 
     /**

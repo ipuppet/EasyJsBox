@@ -1,7 +1,5 @@
-/**
- * TODO Request
- */
- class Request {
+// TODO Request
+class Request {
     url
     method = "GET"
     headers = {}
@@ -51,9 +49,7 @@
     addImageToMultipart(image, name, filename) {}
 }
 
-/**
- * TODO Font
- */
+// TODO Font
 class Font {
     name
     size
@@ -261,9 +257,7 @@ class Rect {
     }
 }
 
-/**
- * TODO Path
- */
+// TODO Path
 class Path {
     renderQueue = []
 
@@ -335,9 +329,7 @@ class Path {
     closeSubpath() {}
 }
 
-/**
- * TODO DrawContext
- */
+// TODO DrawContext
 class DrawContext {
     size
     respectScreenScale = false
@@ -668,9 +660,7 @@ class WidgetText extends Widget {
     }
 }
 
-/**
- * TODO WidgetDate
- */
+// TODO WidgetDate
 class WidgetDate extends WidgetText {
     date
 
@@ -959,9 +949,7 @@ class Script {
     }
 }
 
-/**
- * TODO Device
- */
+// TODO Device
 class Device {
     static name() {
         return $device.info.name
