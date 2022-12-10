@@ -186,9 +186,9 @@ setting.method.readme = animate => {
 
 ```js
 const animate = {
-    actionStart: callable(), // 会出现加载动画
-    actionCancel: callable(), // 会直接恢复箭头图标
-    actionDone: callable(), // 会出现对号，然后恢复箭头
+    start: callable(), // 会出现加载动画
+    cancel: callable(), // 会直接恢复箭头图标
+    done: callable(), // 会出现对号，然后恢复箭头
     touchHighlightStart: callable(), // 被点击的一行颜色加深
     touchHighlightEnd: callable() // 被点击的一行颜色恢复
 }
