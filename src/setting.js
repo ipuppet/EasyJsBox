@@ -24,9 +24,9 @@ class SettingReadonlyError extends Error {
 /**
  * 脚本类型的动画
  * @typedef {object} ScriptAnimate
- * @property {Function} animate.actionStart
- * @property {Function} animate.actionCancel
- * @property {Function} animate.actionDone
+ * @property {Function} animate.start
+ * @property {Function} animate.cancel
+ * @property {Function} animate.done
  * @property {Function} animate.touchHighlightStart
  * @property {Function} animate.touchHighlightEnd
  *
@@ -707,18 +707,18 @@ class Setting extends Controller {
     createScript(key, icon, title, script) {
         const id = this.getId(key)
         const buttonId = `${id}-button`
-        const actionStart = () => {
+        const start = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
             $(`${buttonId}-spinner`).alpha = 1
             this.#touchHighlightStart(id)
         }
-        const actionCancel = () => {
+        const cancel = () => {
             $(buttonId).alpha = 1
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
         }
-        const actionDone = (status = true, message = $l10n("ERROR")) => {
+        const done = (status = true, message = $l10n("ERROR")) => {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
             const button = $(buttonId)
@@ -809,9 +809,9 @@ class Setting extends Controller {
                      * @type {ScriptAnimate}
                      */
                     const animate = {
-                        actionStart: actionStart, // 会出现加载动画
-                        actionCancel: actionCancel, // 会直接恢复箭头图标
-                        actionDone: actionDone, // 会出现对号，然后恢复箭头
+                        start: start, // 会出现加载动画
+                        cancel: cancel, // 会直接恢复箭头图标
+                        done: done, // 会出现对号，然后恢复箭头
                         touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
                         touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
                     }
