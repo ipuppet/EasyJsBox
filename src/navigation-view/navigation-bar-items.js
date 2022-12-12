@@ -40,8 +40,9 @@ class BarButtonItem extends View {
     static #instance
 
     edges = 15
-    iconSize = $size(23, 23)
-    fontSize = 16
+    buttonEdges = this.edges / 2
+    iconSize = 24
+    fontSize = 17
 
     color = UIKit.textColor
 
@@ -55,12 +56,20 @@ class BarButtonItem extends View {
      * SF Symbol 或者 $image 对象
      * @type {string|$image}
      */
-    symbol
+    #symbol
 
     /**
      * 对齐方式
      */
     align = UIKit.align.right
+
+    get symbol() {
+        return this.#symbol
+    }
+
+    set symbol(symbol) {
+        this.#symbol = typeof symbol === "string" ? $image(symbol) : symbol
+    }
 
     get width() {
         if (this.title) {
@@ -72,7 +81,7 @@ class BarButtonItem extends View {
             return Math.ceil(fontSize.width) + this.edges // 文本按钮增加内边距
         }
 
-        return this.iconSize.width + this.edges
+        return this.iconSize + this.edges
     }
 
     static get style() {
@@ -183,6 +192,7 @@ class BarButtonItem extends View {
                 sender
             )
         }
+
         return {
             type: "view",
             props: { info: { align: this.align } },
@@ -212,15 +222,20 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: this.color
                                 },
-                                this.symbol === undefined
-                                    ? {}
-                                    : typeof this.symbol === "string"
-                                    ? { symbol: this.symbol }
-                                    : { data: this.symbol.png }
+                                this.symbol ? { image: this.symbol } : {}
                             ),
                             layout: (make, view) => {
+                                if (this.symbol) {
+                                    const scale = this.symbol.size.width / this.symbol.size.height
+                                    if (this.symbol.size.width > this.symbol.size.height) {
+                                        make.width.equalTo(this.iconSize)
+                                        make.height.equalTo(this.iconSize / scale)
+                                    } else {
+                                        make.width.equalTo(this.iconSize * scale)
+                                        make.height.equalTo(this.iconSize)
+                                    }
+                                }
                                 make.center.equalTo(view.super)
-                                make.size.equalTo(this.iconSize)
                             }
                         },
                         {
@@ -254,8 +269,8 @@ class BarButtonItem extends View {
                 make.size.equalTo($size(this.width, UIKit.NavigationBarNormalHeight))
                 make.centerY.equalTo(view.super)
                 if (view.prev && view.prev?.info?.align === this.align) {
-                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
-                    else make.left.equalTo(view.prev.right)
+                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-this.buttonEdges)
+                    else make.left.equalTo(view.prev.right).offset(this.buttonEdges)
                 } else {
                     // 留一半边距，按钮内边距是另一半
                     const edges = this.edges / 2

@@ -2,8 +2,6 @@ const { View } = require("../view")
 const { Controller } = require("../controller")
 const { UIKit } = require("../ui-kit")
 
-const { BarButtonItem } = require("./navigation-bar-items")
-
 /**
  * @typedef {import("./navigation-bar-items").NavigationBarItems} NavigationBarItems
  */
