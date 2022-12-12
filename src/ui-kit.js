@@ -203,15 +203,20 @@ class UIKit {
         title = "",
         navButtons = [{ title: "" }],
         bgcolor = views[0]?.props?.bgcolor ?? "primarySurface",
+        titleView = undefined,
         disappeared
     } = {}) {
+        const props = {
+            statusBarStyle,
+            navButtons,
+            title,
+            bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor
+        }
+        if (titleView) {
+            props.titleView = titleView
+        }
         $ui.push({
-            props: {
-                statusBarStyle: statusBarStyle,
-                navButtons: navButtons,
-                title: title,
-                bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor
-            },
+            props,
             events: {
                 disappeared: () => {
                     if (disappeared !== undefined) disappeared()

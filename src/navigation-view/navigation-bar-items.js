@@ -40,8 +40,9 @@ class BarButtonItem extends View {
     static #instance
 
     edges = 15
-    iconSize = $size(23, 23)
-    fontSize = 16
+    buttonEdges = this.edges / 2
+    iconSize = $size(24, 24)
+    fontSize = 18
 
     color = UIKit.textColor
 
@@ -254,8 +255,8 @@ class BarButtonItem extends View {
                 make.size.equalTo($size(this.width, UIKit.NavigationBarNormalHeight))
                 make.centerY.equalTo(view.super)
                 if (view.prev && view.prev?.info?.align === this.align) {
-                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
-                    else make.left.equalTo(view.prev.right)
+                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-this.buttonEdges)
+                    else make.left.equalTo(view.prev.right).offset(this.buttonEdges)
                 } else {
                     // 留一半边距，按钮内边距是另一半
                     const edges = this.edges / 2
