@@ -41,8 +41,8 @@ class BarButtonItem extends View {
 
     edges = 15
     buttonEdges = this.edges / 2
-    iconSize = $size(24, 24)
-    fontSize = 18
+    iconSize = 24
+    fontSize = 17
 
     color = UIKit.textColor
 
@@ -56,12 +56,20 @@ class BarButtonItem extends View {
      * SF Symbol 或者 $image 对象
      * @type {string|$image}
      */
-    symbol
+    #symbol
 
     /**
      * 对齐方式
      */
     align = UIKit.align.right
+
+    get symbol() {
+        return this.#symbol
+    }
+
+    set symbol(symbol) {
+        this.#symbol = typeof symbol === "string" ? $image(symbol) : symbol
+    }
 
     get width() {
         if (this.title) {
@@ -73,7 +81,7 @@ class BarButtonItem extends View {
             return Math.ceil(fontSize.width) + this.edges // 文本按钮增加内边距
         }
 
-        return this.iconSize.width + this.edges
+        return this.iconSize + this.edges
     }
 
     static get style() {
@@ -184,6 +192,7 @@ class BarButtonItem extends View {
                 sender
             )
         }
+
         return {
             type: "view",
             props: { info: { align: this.align } },
@@ -213,15 +222,20 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: this.color
                                 },
-                                this.symbol === undefined
-                                    ? {}
-                                    : typeof this.symbol === "string"
-                                    ? { symbol: this.symbol }
-                                    : { data: this.symbol.png }
+                                this.symbol ? { image: this.symbol } : {}
                             ),
                             layout: (make, view) => {
+                                if (this.symbol) {
+                                    const scale = this.symbol.size.width / this.symbol.size.height
+                                    if (this.symbol.size.width > this.symbol.size.height) {
+                                        make.width.equalTo(this.iconSize)
+                                        make.height.equalTo(this.iconSize / scale)
+                                    } else {
+                                        make.width.equalTo(this.iconSize * scale)
+                                        make.height.equalTo(this.iconSize)
+                                    }
+                                }
                                 make.center.equalTo(view.super)
-                                make.size.lessThanOrEqualTo(this.iconSize)
                             }
                         },
                         {
