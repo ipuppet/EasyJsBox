@@ -14,21 +14,21 @@
 
     - `set`
 
-    可用来重写 set 方法，必须同时设置 get 方法
+    可用来重写 set 方法，必须同时设置 get 方法。
 
-    设置此参数将导致 savePath 参数失效
+    设置此参数将导致 savePath 参数失效。
 
     - `get`
 
-    可用来重写 get 方法，必须同时设置 set 方法
+    可用来重写 get 方法，必须同时设置 set 方法。
 
-    设置此参数将导致 savePath 参数失效
+    设置此参数将导致 savePath 参数失效。
 
     - `savePath`
 
     数据文件保存路径。
     
-    默认值为 "storage/setting.json"
+    默认值： "storage/setting.json"
 
     - `structure`
 
@@ -40,7 +40,7 @@
 
     结构数据文件路径，如果设置了 `structure` 会使该参数失效。
 
-    默认值为 "setting.json"
+    默认值： "setting.json"
 
     - `name`
 
@@ -66,7 +66,7 @@
 
 - `setFooter(footer)`
 
-    用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号。(作者和版本号将从根目录的 `config.js` 获取)
+    用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号（作者和版本号将从根目录的 `config.js` 获取）。
 
 - `getImage(key, compress = false)`
 
@@ -84,7 +84,7 @@
 
 - `onChildPush(listView, title)`
 
-    可重写child类型的push事件
+    可重写child类型的push事件。
 
     ### Parameter
     
@@ -209,11 +209,11 @@ const animate = {
 
 #### tab
 
-`items` 若为字符串，将尝试将其作为函数执行并使用其返回值
+`items` 若为字符串，将尝试将其作为函数执行并使用其返回值。
 
-可选参数 `values`, 与 `items` 一一对应的数组，同样可传入字符串代码动态执行
+可选参数 `values`, 与 `items` 一一对应的数组，同样可传入字符串代码动态执行。
 
-传入 `values` 后，`get` 函数将返回 `values` 内的值
+传入 `values` 后，`get` 函数将返回 `values` 内的值。
 
 ```json
 {
@@ -236,11 +236,11 @@ const animate = {
 }
 ```
 
-以上示例中，`get` 函数在选中 `"_SUNDAY"` 时将会返回 `"sunday"`, 若未定义 `values` 则返回数字 `0`
+以上示例中，`get` 函数在选中 `"_SUNDAY"` 时将会返回 `"sunday"`, 若未定义 `values` 则返回数字 `0`。
 
 #### menu
 
-参数 `items`, `values`, 与 `tab` 类型相同
+参数 `items`, `values`, 与 `tab` 类型相同。
 
 ```json
 {
@@ -254,6 +254,9 @@ const animate = {
     "value": 0
 }
 ```
+可选参数 `pullDown`，默认 `false`。
+
+启用后，`menu` 项将以 Pull-Down 菜单样式显示，选项内容将不可动态更改。
 
 #### color
 
@@ -368,9 +371,9 @@ const animate = {
 
 #### image
 
-`image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象
+`image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象。
 
-`compress` 为可选参数
+`compress` 为可选参数。
 
 ```json
 {

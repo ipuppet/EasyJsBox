@@ -707,6 +707,7 @@ class Setting extends Controller {
     createScript(key, icon, title, script) {
         const id = this.getId(key)
         const buttonId = `${id}-button`
+        const rightSymbol = "chevron.right"
         const start = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
@@ -718,52 +719,34 @@ class Setting extends Controller {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
         }
-        const done = (status = true, message = $l10n("ERROR")) => {
+        const done = () => {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
             const button = $(buttonId)
-            if (!status) {
-                // 失败
-                $ui.toast(message)
-                button.alpha = 1
-                return
-            }
             // 成功动画
             button.symbol = "checkmark"
             $ui.animate({
                 duration: 0.6,
-                animation: () => {
-                    button.alpha = 1
-                },
+                animation: () => (button.alpha = 1),
                 completion: () => {
-                    setTimeout(() => {
-                        $ui.animate({
-                            duration: 0.4,
-                            animation: () => {
-                                button.alpha = 0
-                            },
-                            completion: () => {
-                                button.symbol = "chevron.right"
-                                $ui.animate({
-                                    duration: 0.4,
-                                    animation: () => {
-                                        button.alpha = 1
-                                    },
-                                    completion: () => {
-                                        button.alpha = 1
-                                    }
-                                })
-                            }
-                        })
-                    }, 600)
+                    $ui.animate({
+                        duration: 0.4,
+                        animation: () => (button.alpha = 0),
+                        completion: () => {
+                            button.symbol = rightSymbol
+                            $ui.animate({
+                                duration: 0.4,
+                                animation: () => (button.alpha = 1)
+                            })
+                        }
+                    })
                 }
             })
+            $delay(0.6, () => {})
         }
         return {
             type: "view",
-            props: {
-                id
-            },
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -771,16 +754,17 @@ class Setting extends Controller {
                     views: [
                         {
                             // 仅用于显示图片
-                            type: "image",
+                            type: "button",
                             props: {
                                 id: buttonId,
-                                symbol: "chevron.right",
+                                symbol: rightSymbol,
+                                bgcolor: $color("clear"),
                                 tintColor: $color("secondaryText")
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(15)
+                                make.height.equalTo(view.super)
                             }
                         },
                         {
@@ -788,11 +772,12 @@ class Setting extends Controller {
                             props: {
                                 id: `${buttonId}-spinner`,
                                 loading: true,
-                                alpha: 0
+                                alpha: 0 // 透明度用于渐变完成动画
                             },
                             layout: (make, view) => {
-                                make.size.equalTo(view.prev)
-                                make.left.top.equalTo(view.prev)
+                                make.size.equalTo(15)
+                                make.centerY.equalTo(view.super)
+                                make.right.equalTo(view.prev)
                             }
                         }
                     ],
@@ -801,7 +786,8 @@ class Setting extends Controller {
                         make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
-                }
+                },
+                { type: "view", layout: $layout.fill }
             ],
             events: this.#withTouchEvents(id, {
                 tapped: () => {
@@ -878,7 +864,7 @@ class Setting extends Controller {
         }
     }
 
-    createMenu(key, icon, title, items, values) {
+    createMenu(key, icon, title, items, values, pullDown) {
         const id = this.getId(key)
         const labelId = `${id}-label`
 
@@ -911,6 +897,24 @@ class Setting extends Controller {
 
         const isCustomizeValues = tmpItems?.length > 0 && tmpValues?.length === tmpItems?.length
 
+        const handler = (title, idx) => {
+            if (isCustomizeValues) {
+                const tmpValues = getValues()
+                this.set(key, tmpValues[idx])
+            } else {
+                this.set(key, idx)
+            }
+            $(labelId).title = title
+        }
+        const tapped = () => {
+            if (pullDown) return
+
+            $ui.menu({
+                items: getItems(),
+                handler
+            })
+        }
+
         return {
             type: "view",
             props: {
@@ -923,14 +927,28 @@ class Setting extends Controller {
                     type: "view",
                     views: [
                         {
-                            type: "label",
+                            type: "button",
                             props: {
-                                text: isCustomizeValues
+                                menu: pullDown
+                                    ? {
+                                          pullDown: true,
+                                          asPrimary: true,
+                                          items: tmpItems.map((title, idx) => {
+                                              return {
+                                                  title: title,
+                                                  handler: () => handler(title, idx)
+                                              }
+                                          })
+                                      }
+                                    : undefined,
+                                title: isCustomizeValues
                                     ? tmpItems[tmpValues.indexOf(this.get(key))]
                                     : tmpItems[this.get(key)],
-                                color: $color("secondaryText"),
+                                titleColor: $color("secondaryText"),
+                                bgcolor: $color("clear"),
                                 id: labelId
                             },
+                            events: { tapped },
                             layout: (make, view) => {
                                 make.right.inset(0)
                                 make.height.equalTo(view.super)
@@ -944,23 +962,7 @@ class Setting extends Controller {
                     }
                 }
             ],
-            events: {
-                tapped: () => {
-                    const tmpItems = getItems()
-                    const tmpValues = getValues()
-                    $ui.menu({
-                        items: tmpItems,
-                        handler: (title, idx) => {
-                            if (isCustomizeValues) {
-                                this.set(key, tmpValues[idx])
-                            } else {
-                                this.set(key, idx)
-                            }
-                            $(labelId).text = $l10n(title)
-                        }
-                    })
-                }
-            },
+            events: { tapped },
             layout: $layout.fill
         }
     }
@@ -1318,17 +1320,19 @@ class Setting extends Controller {
                 this.createLineLabel(title, icon),
                 {
                     // 仅用于显示图片
-                    type: "image",
+                    type: "button",
                     props: {
                         symbol: "chevron.right",
+                        bgcolor: $color("clear"),
                         tintColor: $color("secondaryText")
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(this.edgeOffset)
-                        make.size.equalTo(15)
+                        make.height.equalTo(view.super)
                     }
-                }
+                },
+                { type: "view", layout: $layout.fill }
             ],
             events: {
                 tapped: () => {
@@ -1381,12 +1385,69 @@ class Setting extends Controller {
         const id = this.getId(key)
         const imageId = `${id}-image`
         const noneImage = $image("questionmark.square.dashed")
+
+        const withLoading = action => {
+            return async () => {
+                $(imageId).hidden = true
+                $(`${imageId}-spinner`).hidden = false
+                await $wait(0.2)
+                action()
+                $(`${imageId}-spinner`).hidden = true
+                $(imageId).hidden = false
+            }
+        }
+        const menus = [
+            {
+                title: $l10n("PREVIEW"),
+                handler: withLoading(() => {
+                    const image = this.getImage(key)
+                    if (image) {
+                        $quicklook.open({ image: image })
+                    } else {
+                        $ui.toast($l10n("NO_IMAGE"))
+                    }
+                })
+            },
+            {
+                inline: true,
+                items: [
+                    {
+                        title: $l10n("SELECT_IMAGE"),
+                        handler: withLoading(() => {
+                            $photo.pick({ format: "data" }).then(resp => {
+                                $ui.toast($l10n("LOADING"))
+                                if (!resp.status || !resp.data) {
+                                    if (resp?.error?.description !== "canceled") {
+                                        $ui.toast($l10n("ERROR"))
+                                    }
+                                    return
+                                }
+                                // 控制压缩图片大小
+                                const image = Kernel.compressImage(resp.data.image)
+                                this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
+                                this.fileStorage.write(this.getImagePath(key), resp.data)
+                                $(imageId).image = image
+                                $ui.success($l10n("SUCCESS"))
+                            })
+                        })
+                    },
+                    {
+                        title: $l10n("CLEAR_IMAGE"),
+                        inline: true,
+                        handler: withLoading(() => {
+                            this.fileStorage.delete(this.getImagePath(key, true))
+                            this.fileStorage.delete(this.getImagePath(key))
+                            $(imageId).image = noneImage
+                            $ui.success($l10n("SUCCESS"))
+                        })
+                    }
+                ]
+            }
+        ]
+
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id, selectable: true },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -1403,52 +1464,36 @@ class Setting extends Controller {
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(30, 30))
                             }
+                        },
+                        {
+                            type: "spinner",
+                            props: {
+                                id: `${imageId}-spinner`,
+                                loading: true,
+                                hidden: true
+                            },
+                            layout: (make, view) => {
+                                make.size.equalTo(view.prev)
+                                make.left.top.equalTo(view.prev)
+                            }
+                        },
+                        {
+                            type: "button",
+                            props: {
+                                menu: {
+                                    pullDown: true,
+                                    asPrimary: true,
+                                    items: menus
+                                },
+                                bgcolor: $color("clear")
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(this.edgeOffset)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(30, 30))
+                            }
                         }
                     ],
-                    events: {
-                        tapped: () => {
-                            this.#touchHighlightStart(id)
-                            $ui.menu({
-                                items: [$l10n("PREVIEW"), $l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
-                                handler: (title, idx) => {
-                                    if (idx === 0) {
-                                        const image = this.getImage(key)
-                                        if (image) {
-                                            $quicklook.open({
-                                                image: image
-                                            })
-                                        } else {
-                                            $ui.toast($l10n("NO_IMAGE"))
-                                        }
-                                    } else if (idx === 1) {
-                                        $photo.pick({ format: "data" }).then(resp => {
-                                            $ui.toast($l10n("LOADING"))
-                                            if (!resp.status || !resp.data) {
-                                                if (resp?.error?.description !== "canceled") {
-                                                    $ui.toast($l10n("ERROR"))
-                                                }
-                                                return
-                                            }
-                                            // 控制压缩图片大小
-                                            const image = Kernel.compressImage(resp.data.image)
-                                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
-                                            this.fileStorage.write(this.getImagePath(key), resp.data)
-                                            $(imageId).image = image
-                                            $ui.success($l10n("SUCCESS"))
-                                        })
-                                    } else if (idx === 2) {
-                                        this.fileStorage.delete(this.getImagePath(key, true))
-                                        this.fileStorage.delete(this.getImagePath(key))
-                                        $(imageId).image = noneImage
-                                        $ui.success($l10n("SUCCESS"))
-                                    }
-                                },
-                                finished: () => {
-                                    this.#touchHighlightEnd(id)
-                                }
-                            })
-                        }
-                    },
                     layout: (make, view) => {
                         make.right.inset(0)
                         make.height.equalTo(this.rowHeight)
@@ -1491,7 +1536,14 @@ class Setting extends Controller {
                         row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "menu":
-                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.values)
+                        row = this.createMenu(
+                            item.key,
+                            item.icon,
+                            item.title,
+                            item.items,
+                            item.values,
+                            item.pullDown ?? false
+                        )
                         break
                     case "color":
                         row = this.createColor(item.key, item.icon, item.title)
