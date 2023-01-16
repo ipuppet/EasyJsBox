@@ -754,16 +754,17 @@ class Setting extends Controller {
                     views: [
                         {
                             // 仅用于显示图片
-                            type: "image",
+                            type: "button",
                             props: {
                                 id: buttonId,
                                 symbol: rightSymbol,
+                                bgcolor: $color("clear"),
                                 tintColor: $color("secondaryText")
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(UIKit.getSymbolSize(rightSymbol, 13, 4))
+                                make.height.equalTo(view.super)
                             }
                         },
                         {
@@ -774,7 +775,7 @@ class Setting extends Controller {
                                 alpha: 0 // 透明度用于渐变完成动画
                             },
                             layout: (make, view) => {
-                                make.size.equalTo(13)
+                                make.size.equalTo(15)
                                 make.centerY.equalTo(view.super)
                                 make.right.equalTo(view.prev)
                             }
@@ -785,7 +786,8 @@ class Setting extends Controller {
                         make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
-                }
+                },
+                { type: "view", layout: $layout.fill }
             ],
             events: this.#withTouchEvents(id, {
                 tapped: () => {
@@ -1318,17 +1320,19 @@ class Setting extends Controller {
                 this.createLineLabel(title, icon),
                 {
                     // 仅用于显示图片
-                    type: "image",
+                    type: "button",
                     props: {
                         symbol: "chevron.right",
+                        bgcolor: $color("clear"),
                         tintColor: $color("secondaryText")
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(this.edgeOffset)
-                        make.size.equalTo(UIKit.getSymbolSize("chevron.right", 13, 4))
+                        make.height.equalTo(view.super)
                     }
-                }
+                },
+                { type: "view", layout: $layout.fill }
             ],
             events: {
                 tapped: () => {

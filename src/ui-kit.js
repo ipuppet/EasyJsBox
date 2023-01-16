@@ -194,13 +194,13 @@ class UIKit {
         return $text.sizeThatFits(options)
     }
 
-    static getSymbolSize(symbol, size, modifier = 0) {
+    static getSymbolSize(symbol, size) {
         symbol = typeof symbol === "string" ? $image(symbol) : symbol
         const scale = symbol.size.width / symbol.size.height
         if (symbol.size.width > symbol.size.height) {
-            return $size(size / scale + modifier, size)
+            return $size(size, size / scale)
         } else {
-            return $size(size, size / scale + modifier)
+            return $size(size * scale, size)
         }
     }
 

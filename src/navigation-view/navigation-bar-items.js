@@ -241,7 +241,7 @@ class BarButtonItem extends View {
                             },
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
-                                make.size.equalTo(this.iconSize)
+                                make.size.equalTo(UIKit.getSymbolSize("checkmark", this.iconSize))
                             }
                         }
                     ],
