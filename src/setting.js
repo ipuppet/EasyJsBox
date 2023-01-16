@@ -707,6 +707,7 @@ class Setting extends Controller {
     createScript(key, icon, title, script) {
         const id = this.getId(key)
         const buttonId = `${id}-button`
+        const rightSymbol = "chevron.right"
         const start = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
@@ -718,46 +719,30 @@ class Setting extends Controller {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
         }
-        const done = (status = true, message = $l10n("ERROR")) => {
+        const done = () => {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(id)
             const button = $(buttonId)
-            if (!status) {
-                // 失败
-                $ui.toast(message)
-                button.alpha = 1
-                return
-            }
             // 成功动画
             button.symbol = "checkmark"
             $ui.animate({
                 duration: 0.6,
-                animation: () => {
-                    button.alpha = 1
-                },
+                animation: () => (button.alpha = 1),
                 completion: () => {
-                    setTimeout(() => {
-                        $ui.animate({
-                            duration: 0.4,
-                            animation: () => {
-                                button.alpha = 0
-                            },
-                            completion: () => {
-                                button.symbol = "chevron.right"
-                                $ui.animate({
-                                    duration: 0.4,
-                                    animation: () => {
-                                        button.alpha = 1
-                                    },
-                                    completion: () => {
-                                        button.alpha = 1
-                                    }
-                                })
-                            }
-                        })
-                    }, 600)
+                    $ui.animate({
+                        duration: 0.4,
+                        animation: () => (button.alpha = 0),
+                        completion: () => {
+                            button.symbol = rightSymbol
+                            $ui.animate({
+                                duration: 0.4,
+                                animation: () => (button.alpha = 1)
+                            })
+                        }
+                    })
                 }
             })
+            $delay(0.6, () => {})
         }
         return {
             type: "view",
@@ -772,13 +757,13 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: buttonId,
-                                symbol: "play",
+                                symbol: rightSymbol,
                                 tintColor: $color("secondaryText")
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(UIKit.getSymbolSize("play.fill", 18, 4))
+                                make.size.equalTo(UIKit.getSymbolSize(rightSymbol, 13, 4))
                             }
                         },
                         {
@@ -789,8 +774,9 @@ class Setting extends Controller {
                                 alpha: 0 // 透明度用于渐变完成动画
                             },
                             layout: (make, view) => {
-                                make.size.equalTo(view.prev)
-                                make.left.top.equalTo(view.prev)
+                                make.size.equalTo(13)
+                                make.centerY.equalTo(view.super)
+                                make.right.equalTo(view.prev)
                             }
                         }
                     ],
@@ -1340,7 +1326,7 @@ class Setting extends Controller {
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(this.edgeOffset)
-                        make.size.equalTo(UIKit.getSymbolSize("chevron.right", 15, 4))
+                        make.size.equalTo(UIKit.getSymbolSize("chevron.right", 13, 4))
                     }
                 }
             ],
