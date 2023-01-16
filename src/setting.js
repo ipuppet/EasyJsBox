@@ -761,9 +761,7 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: {
-                id
-            },
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -774,13 +772,13 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: buttonId,
-                                symbol: "chevron.right",
+                                symbol: "play",
                                 tintColor: $color("secondaryText")
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.right.inset(0)
-                                make.size.equalTo(15)
+                                make.size.equalTo(UIKit.getSymbolSize("play.fill", 18, 4))
                             }
                         },
                         {
@@ -1326,7 +1324,7 @@ class Setting extends Controller {
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(this.edgeOffset)
-                        make.size.equalTo(15)
+                        make.size.equalTo(UIKit.getSymbolSize("chevron.right", 15, 4))
                     }
                 }
             ],

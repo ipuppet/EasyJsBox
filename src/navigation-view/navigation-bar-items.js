@@ -226,14 +226,7 @@ class BarButtonItem extends View {
                             ),
                             layout: (make, view) => {
                                 if (this.symbol) {
-                                    const scale = this.symbol.size.width / this.symbol.size.height
-                                    if (this.symbol.size.width > this.symbol.size.height) {
-                                        make.width.equalTo(this.iconSize)
-                                        make.height.equalTo(this.iconSize / scale)
-                                    } else {
-                                        make.width.equalTo(this.iconSize * scale)
-                                        make.height.equalTo(this.iconSize)
-                                    }
+                                    make.size.equalTo(UIKit.getSymbolSize(this.symbol, this.iconSize))
                                 }
                                 make.center.equalTo(view.super)
                             }

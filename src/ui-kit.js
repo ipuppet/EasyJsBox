@@ -194,6 +194,16 @@ class UIKit {
         return $text.sizeThatFits(options)
     }
 
+    static getSymbolSize(symbol, size, modifier = 0) {
+        symbol = typeof symbol === "string" ? $image(symbol) : symbol
+        const scale = symbol.size.width / symbol.size.height
+        if (symbol.size.width > symbol.size.height) {
+            return $size(size / scale + modifier, size)
+        } else {
+            return $size(size, size / scale + modifier)
+        }
+    }
+
     /**
      * 建议仅在使用 JSBox nav 时使用，便于统一风格
      */
