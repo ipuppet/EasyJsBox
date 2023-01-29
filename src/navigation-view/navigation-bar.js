@@ -35,14 +35,6 @@ class NavigationBar extends View {
     navigationBarNormalHeight = UIKit.NavigationBarNormalHeight
     navigationBarLargeTitleHeight = UIKit.NavigationBarLargeTitleHeight
 
-    pageSheetMode() {
-        this.navigationBarLargeTitleHeight -= this.navigationBarNormalHeight
-        this.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
-        this.navigationBarLargeTitleHeight += this.navigationBarNormalHeight
-        this.topSafeArea = false
-        return this
-    }
-
     setTopSafeArea() {
         this.topSafeArea = true
         return this
