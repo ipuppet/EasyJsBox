@@ -115,13 +115,21 @@ class Toast {
         })
     }
 
-    static toast({ message, type = Toast.type.info, displayTime = 2, labelLines = 2, font = Toast.defaultFont }) {
+    static toast({
+        message,
+        type = Toast.type.info,
+        show = true,
+        displayTime = 2,
+        labelLines = 2,
+        font = Toast.defaultFont
+    }) {
         const toast = new Toast(message, type, labelLines, font)
-
-        toast.show()
-        $delay(displayTime, () => {
-            toast.remove()
-        })
+        if (show) {
+            toast.show()
+            $delay(displayTime, () => {
+                toast.remove()
+            })
+        }
 
         return toast
     }
