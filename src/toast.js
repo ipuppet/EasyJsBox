@@ -18,7 +18,7 @@ class Toast {
     id = $text.uuid
 
     #message = ""
-    font = undefined
+    font = Toast.defaultFont
     type = Toast.type.info
     labelLines = 2
 
