@@ -24,6 +24,7 @@ class Sheet extends View {
     #dismiss = () => {}
     style = Sheet.UIModalPresentationStyle.PageSheet
     #preventDismiss = false
+    #navBar
 
     static UIModalPresentationStyle = {
         Automatic: -2,
@@ -44,6 +45,7 @@ class Sheet extends View {
     navigationView
 
     init() {
+        this.initNavBar()
         const { width, height } = $device.info.screen
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
         const ViewController = $objc("UIViewController").invoke("alloc.init")
@@ -58,6 +60,60 @@ class Sheet extends View {
         }
         this.#dismiss = () => ViewController.invoke("dismissViewControllerAnimated:completion:", true, undefined)
         return this
+    }
+
+    initNavBar() {
+        if (!this.#navBar) {
+            return
+        }
+        const { title = "", popButton = { title: $l10n("DONE") }, rightButtons = [] } = this.#navBar
+        if (this.view === undefined) throw new SheetAddNavBarError()
+        this.navigationView = new NavigationView()
+        // 返回按钮
+        const barButtonItem = new BarButtonItem()
+        barButtonItem
+            .setEvents(
+                Object.assign(
+                    {
+                        tapped: () => {
+                            this.dismiss()
+                            if (typeof popButton.tapped === "function") popButton.tapped()
+                        }
+                    },
+                    popButton.events
+                )
+            )
+            .setAlign(UIKit.align.left)
+            .setSymbol(popButton.symbol)
+            .setTitle(popButton.title)
+            .setColor(popButton.color)
+            .setMenu(popButton.menu)
+        const button = barButtonItem.definition.views[0]
+        button.layout = (make, view) => {
+            make.left.equalTo(view.super.safeArea).offset(15)
+            make.centerY.equalTo(view.super.safeArea)
+        }
+
+        const navBar = this.navigationView.navigationBar
+        navBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+        navBar.navigationBarLargeTitleHeight -= navBar.navigationBarNormalHeight
+        navBar.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
+        navBar.navigationBarLargeTitleHeight += navBar.navigationBarNormalHeight
+        if (
+            this.style === Sheet.UIModalPresentationStyle.FullScreen ||
+            this.style === Sheet.UIModalPresentationStyle.OverFullScreen ||
+            this.style === Sheet.UIModalPresentationStyle.BlurOverFullScreen
+        ) {
+            navBar.setTopSafeArea()
+        } else {
+            navBar.removeTopSafeArea()
+        }
+
+        this.navigationView.navigationBarItems.addPopButton("", button).setRightButtons(rightButtons)
+        this.navigationView.setView(this.view).navigationBarTitle(title)
+        if (this.view.props?.bgcolor) {
+            this.navigationView?.getPage().setProp("bgcolor", this.view.props?.bgcolor)
+        }
     }
 
     preventDismiss() {
@@ -91,41 +147,8 @@ class Sheet extends View {
      *  }
      * @returns {this}
      */
-    addNavBar({ title = "", popButton = { title: $l10n("DONE") }, rightButtons = [] } = {}) {
-        if (this.view === undefined) throw new SheetAddNavBarError()
-        this.navigationView = new NavigationView()
-        // 返回按钮
-        const barButtonItem = new BarButtonItem()
-        barButtonItem
-            .setEvents(
-                Object.assign(
-                    {
-                        tapped: () => {
-                            this.dismiss()
-                            if (typeof popButton.tapped === "function") popButton.tapped()
-                        }
-                    },
-                    popButton.events
-                )
-            )
-            .setAlign(UIKit.align.left)
-            .setSymbol(popButton.symbol)
-            .setTitle(popButton.title)
-            .setColor(popButton.color)
-            .setMenu(popButton.menu)
-        const button = barButtonItem.definition.views[0]
-        button.layout = (make, view) => {
-            make.left.equalTo(view.super.safeArea).offset(15)
-            make.centerY.equalTo(view.super.safeArea)
-        }
-        this.navigationView.navigationBar
-            .setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
-            .pageSheetMode()
-        this.navigationView.navigationBarItems.addPopButton("", button).setRightButtons(rightButtons)
-        this.navigationView.setView(this.view).navigationBarTitle(title)
-        if (this.view.props?.bgcolor) {
-            this.navigationView?.getPage().setProp("bgcolor", this.view.props?.bgcolor)
-        }
+    addNavBar(navBarOptions) {
+        this.#navBar = navBarOptions
         return this
     }
 
