@@ -10,6 +10,7 @@ class Toast {
     static edges = 40
     static iconSize = 100
     static labelTopMargin = 10
+    static defaultFont = $font("default", 26)
 
     width = Math.min(UIKit.windowSize.width * 0.6, 260)
     labelWidth = this.width - Toast.edges * 2
@@ -17,11 +18,11 @@ class Toast {
     id = $text.uuid
 
     #message = ""
+    font = undefined
     type = Toast.type.info
     labelLines = 2
-    font = $font("default", 26)
 
-    constructor(message, type = Toast.type.info, labelLines = 2, font = $font("default", 26)) {
+    constructor(message, type = Toast.type.info, labelLines = 2, font = Toast.defaultFont) {
         // 先确定类型，用于高度计算
         this.type = type
         this.message = message
@@ -114,25 +115,27 @@ class Toast {
         })
     }
 
-    static toast({ message, type = Toast.type.info, displayTime = 2, labelLines = 2, font = $font("default", 26) }) {
+    static toast({ message, type = Toast.type.info, displayTime = 2, labelLines = 2, font = Toast.defaultFont }) {
         const toast = new Toast(message, type, labelLines, font)
 
         toast.show()
         $delay(displayTime, () => {
             toast.remove()
         })
+
+        return toast
     }
     static info(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.type.info }, opts))
+        return Toast.toast(Object.assign({ message, type: Toast.type.info }, opts))
     }
     static success(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.type.success }, opts))
+        return Toast.toast(Object.assign({ message, type: Toast.type.success }, opts))
     }
     static warning(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.type.warning }, opts))
+        return Toast.toast(Object.assign({ message, type: Toast.type.warning }, opts))
     }
     static error(message, opts = {}) {
-        Toast.toast(Object.assign({ message, type: Toast.type.error }, opts))
+        return Toast.toast(Object.assign({ message, type: Toast.type.error }, opts))
     }
 }
 
