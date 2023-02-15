@@ -89,9 +89,10 @@ class Request {
 
     /**
      *
-     * @param {string} path
+     * @param {string} url
      * @param {string} method
      * @param {object} body
+     * @param {object} header
      * @param {number} cacheLife ms
      * @returns
      */
