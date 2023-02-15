@@ -96,7 +96,7 @@ class Request {
      * @param {number} cacheLife ms
      * @returns
      */
-    async request(url, method, body = {}, header = {}, cacheLife = this.cacheLife) {
+    async request(url, method, body = {}, header = {}, cacheLife = this.cacheLife, opts) {
         let cacheKey
         const useCache = this.#useCache && method === Request.method.get
         if (useCache) {
@@ -110,13 +110,18 @@ class Request {
 
         try {
             this.#logRequest(`sending request [${method}]: ${url}`)
-            const resp = await $http.request({
-                header,
-                url,
-                method,
-                body,
-                timeout: this.timeout
-            })
+            const resp = await $http.request(
+                Object.assign(
+                    {
+                        header,
+                        url,
+                        method,
+                        body: method === Request.method.get ? null : body,
+                        timeout: this.timeout
+                    },
+                    opts
+                )
+            )
 
             if (resp.error) {
                 throw resp.error
