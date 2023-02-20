@@ -1,3 +1,12 @@
+class RequestError extends Error {
+    constructor({ message, code, type } = {}) {
+        super(message)
+        this.name = "RequestError"
+        this.code = code
+        this.type = type
+    }
+}
+
 class Request {
     static method = {
         get: "GET",
@@ -5,6 +14,10 @@ class Request {
         delete: "DELETE",
         patch: "PATCH",
         head: "HEAD"
+    }
+    static errorType = {
+        http: 0,
+        network: 1
     }
 
     cacheContainerKey = $addin?.current?.name + ".request.cache"
@@ -108,44 +121,45 @@ class Request {
             }
         }
 
-        try {
-            this.#logRequest(`sending request [${method}]: ${url}`)
-            const resp = await $http.request(
-                Object.assign(
-                    {
-                        header,
-                        url,
-                        method,
-                        body: method === Request.method.get ? null : body,
-                        timeout: this.timeout
-                    },
-                    opts
-                )
+        this.#logRequest(`sending request [${method}]: ${url}`)
+        const resp = await $http.request(
+            Object.assign(
+                {
+                    header,
+                    url,
+                    method,
+                    body: method === Request.method.get ? null : body,
+                    timeout: this.timeout
+                },
+                opts
             )
+        )
 
-            if (resp.error) {
-                throw resp.error
-            } else if (resp?.response?.statusCode >= 400) {
-                let errMsg = resp.data
-                if (typeof errMsg === "object") {
-                    errMsg = JSON.stringify(errMsg)
-                }
-                throw new Error("http error: [" + resp.response.statusCode + "] " + errMsg)
+        if (resp.error) {
+            throw new RequestError({
+                type: Request.errorType.network,
+                message: resp.error.localizedDescription,
+                code: resp.error.code
+            })
+        } else if (resp?.response?.statusCode >= 400) {
+            let errMsg = resp.data
+            if (typeof errMsg === "object") {
+                errMsg = JSON.stringify(errMsg)
             }
-
-            if (useCache) {
-                this.setCache(cacheKey, {
-                    exp: Date.now() + cacheLife,
-                    data: resp
-                })
-            }
-            return resp
-        } catch (error) {
-            if (error.code) {
-                error = new Error("network error: [" + error.code + "] " + error.localizedDescription)
-            }
-            throw error
+            throw new RequestError({
+                type: Request.errorType.http,
+                message: errMsg,
+                code: resp.response.statusCode
+            })
         }
+
+        if (useCache) {
+            this.setCache(cacheKey, {
+                exp: Date.now() + cacheLife,
+                data: resp
+            })
+        }
+        return resp
     }
 }
 
