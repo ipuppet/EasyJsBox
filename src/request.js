@@ -11,9 +11,11 @@ class Request {
     static method = {
         get: "GET",
         post: "POST",
+        put: "PUT",
         delete: "DELETE",
         patch: "PATCH",
-        head: "HEAD"
+        head: "HEAD",
+        options: "OPTIONS"
     }
     static errorType = {
         http: 0,
