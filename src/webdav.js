@@ -165,6 +165,7 @@ class WebDAV extends Request {
                 if (error.code !== 404) {
                     throw error
                 }
+                withLock = false // 跳过解锁步骤
             }
         }
 
