@@ -13,6 +13,7 @@ class WebDAV extends Request {
     #basepath
 
     namespace = "JSBox.WebDAV"
+    lockTokenCacheKey = this.namespace + ".lockToken"
 
     get host() {
         return this.#host
@@ -139,17 +140,46 @@ class WebDAV extends Request {
         return await this.request(path, "MKCOL")
     }
 
-    async put(path, body) {
-        return await this.request(path, Request.method.put, body)
+    async get(path) {
+        return this.request(path, Request.method.get, null)
+    }
+
+    async put(path, body, { withLock = true, waitInterval = 2, maxTry = 3 } = {}) {
+        let header = {}
+        while (true) {
+            let fileLock = await this.isLocked(path)
+            if (!fileLock) {
+                break
+            }
+            if (--maxTry <= 0) {
+                throw new Error("Resource Locked")
+            }
+            await $wait(waitInterval)
+        }
+
+        if (withLock) {
+            try {
+                await this.lock(path)
+                header["If"] = `(${this.#getLockToken(path)})`
+            } catch (error) {
+                if (error.code !== 404) {
+                    throw error
+                }
+            }
+        }
+
+        await this.request(path, Request.method.put, body, header)
+
+        if (withLock) await this.unlock(path)
     }
 
     #setLockToken(path, token) {
-        const lockToken = $cache.get("webdav.lockToken") ?? {}
+        const lockToken = $cache.get(this.lockTokenCacheKey) ?? {}
         lockToken[path] = token
-        $cache.set("webdav.lockToken", lockToken)
+        $cache.set(this.lockTokenCacheKey, lockToken)
     }
     #getLockToken(path) {
-        const lockToken = $cache.get("webdav.lockToken") ?? {}
+        const lockToken = $cache.get(this.lockTokenCacheKey) ?? {}
         return lockToken[path]
     }
     async isSupportLock(path) {
@@ -169,7 +199,7 @@ class WebDAV extends Request {
             }
         }
     }
-    async lock(path, infinity = false, timeout = "Second-10") {
+    async lock(path, { infinity = false, timeout = "Second-10" } = {}) {
         const isSupportLock = await this.isSupportLock(path)
         if (!isSupportLock) {
             throw new Error("Your WebDAV service does not support the `LOCK` method.")
@@ -193,7 +223,7 @@ class WebDAV extends Request {
         this.#setLockToken(path, token)
         return $xml.parse({ string: resp.data })
     }
-    async isLocked(path, infinity = false) {
+    async isLocked(path) {
         try {
             const resp = await this.propfind(path, "lockdiscovery")
             const rootElement = resp.rootElement
@@ -215,7 +245,7 @@ class WebDAV extends Request {
                 }
             } else {
                 // unsupport lockdiscovery
-                await this.lock(path, infinity, "Second-0")
+                await this.lock(path, { timeout: "Second-0" })
             }
         } catch (error) {
             if (error.code === 423) {
@@ -224,7 +254,7 @@ class WebDAV extends Request {
         }
         return false
     }
-    async refreshLock(path, infinity = false, timeout = "Second-10") {
+    async refreshLock(path, { infinity = false, timeout = "Second-10" } = {}) {
         const resp = await this.request(path, "LOCK", null, {
             Timeout: timeout,
             If: this.#getLockToken(path),
