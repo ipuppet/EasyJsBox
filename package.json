@@ -6,7 +6,7 @@
     "jsbox": "dist/easy-jsbox.js",
     "targets": {
         "jsbox": {
-            "source": "src/index.js",
+            "source": "./index.js",
             "includeNodeModules": false,
             "sourceMap": false,
             "outputFormat": "commonjs",
