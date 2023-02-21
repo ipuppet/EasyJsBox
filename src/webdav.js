@@ -141,7 +141,7 @@ class WebDAV extends Request {
     }
 
     async get(path) {
-        return this.request(path, Request.method.get, null)
+        return await this.request(path, Request.method.get, null)
     }
 
     async put(path, body, { withLock = true, waitInterval = 2, maxTry = 3 } = {}) {
@@ -172,6 +172,13 @@ class WebDAV extends Request {
         await this.request(path, Request.method.put, body, header)
 
         if (withLock) await this.unlock(path)
+    }
+
+    async delete(path) {
+        if (!path) {
+            throw new Error("path empty")
+        }
+        return await this.request(path, Request.method.delete)
     }
 
     #setLockToken(path, token) {
