@@ -1303,8 +1303,8 @@ class Setting extends Controller {
         }
     }
 
-    createPush(icon, title, view, tapped) {
-        const id = this.getId($text.uuid)
+    createPush(key, icon, title, view, tapped) {
+        const id = this.getId(key)
         return {
             type: "view",
             layout: $layout.fill,
@@ -1368,7 +1368,7 @@ class Setting extends Controller {
     }
 
     createChild(icon, title, children) {
-        return this.createPush(icon, title, undefined, push => {
+        return this.createPush($text.uuid, icon, title, undefined, push => {
             if (this.events?.onChildPush) {
                 this.callEvent("onChildPush", this.getListView(children, {}), title)
             } else {
@@ -1556,7 +1556,7 @@ class Setting extends Controller {
                         row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
                         break
                     case "push":
-                        row = this.createPush(item.icon, item.title, item.view)
+                        row = this.createPush(item.key, item.icon, item.title, item.view)
                         break
                     case "child":
                         row = this.createChild(item.icon, item.title, item.children)

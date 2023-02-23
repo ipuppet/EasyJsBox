@@ -330,6 +330,8 @@ const animate = {
     ],
     "title": "CHILD",
     "type": "push",
+    "key": "my.push",
+    "value": "data.save.in.my.push",
     "view": [
         {
             "title": "Section 1",
