@@ -165,9 +165,8 @@
         "book.fill",
         "#A569BD"
     ],
-    "title": "README",
-    "type": "script",
-    "key": "readme",
+    "title": "Info",
+    "type": "info",
     "value": "Text message."
 }
 ```
@@ -202,7 +201,6 @@ const animate = {
     ],
     "title": "README",
     "type": "script",
-    "key": "calendar",
     "value": "this.method.readme"
 }
 ```
@@ -332,7 +330,6 @@ const animate = {
     ],
     "title": "CHILD",
     "type": "push",
-    "key": "push",
     "view": [
         {
             "title": "Section 1",
@@ -355,7 +352,6 @@ const animate = {
     ],
     "title": "CHILD",
     "type": "child",
-    "key": "child",
     "children": [
         {
             "title": "Section 1",

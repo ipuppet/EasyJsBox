@@ -145,10 +145,8 @@ class Setting extends Controller {
      * @returns {this}
      */
     loadConfig() {
-        const exclude = [
-            "script", // script 类型永远使用 setting 结构文件内的值
-            "info"
-        ]
+        // 永远使用 setting 结构文件内的值
+        const exclude = ["script", "info"]
         const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
         function setValue(structure) {
             const setting = {}
@@ -157,11 +155,8 @@ class Setting extends Controller {
                     if (item.type === "child") {
                         const child = setValue(item.children)
                         Object.assign(setting, child)
-                    } else if (exclude.indexOf(item.type) === -1) {
+                    } else if (!exclude.includes(item.type)) {
                         setting[item.key] = item.key in userData ? userData[item.key] : item.value
-                    } else {
-                        // 被排除的项目直接赋值
-                        setting[item.key] = item.value
                     }
                 }
             }
@@ -258,6 +253,7 @@ class Setting extends Controller {
 
     setUserData(userData) {
         this.userData = userData
+        return this
     }
 
     setStructure(structure) {
@@ -704,8 +700,8 @@ class Setting extends Controller {
         }
     }
 
-    createScript(key, icon, title, script) {
-        const id = this.getId(key)
+    createScript(icon, title, script) {
+        const id = this.getId($text.uuid)
         const buttonId = `${id}-button`
         const rightSymbol = "chevron.right"
         const start = () => {
@@ -804,7 +800,7 @@ class Setting extends Controller {
                     // 执行代码
                     if (typeof script === "function") {
                         script(animate)
-                    } else if (script.startsWith("this")) {
+                    } else if (script.startsWith("this.")) {
                         // 传递 animate 对象
                         eval(`(()=>{return ${script}(animate)})()`)
                     } else {
@@ -1307,8 +1303,8 @@ class Setting extends Controller {
         }
     }
 
-    createPush(key, icon, title, view, tapped) {
-        const id = this.getId(key)
+    createPush(icon, title, view, tapped) {
+        const id = this.getId($text.uuid)
         return {
             type: "view",
             layout: $layout.fill,
@@ -1371,8 +1367,8 @@ class Setting extends Controller {
         }
     }
 
-    createChild(key, icon, title, children) {
-        return this.createPush(key, icon, title, undefined, push => {
+    createChild(icon, title, children) {
+        return this.createPush(icon, title, undefined, push => {
             if (this.events?.onChildPush) {
                 this.callEvent("onChildPush", this.getListView(children, {}), title)
             } else {
@@ -1510,7 +1506,6 @@ class Setting extends Controller {
         for (let section of structure) {
             const rows = []
             for (let item of section.items) {
-                const value = this.get(item.key)
                 let row = null
                 if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
                 if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
@@ -1527,10 +1522,10 @@ class Setting extends Controller {
                         row = this.createString(item.key, item.icon, item.title)
                         break
                     case "info":
-                        row = this.createInfo(item.icon, item.title, value)
+                        row = this.createInfo(item.icon, item.title, item.value)
                         break
                     case "script":
-                        row = this.createScript(item.key, item.icon, item.title, value)
+                        row = this.createScript(item.icon, item.title, item.value)
                         break
                     case "tab":
                         row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
@@ -1561,10 +1556,10 @@ class Setting extends Controller {
                         row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
                         break
                     case "push":
-                        row = this.createPush(item.key, item.icon, item.title, item.view)
+                        row = this.createPush(item.icon, item.title, item.view)
                         break
                     case "child":
-                        row = this.createChild(item.key, item.icon, item.title, item.children)
+                        row = this.createChild(item.icon, item.title, item.children)
                         break
                     case "image":
                         row = this.createImage(item.key, item.icon, item.title)
