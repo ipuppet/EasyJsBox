@@ -170,11 +170,12 @@ class Matrix extends View {
      * @returns {$indexPath}
      */
     indexPath(indexPath, withTitleOffset) {
-        let offset = withTitleOffset ? 0 : 1
+        let offset = withTitleOffset ? 1 : 0
         if (typeof indexPath === "number") {
-            indexPath = $indexPath(0, indexPath)
+            indexPath = $indexPath(0, indexPath + offset)
+        } else {
+            indexPath = $indexPath(indexPath.section, indexPath.row + offset)
         }
-        indexPath = $indexPath(indexPath.section, indexPath.row + offset)
         return indexPath
     }
 
