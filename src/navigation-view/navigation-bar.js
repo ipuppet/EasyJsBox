@@ -190,29 +190,37 @@ class NavigationBar extends View {
                 leftButtonView,
                 rightButtonView,
                 {
-                    // 标题
-                    type: "label",
-                    props: {
-                        id: this.id + "-small-title",
-                        alpha: isHideTitle ? 1 : 0, // 不显示大标题则显示小标题
-                        text: this.title,
-                        font: $font(this.fontFamily, this.navigationBarTitleFontSize),
-                        align: $align.center,
-                        bgcolor: $color("clear"),
-                        textColor: UIKit.textColor
-                    },
+                    type: "view",
+                    views: [
+                        {
+                            // 标题
+                            type: "label",
+                            props: {
+                                id: this.id + "-small-title",
+                                alpha: isHideTitle ? 1 : 0, // 不显示大标题则显示小标题
+                                text: this.title,
+                                font: $font(this.fontFamily, this.navigationBarTitleFontSize),
+                                align: $align.center,
+                                bgcolor: $color("clear"),
+                                textColor: UIKit.textColor
+                            },
+                            layout: (make, view) => {
+                                make.edges.equalTo(view.super.safeArea)
+                                const fontWidth = UIKit.getContentSize(
+                                    $font(this.fontFamily, this.navigationBarTitleFontSize),
+                                    view.text
+                                ).width
+                                const btnW = Math.max(leftButtonView.info?.width ?? 0, rightButtonView.info?.width ?? 0)
+                                if (UIKit.windowSize.width - btnW * 2 > fontWidth) {
+                                    make.centerX.equalTo(view.super.super)
+                                }
+                            }
+                        }
+                    ],
                     layout: (make, view) => {
                         make.top.bottom.equalTo(view.super.safeArea)
                         make.left.equalTo(view.prev.prev.right)
                         make.right.equalTo(view.prev.left)
-                        const fontWidth = UIKit.getContentSize(
-                            $font(this.fontFamily, this.navigationBarTitleFontSize),
-                            view.text
-                        ).width
-                        const btnW = Math.max(leftButtonView.info?.width ?? 0, rightButtonView.info?.width ?? 0)
-                        if (UIKit.windowSize.width - btnW * 2 > fontWidth) {
-                            make.centerX.equalTo(view.super)
-                        }
                     }
                 }
             ]
