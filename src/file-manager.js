@@ -81,10 +81,8 @@ class FileManager {
 
     edit(info) {
         const file = $file.read(info.path)
-        if (file.image) {
-            $quicklook.open({
-                image: file.image
-            })
+        if (file.info?.mimeType?.startsWith("image")) {
+            Kernel.quickLookImage(file, info.path.substring(info.path.lastIndexOf("/") + 1))
         } else {
             const sheet = new Sheet()
             const id = $text.uuid
@@ -179,26 +177,35 @@ class FileManager {
                     }
                 },
                 {
-                    type: "label",
-                    props: {
-                        id: "name",
-                        lines: 1
-                    },
+                    type: "view",
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                id: "size",
+                                color: $color("secondaryText"),
+                                lines: 1
+                            },
+                            layout: (make, view) => {
+                                make.height.equalTo(view.super)
+                                make.right.inset(this.edges)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                lines: 1
+                            },
+                            layout: (make, view) => {
+                                make.height.left.equalTo(view.super)
+                                make.right.equalTo(view.prev.left).offset(-this.edges)
+                            }
+                        }
+                    ],
                     layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
+                        make.height.right.equalTo(view.super)
                         make.left.equalTo(view.prev.right).offset(this.edges)
-                    }
-                },
-                {
-                    type: "label",
-                    props: {
-                        id: "size",
-                        color: $color("secondaryText"),
-                        lines: 1
-                    },
-                    layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
-                        make.right.inset(this.edges)
                     }
                 }
             ]

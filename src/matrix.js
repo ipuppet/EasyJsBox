@@ -54,6 +54,22 @@ class Matrix extends View {
         return this.#hiddenViews
     }
 
+    get data() {
+        const rawData = $(this.id).data
+        const data = []
+        rawData.map(section => {
+            section.items = section.items.filter(item => {
+                return item?.__title?.hidden === true ?? true
+            })
+            data.push(section)
+        })
+        return data
+    }
+    set data(data) {
+        this.props.data = this.rebuildData(data)
+        $(this.id).data = this.props.data
+    }
+
     #titleToData(title) {
         let hiddenViews = { ...this.hiddenViews }
 
@@ -170,17 +186,13 @@ class Matrix extends View {
      * @returns {$indexPath}
      */
     indexPath(indexPath, withTitleOffset) {
-        let offset = withTitleOffset ? 0 : 1
+        let offset = withTitleOffset ? 1 : 0
         if (typeof indexPath === "number") {
-            indexPath = $indexPath(0, indexPath)
+            indexPath = $indexPath(0, indexPath + offset)
+        } else {
+            indexPath = $indexPath(indexPath.section, indexPath.row + offset)
         }
-        indexPath = $indexPath(indexPath.section, indexPath.row + offset)
         return indexPath
-    }
-
-    update(data) {
-        this.props.data = this.rebuildData(data)
-        $(this.id).data = this.props.data
     }
 
     getView() {

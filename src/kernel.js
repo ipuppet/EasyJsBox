@@ -54,6 +54,44 @@ class Kernel {
         return image
     }
 
+    static quickLookImage(data, title = $l10n("PREVIEW")) {
+        const { Sheet } = require("./sheet")
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { data: data },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            .addNavBar({
+                title,
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(data)
+                    }
+                ]
+            })
+            .init()
+            .present()
+    }
+
     static objectEqual(a, b) {
         let aProps = Object.getOwnPropertyNames(a)
         let bProps = Object.getOwnPropertyNames(b)

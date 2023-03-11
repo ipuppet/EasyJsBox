@@ -20,6 +20,22 @@ class FileStorage {
         this.#createDirectory(this.basePath)
     }
 
+    static join(...path) {
+        const length = path.length
+        let result = path[0]
+        if (length < 2) return result
+
+        for (let i = 0; i < length - 1; ++i) {
+            let p = path[i + 1]
+            if (p.startsWith("/")) {
+                p = p.substring(1)
+            }
+            result = result.endsWith("/") ? result + p : result + "/" + p
+        }
+
+        return result
+    }
+
     #createDirectory(path) {
         if (!$file.isDirectory(path)) {
             $file.mkdir(path)
@@ -27,10 +43,7 @@ class FileStorage {
     }
 
     filePath(path = "", createPath = true) {
-        if (path.startsWith("/")) {
-            path = path.substring(1)
-        }
-        path = `${this.basePath}/${path}`
+        path = FileStorage.join(this.basePath, path)
 
         let fileName = ""
 
