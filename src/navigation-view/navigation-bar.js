@@ -202,7 +202,7 @@ class NavigationBar extends View {
                         textColor: UIKit.textColor
                     },
                     layout: (make, view) => {
-                        make.top.bottom.equalTo(view.super)
+                        make.top.bottom.equalTo(view.super.safeArea)
                         make.left.equalTo(view.prev.prev.right)
                         make.right.equalTo(view.prev.left)
                         const fontWidth = UIKit.getContentSize(
