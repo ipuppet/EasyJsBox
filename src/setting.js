@@ -183,7 +183,6 @@ class Setting extends Controller {
                 BACK: "返回",
                 ERROR: "发生错误",
                 SUCCESS: "成功",
-                LOADING: "加载中",
                 INVALID_VALUE: "非法参数",
                 CONFIRM_CHANGES: "数据已变化，确认修改？",
 
@@ -200,7 +199,8 @@ class Setting extends Controller {
                 IMAGE_BASE64: "图片 / base64",
 
                 PREVIEW: "预览",
-                SELECT_IMAGE: "选择图片",
+                SELECT_IMAGE_PHOTO: "从相册选择图片",
+                SELECT_IMAGE_ICLOUD: "从 iCloud 选择图片",
                 CLEAR_IMAGE: "清除图片",
                 NO_IMAGE: "无图片",
 
@@ -221,7 +221,6 @@ class Setting extends Controller {
                 BACK: "Back",
                 ERROR: "Error",
                 SUCCESS: "Success",
-                LOADING: "Loading",
                 INVALID_VALUE: "Invalid value",
                 CONFIRM_CHANGES: "The data has changed, confirm the modification?",
 
@@ -238,7 +237,8 @@ class Setting extends Controller {
                 IMAGE_BASE64: "Image / base64",
 
                 PREVIEW: "Preview",
-                SELECT_IMAGE: "Select Image",
+                SELECT_IMAGE_PHOTO: "Select From Photo",
+                SELECT_IMAGE_ICLOUD: "Select From iCloud",
                 CLEAR_IMAGE: "Clear Image",
                 NO_IMAGE: "No Image",
 
@@ -364,9 +364,24 @@ class Setting extends Controller {
         return this.imagePath + name
     }
 
-    getImage(key, compress = false) {
+    /**
+     *
+     * @param {string} key
+     * @param {boolean} compress
+     * @param {string} format "data"|"image" default "image"
+     * @returns
+     */
+    getImage(key, compress = false, format = "image") {
         try {
-            return this.fileStorage.readSync(this.getImagePath(key, compress)).image
+            const data = this.fileStorage.readSync(this.getImagePath(key, compress))
+            switch (format) {
+                case "data":
+                    return data
+                case "image":
+                    return data.image
+                default:
+                    return data.image
+            }
         } catch (error) {
             if (error instanceof FileStorageFileNotFoundError) {
                 return null
@@ -1386,8 +1401,16 @@ class Setting extends Controller {
             return async () => {
                 $(imageId).hidden = true
                 $(`${imageId}-spinner`).hidden = false
-                await $wait(0.2)
-                action()
+                await $wait(0.1)
+                try {
+                    await action()
+                } catch (error) {
+                    $ui.alert({
+                        title: $l10n("ERROR"),
+                        message: String(error)
+                    })
+                }
+                await $wait(0.1)
                 $(`${imageId}-spinner`).hidden = true
                 $(imageId).hidden = false
             }
@@ -1396,9 +1419,9 @@ class Setting extends Controller {
             {
                 title: $l10n("PREVIEW"),
                 handler: withLoading(() => {
-                    const image = this.getImage(key)
+                    const image = this.getImage(key, false, "data")
                     if (image) {
-                        $quicklook.open({ image: image })
+                        Kernel.quickLookImage(image)
                     } else {
                         $ui.toast($l10n("NO_IMAGE"))
                     }
@@ -1408,36 +1431,47 @@ class Setting extends Controller {
                 inline: true,
                 items: [
                     {
-                        title: $l10n("SELECT_IMAGE"),
-                        handler: withLoading(() => {
-                            $photo.pick({ format: "data" }).then(resp => {
-                                $ui.toast($l10n("LOADING"))
-                                if (!resp.status || !resp.data) {
-                                    if (resp?.error?.description !== "canceled") {
-                                        $ui.toast($l10n("ERROR"))
-                                    }
-                                    return
+                        title: $l10n("SELECT_IMAGE_PHOTO"),
+                        handler: withLoading(async () => {
+                            const resp = await $photo.pick({ format: "data" })
+                            if (!resp.status || !resp.data) {
+                                if (resp?.error?.description !== "canceled") {
+                                    throw new Error(resp?.error?.description)
                                 }
-                                // 控制压缩图片大小
-                                const image = Kernel.compressImage(resp.data.image)
-                                this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
-                                this.fileStorage.write(this.getImagePath(key), resp.data)
-                                $(imageId).image = image
-                                $ui.success($l10n("SUCCESS"))
-                            })
+                                return
+                            }
+                            // 控制压缩图片大小
+                            const image = Kernel.compressImage(resp.data.image)
+                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
+                            this.fileStorage.write(this.getImagePath(key), resp.data)
+                            $(imageId).image = image
+                            $ui.success($l10n("SUCCESS"))
                         })
                     },
                     {
-                        title: $l10n("CLEAR_IMAGE"),
-                        inline: true,
-                        handler: withLoading(() => {
-                            this.fileStorage.delete(this.getImagePath(key, true))
-                            this.fileStorage.delete(this.getImagePath(key))
-                            $(imageId).image = noneImage
+                        title: $l10n("SELECT_IMAGE_ICLOUD"),
+                        handler: withLoading(async () => {
+                            const data = await $drive.open()
+                            if (!data) return
+                            // 控制压缩图片大小
+                            const image = Kernel.compressImage(data.image)
+                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
+                            this.fileStorage.write(this.getImagePath(key), data)
+                            $(imageId).image = image
                             $ui.success($l10n("SUCCESS"))
                         })
                     }
                 ]
+            },
+            {
+                title: $l10n("CLEAR_IMAGE"),
+                destructive: true,
+                handler: withLoading(() => {
+                    this.fileStorage.delete(this.getImagePath(key, true))
+                    this.fileStorage.delete(this.getImagePath(key))
+                    $(imageId).image = noneImage
+                    $ui.success($l10n("SUCCESS"))
+                })
             }
         ]
 

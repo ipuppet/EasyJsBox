@@ -54,6 +54,54 @@ class Kernel {
         return image
     }
 
+    static quickLookImage(image, format = "data") {
+        switch (format) {
+            case "image":
+                image = image.png
+                break
+            case "data":
+            default:
+                break
+        }
+        const { Sheet } = require("./sheet")
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { data: image },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
+            .addNavBar({
+                title: $l10n("PREVIEW"),
+                popButton: { title: $l10n("CLOSE") },
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(image)
+                    }
+                ]
+            })
+            .init()
+            .present()
+    }
+
     static objectEqual(a, b) {
         let aProps = Object.getOwnPropertyNames(a)
         let bProps = Object.getOwnPropertyNames(b)
