@@ -54,15 +54,7 @@ class Kernel {
         return image
     }
 
-    static quickLookImage(image, format = "data") {
-        switch (format) {
-            case "image":
-                image = image.png
-                break
-            case "data":
-            default:
-                break
-        }
+    static quickLookImage(data, title = $l10n("PREVIEW")) {
         const { Sheet } = require("./sheet")
         const sheet = new Sheet()
         sheet
@@ -79,7 +71,7 @@ class Kernel {
                         views: [
                             {
                                 type: "image",
-                                props: { data: image },
+                                props: { data: data },
                                 layout: $layout.fill
                             }
                         ]
@@ -87,14 +79,12 @@ class Kernel {
                 ],
                 layout: $layout.fill
             })
-            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
             .addNavBar({
-                title: $l10n("PREVIEW"),
-                popButton: { title: $l10n("CLOSE") },
+                title,
                 rightButtons: [
                     {
                         symbol: "square.and.arrow.up",
-                        tapped: () => $share.sheet(image)
+                        tapped: () => $share.sheet(data)
                     }
                 ]
             })

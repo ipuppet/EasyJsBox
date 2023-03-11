@@ -22,12 +22,12 @@ class NavigationBar extends View {
     prefersLargeTitles = true
     largeTitleDisplayMode = NavigationBar.largeTitleDisplayModeAutomatic
 
+    fontFamily = "bold"
     largeTitleFontSize = 34
-    largeTitleFontFamily = "bold"
     largeTitleFontHeight = $text.sizeThatFits({
         text: "A",
         width: 100,
-        font: $font(this.largeTitleFontFamily, this.largeTitleFontSize)
+        font: $font(this.fontFamily, this.largeTitleFontSize)
     }).height
     navigationBarTitleFontSize = 17
     topSafeArea = true
@@ -82,7 +82,7 @@ class NavigationBar extends View {
                       text: this.title,
                       textColor: UIKit.textColor,
                       align: $align.left,
-                      font: $font(this.largeTitleFontFamily, this.largeTitleFontSize),
+                      font: $font(this.fontFamily, this.largeTitleFontSize),
                       line: 1
                   },
                   layout: (make, view) => {
@@ -102,31 +102,44 @@ class NavigationBar extends View {
 
     getNavigationBarView() {
         const getButtonView = (buttons, align) => {
+            const layout = (make, view) => {
+                make.top.equalTo(view.super.safeAreaTop)
+                make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea)
+                else make.right.equalTo(view.super.safeArea)
+            }
+            if (buttons && !Array.isArray(buttons)) {
+                return {
+                    type: "view",
+                    views: [buttons],
+                    layout: layout
+                }
+            }
             let width = 0
-            const buttonsView = []
+            const buttonViews = []
             buttons.forEach(button => {
                 width += button.width
-                buttonsView.push(button.definition)
+                buttonViews.push(button.definition)
             })
-            width += buttons[0]?.edges ?? 0
+            const edges = buttons[0]?.edges ?? 0
+            width += buttons.length >= 2 ? edges * 2 : edges
             return buttons.length > 0
                 ? {
                       type: "view",
-                      views: buttonsView,
+                      views: buttonViews,
+                      info: { width },
                       layout: (make, view) => {
-                          make.top.equalTo(view.super.safeAreaTop)
-                          make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                          if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea)
-                          else make.right.equalTo(view.super.safeArea)
+                          layout(make, view)
                           make.width.equalTo(width)
                       }
                   }
-                : {}
+                : { type: "view", layout: make => make.size.equalTo(0) }
         }
+        const leftButtonView = getButtonView(
+            this.navigationBarItems.popButtonView ?? this.navigationBarItems.leftButtons,
+            UIKit.align.left
+        )
         const rightButtonView = getButtonView(this.navigationBarItems.rightButtons, UIKit.align.right)
-        const leftButtonView =
-            this.navigationBarItems.popButtonView ??
-            getButtonView(this.navigationBarItems.leftButtons, UIKit.align.left)
         const isHideBackground = this.prefersLargeTitles
         const isHideTitle =
             !this.prefersLargeTitles || this.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever
@@ -174,6 +187,8 @@ class NavigationBar extends View {
                     },
                     layout: $layout.fill
                 },
+                leftButtonView,
+                rightButtonView,
                 {
                     // 标题
                     type: "label",
@@ -181,18 +196,26 @@ class NavigationBar extends View {
                         id: this.id + "-small-title",
                         alpha: isHideTitle ? 1 : 0, // 不显示大标题则显示小标题
                         text: this.title,
-                        font: $font(this.largeTitleFontFamily, this.navigationBarTitleFontSize),
+                        font: $font(this.fontFamily, this.navigationBarTitleFontSize),
                         align: $align.center,
                         bgcolor: $color("clear"),
                         textColor: UIKit.textColor
                     },
                     layout: (make, view) => {
-                        make.left.right.inset(0)
-                        make.height.equalTo(20)
-                        make.centerY.equalTo(view.super.safeArea)
+                        make.top.bottom.equalTo(view.super)
+                        make.left.equalTo(view.prev.prev.right)
+                        make.right.equalTo(view.prev.left)
+                        const fontWidth = UIKit.getContentSize(
+                            $font(this.fontFamily, this.navigationBarTitleFontSize),
+                            view.text
+                        ).width
+                        const btnW = Math.max(leftButtonView.info?.width ?? 0, rightButtonView.info?.width ?? 0)
+                        if (UIKit.windowSize.width - btnW * 2 > fontWidth) {
+                            make.centerX.equalTo(view.super)
+                        }
                     }
                 }
-            ].concat(rightButtonView, leftButtonView)
+            ]
         }
     }
 }
@@ -291,7 +314,7 @@ class NavigationBarController extends Controller {
             // 下拉放大字体
             let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
             if (size > titleSizeMax) size = titleSizeMax
-            this.selector.largeTitleView.font = $font(this.navigationBar.largeTitleFontFamily, size)
+            this.selector.largeTitleView.font = $font(this.navigationBar.fontFamily, size)
         }
     }
 

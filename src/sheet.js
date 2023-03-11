@@ -66,34 +66,10 @@ class Sheet extends View {
         if (!this.#navBar) {
             return
         }
-        const { title = "", popButton = { title: $l10n("DONE") }, rightButtons = [] } = this.#navBar
+        const { title = "", popButton = { title: $l10n("CLOSE") }, rightButtons = [] } = this.#navBar
         if (this.view === undefined) throw new SheetAddNavBarError()
-        this.navigationView = new NavigationView()
-        // 返回按钮
-        const barButtonItem = new BarButtonItem()
-        barButtonItem
-            .setEvents(
-                Object.assign(
-                    {
-                        tapped: () => {
-                            this.dismiss()
-                            if (typeof popButton.tapped === "function") popButton.tapped()
-                        }
-                    },
-                    popButton.events
-                )
-            )
-            .setAlign(UIKit.align.left)
-            .setSymbol(popButton.symbol)
-            .setTitle(popButton.title)
-            .setColor(popButton.color)
-            .setMenu(popButton.menu)
-        const button = barButtonItem.definition.views[0]
-        button.layout = (make, view) => {
-            make.left.equalTo(view.super.safeArea).offset(15)
-            make.centerY.equalTo(view.super.safeArea)
-        }
 
+        this.navigationView = new NavigationView()
         const navBar = this.navigationView.navigationBar
         navBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         navBar.navigationBarLargeTitleHeight -= navBar.navigationBarNormalHeight
@@ -109,7 +85,17 @@ class Sheet extends View {
             navBar.removeTopSafeArea()
         }
 
-        this.navigationView.navigationBarItems.addPopButton("", button).setRightButtons(rightButtons)
+        // 返回按钮
+        popButton.events = Object.assign(
+            {
+                tapped: () => {
+                    this.dismiss()
+                    if (typeof popButton.tapped === "function") popButton.tapped()
+                }
+            },
+            popButton.events ?? {}
+        )
+        this.navigationView.navigationBarItems.addLeftButton(popButton).setRightButtons(rightButtons)
         this.navigationView.setView(this.view).navigationBarTitle(title)
         if (this.view.props?.bgcolor) {
             this.navigationView?.getPage().setProp("bgcolor", this.view.props?.bgcolor)

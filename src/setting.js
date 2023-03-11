@@ -1419,9 +1419,9 @@ class Setting extends Controller {
             {
                 title: $l10n("PREVIEW"),
                 handler: withLoading(() => {
-                    const image = this.getImage(key, false, "data")
-                    if (image) {
-                        Kernel.quickLookImage(image)
+                    const data = this.getImage(key, false, "data")
+                    if (data) {
+                        Kernel.quickLookImage(data)
                     } else {
                         $ui.toast($l10n("NO_IMAGE"))
                     }
