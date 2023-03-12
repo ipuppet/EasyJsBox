@@ -50,6 +50,12 @@
 
     根据 `key` 获取值。若未找到将返回 `_default`。
 
+- `set(key, value)`
+
+    不建议使用该方法，所有数据更新推荐仅在生成的 UI 中完成。
+
+    设置键值对，该方法会将数据保存到文件，同时更新内存中的数据，这意味着设置即时生效，可随时调用 `get()` 获取数据。
+
 - `useJsboxNav()`
 
     调用后将修改 child 类型弹出方式为 JsBox 默认样式。
@@ -58,21 +64,9 @@
 
     设置为只读模式，尝试写入数据将抛出 `SettingReadonlyError` 错误。
 
-- `set(key, value)`
-
-    不建议使用该方法，所有数据更新推荐仅在生成的 UI 中完成。
-
-    设置键值对，该方法会将数据保存到文件，同时更新内存中的数据，这意味着设置即时生效，可随时调用 `get()` 获取数据。
-
 - `setFooter(footer)`
 
     用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号（作者和版本号将从根目录的 `config.js` 获取）。
-
-- `getImage(key, compress = false)`
-
-    类型为 `image` 的项只能通过该方法获取 `$image` 对象。
-
-    `compress` 为可选参数，若为 `true` 则返回一个经过 `Utils.compressImage()` 压缩后的图片。
 
 ### events
 
@@ -86,7 +80,7 @@
 
     可重写child类型的push事件。
 
-    ### Parameter
+    **Parameter**
     
     - listView 生成的子列表视图对象
     - title 子列表的标题
@@ -258,6 +252,8 @@ const animate = {
 
 #### color
 
+调用 `get(key, _default = null)` 方法返回 `$color` 对象。
+
 ```json
 {
     "icon": [
@@ -369,9 +365,7 @@ const animate = {
 
 #### image
 
-`image` 类型需要调用 `getImage(key, compress?: bool)` 方法来获取 `$image` 对象。
-
-`compress` 为可选参数。
+调用 `get(key, _default = null)` 方法返回 `$image` 对象。
 
 ```json
 {
