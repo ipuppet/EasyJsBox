@@ -486,7 +486,6 @@ class Setting extends Controller {
                     props: {
                         text: title,
                         lines: 1,
-                        textColor: this.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
@@ -685,7 +684,6 @@ class Setting extends Controller {
                     props: {
                         id: labelId,
                         text: this.get(key),
-                        textColor: this.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
