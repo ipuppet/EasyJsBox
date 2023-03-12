@@ -83,6 +83,7 @@ class Setting extends Controller {
     rowHeight = 50
     edgeOffset = 10
     iconSize = 30
+    iconDefaultColor = "#00CC00"
     // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
     #withTouchEventsT = {}
     // read only
@@ -436,13 +437,19 @@ class Setting extends Controller {
     }
 
     createLineLabel(title, icon) {
-        if (!icon[1]) icon[1] = "#00CC00"
-        if (typeof icon[1] !== "object") {
-            icon[1] = [icon[1], icon[1]]
-        }
-        if (typeof icon[0] !== "object") {
+        // `icon[0]` symbol or image
+        // if `icon[0]` is array, light and dark mode
+        if (!Array.isArray(icon[0])) {
             icon[0] = [icon[0], icon[0]]
         }
+        // `icon[1]` color
+        // if `icon[0]` is array, same as `icon[0]`
+        if (!icon[1]) {
+            icon[1] = [this.iconDefaultColor, this.iconDefaultColor]
+        } else if (!Array.isArray(icon[1])) {
+            icon[1] = [icon[1], icon[1]]
+        }
+
         return {
             type: "view",
             views: [
@@ -1541,8 +1548,9 @@ class Setting extends Controller {
             const rows = []
             for (let item of section.items) {
                 let row = null
-                if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
-                if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
+                if (!item.icon) item.icon = ["square.grid.2x2.fill", this.iconDefaultColor]
+                else if (!Array.isArray(item.icon)) item.icon = [item.icon, this.iconDefaultColor]
+                if (Array.isArray(item.items)) item.items = item.items.map(item => $l10n(item))
                 // 更新标题值
                 item.title = $l10n(item.title)
                 switch (item.type) {
@@ -1598,7 +1606,7 @@ class Setting extends Controller {
                     case "image":
                         row = this.createImage(item.key, item.icon, item.title)
                         break
-                    default:
+                    default: // 跳过不支持的类型
                         continue
                 }
                 rows.push(row)
