@@ -1215,7 +1215,7 @@ class SettingImage extends SettingItem {
                             type: "image",
                             props: {
                                 id: imageId,
-                                image: this.getImage(true).image ?? noneImage
+                                image: this.getImage(true)?.image ?? noneImage
                             },
                             layout: (make, view) => {
                                 make.right.inset(SettingItem.edgeOffset)
