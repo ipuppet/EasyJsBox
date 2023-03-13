@@ -98,7 +98,6 @@ class Setting extends Controller {
                 .present()
         }
     }
-    userGetter = false
     // read only
     #readonly = false
     // 判断是否已经加载数据加载
@@ -124,9 +123,8 @@ class Setting extends Controller {
         // set 和 get 同时设置才会生效
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
-            this.get = args.get
-            this.userData = args.userData
-            this.userGetter = true
+            this.getOriginal = args.get
+            this.userData = args.userData ?? {}
         } else {
             this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
@@ -228,6 +226,7 @@ class Setting extends Controller {
                         setValue(item.children)
                     } else if (!this.exclude.includes(item.type)) {
                         this.setting[item.key] = item.key in userData ? userData[item.key] : item.value
+                        // 只保留有取值需求的 settingItem
                         this.settingItems[item.key] = this.loader(item)
                     }
                 }
@@ -424,7 +423,10 @@ class Setting extends Controller {
 
     get(key, _default = null) {
         this.#checkLoadConfigError()
-        return this.settingItems[key]?.get(_default)
+        if (!this.settingItems[key]) {
+            return this.getOriginal(key, _default)
+        }
+        return this.settingItems[key].get(_default)
     }
 
     #getSections(structure) {

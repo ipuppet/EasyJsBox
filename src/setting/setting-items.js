@@ -687,9 +687,6 @@ class SettingMenu extends SettingItem {
 class SettingColor extends SettingItem {
     get(_default = null) {
         const color = super.get(_default)
-        if (this.setting.userGetter) {
-            return color
-        }
         if (!color) return _default
         return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
     }
@@ -1120,9 +1117,6 @@ class SettingImage extends SettingItem {
     }
 
     get(_default = null) {
-        if (this.setting.userGetter) {
-            return super.get(_default)
-        }
         return this.getImage(false) ?? null
     }
 
