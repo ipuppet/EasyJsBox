@@ -382,6 +382,7 @@ class SettingStepper extends SettingItem {
 class SettingScript extends SettingItem {
     // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
     #withTouchEventT
+    method = this.setting.method
 
     #touchHighlightStart() {
         $(this.id).bgcolor = $color("systemFill")
@@ -525,7 +526,6 @@ class SettingScript extends SettingItem {
                         script(animate)
                     } else if (script.startsWith("this.method")) {
                         // 传递 animate 对象
-                        script = script.replace("this.method", "this.setting.method")
                         eval(`(()=>{return ${script}(animate)})()`)
                     } else {
                         eval(script)
@@ -1021,6 +1021,8 @@ class SettingIcon extends SettingItem {
 }
 
 class SettingPush extends SettingItem {
+    method = this.setting.method
+
     getView(view, tapped) {
         return {
             type: "view",
@@ -1048,7 +1050,6 @@ class SettingPush extends SettingItem {
                 tapped: () => {
                     const push = view => {
                         if (typeof view === "string" && view.startsWith("this.method")) {
-                            view = view.replace("this.method", "this.setting.method")
                             view = eval(`(()=>{return ${view}()})()`)
                         } else if (typeof view === "function") {
                             view = view()
