@@ -17,6 +17,7 @@ const { FileManager } = require("./src/file-manager")
 const { FileStorageParameterError, FileStorageFileNotFoundError, FileStorage } = require("./src/file-storage")
 const { FixedFooterView } = require("./src/fixed-footer-view")
 const { Kernel } = require("./src/kernel")
+const { Logger } = require("./src/logger")
 const { Matrix } = require("./src/matrix")
 const { Request } = require("./src/request")
 const { WebDAV } = require("./src/webdav")
@@ -44,6 +45,7 @@ module.exports = {
     FileStorage,
     FixedFooterView,
     Kernel,
+    Logger,
     Matrix,
     Request,
     WebDAV,
