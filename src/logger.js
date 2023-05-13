@@ -22,12 +22,14 @@ class Logger {
         }
     }
 
-    log(msg, level) {
+    format(msg, level) {
         const time = new Date().toUTCString()
-        const logStr = `${time} [${level}] ${msg}\n`
-        this.print(logStr)
+        return `${time} [${level}] ${msg}\n`
     }
 
+    log(msg, level) {
+        this.print(this.format(msg, level))
+    }
     info(msg) {
         this.log(msg, "INFO")
     }
