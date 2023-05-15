@@ -131,7 +131,6 @@ class Matrix extends View {
                 hidden: false
             })
         }
-        this.props.template.props = {}
 
         // rebuild template
         const templateViews = [
