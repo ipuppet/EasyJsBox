@@ -1,27 +1,12 @@
-const { Controller } = require("./controller")
-const { FileStorageFileNotFoundError, FileStorage } = require("./file-storage")
-const { Kernel } = require("./kernel")
-const { UIKit } = require("./ui-kit")
-const { Sheet } = require("./sheet")
-const { NavigationView } = require("./navigation-view/navigation-view")
-const { NavigationBar } = require("./navigation-view/navigation-bar")
-const { ViewController } = require("./navigation-view/view-controller")
-
-class SettingLoadConfigError extends Error {
-    constructor() {
-        super("Call loadConfig() first.")
-        this.name = "SettingLoadConfigError"
-    }
-}
-
-class SettingReadonlyError extends Error {
-    constructor() {
-        super("Attempted to assign to readonly property.")
-        this.name = "SettingReadonlyError"
-    }
-}
+const { FileStorageFileNotFoundError } = require("../file-storage")
+const { Kernel } = require("../kernel")
+const { UIKit } = require("../ui-kit")
+const { NavigationView } = require("../navigation-view/navigation-view")
+const { NavigationBar } = require("../navigation-view/navigation-bar")
 
 /**
+ * @typedef {import("./setting").Setting} Setting
+ *
  * 脚本类型的动画
  * @typedef {object} ScriptAnimate
  * @property {Function} animate.start
@@ -38,411 +23,82 @@ class SettingReadonlyError extends Error {
  * @property {SettingMethodFunction} *
  */
 
-/**
- * @property {function(key: string, value: any)} Setting.events.onSet 键值发生改变
- * @property {function(view: Object,title: string)} Setting.events.onChildPush 进入的子页面
- */
-class Setting extends Controller {
-    name
-    // 存储数据
-    setting = {}
-    // 初始用户数据，若未定义则尝试从给定的文件读取
-    userData
-    // fileStorage
-    fileStorage
-    imagePath
-    // 用来控制 child 类型
-    viewController = new ViewController()
-    /**
-     * @type {SettingMethod}
-     */
-    method = {
-        readme: () => {
-            const content = (() => {
-                const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
-                try {
-                    return __README__[file] ?? __README__["README.md"]
-                } catch {
-                    return $file.read(file)?.string ?? $file.read("README.md")?.string
-                }
-            })()
-            const sheet = new Sheet()
-            sheet
-                .setView({
-                    type: "markdown",
-                    props: { content: content },
-                    layout: (make, view) => {
-                        make.size.equalTo(view.super)
-                    }
-                })
-                .init()
-                .present()
-        }
-    }
-    // style
-    rowHeight = 50
-    edgeOffset = 10
-    iconSize = 30
-    // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-    #withTouchEventsT = {}
-    // read only
-    #readonly = false
-    // 判断是否已经加载数据加载
-    #loadConfigStatus = false
-    #footer
+class SettingItem {
+    static rowHeight = 50
+    static edgeOffset = 10
+    static iconSize = 30
+    static iconDefaultColor = "#00CC00"
 
     /**
-     *
-     * @param {object} args
-     * @param {Function} args.set 自定义 set 方法，定义后将忽略 fileStorage 和 dataFile
-     * @param {Function} args.get 自定义 get 方法，定义后将忽略 fileStorage 和 dataFile
-     * @param {object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
-     * @param {FileStorage} args.fileStorage FileStorage 对象，用于文件操作
-     * @param {string} args.dataFile 持久化数据保存文件
-     * @param {object} args.structure 设置项结构
-     * @param {string} args.structurePath 结构路径，优先级低于 structure
-     * @param {boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
-     * @param {string} args.name 唯一名称，默认分配一个 UUID
+     * @type {Setting}
      */
-    constructor(args = {}) {
-        super()
+    setting
+    #id
+    #key
+    #icon
+    title
+    #options = []
 
-        // set 和 get 同时设置才会生效
-        if (typeof args.set === "function" && typeof args.get === "function") {
-            this.set = args.set
-            this.get = args.get
-            this.userData = args.userData
-        } else {
-            this.fileStorage = args.fileStorage ?? new FileStorage()
-            this.dataFile = args.dataFile ?? "setting.json"
-        }
-        if (args.structure) {
-            this.setStructure(args.structure) // structure 优先级高于 structurePath
-        } else {
-            this.setStructurePath(args.structurePath ?? "setting.json")
-        }
-        this.isUseJsboxNav = args.isUseJsboxNav ?? false
-        // 不能使用 uuid
-        this.imagePath = (args.name ?? "default") + ".image" + "/"
-        this.setName(args.name ?? $text.uuid)
-        // l10n
-        this.loadL10n()
+    constructor(setting, key, title, icon) {
+        this.setting = setting
+        this.key = key
+        this.title = title
+        this.icon = icon
     }
 
-    useJsboxNav() {
-        this.isUseJsboxNav = true
+    set key(key) {
+        this.#key = key ?? $text.uuid
+        this.#id = undefined
         return this
     }
+    get key() {
+        return this.#key
+    }
 
-    #checkLoadConfigError() {
-        if (!this.#loadConfigStatus) {
-            throw new SettingLoadConfigError()
+    get id() {
+        if (!this.#id) {
+            this.#id = `setting-${this.setting.name}-${this.key}`
         }
+        return this.#id
     }
 
-    /**
-     * 从 this.structure 加载数据
-     * @returns {this}
-     */
-    loadConfig() {
-        // 永远使用 setting 结构文件内的值
-        const exclude = ["script", "info"]
-        const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
-        function setValue(structure) {
-            const setting = {}
-            for (let section of structure) {
-                for (let item of section.items) {
-                    if (item.type === "child") {
-                        const child = setValue(item.children)
-                        Object.assign(setting, child)
-                    } else if (!exclude.includes(item.type)) {
-                        setting[item.key] = item.key in userData ? userData[item.key] : item.value
-                    }
-                }
-            }
-            return setting
+    set icon(icon) {
+        if (!icon) icon = ["square.grid.2x2.fill", SettingItem.iconDefaultColor]
+        else if (!Array.isArray(icon)) icon = [icon, SettingItem.iconDefaultColor]
+
+        // `icon[0]` symbol or image
+        // if `icon[0]` is array, light and dark mode
+        if (!Array.isArray(icon[0])) {
+            icon[0] = [icon[0], icon[0]]
         }
-        this.setting = setValue(this.structure)
-        this.#loadConfigStatus = true
-        return this
-    }
-
-    hasSectionTitle(structure) {
-        this.#checkLoadConfigError()
-        return structure[0]?.title ? true : false
-    }
-
-    loadL10n() {
-        Kernel.l10n(
-            "zh-Hans",
-            {
-                OK: "好",
-                DONE: "完成",
-                CANCEL: "取消",
-                CLEAR: "清除",
-                BACK: "返回",
-                ERROR: "发生错误",
-                SUCCESS: "成功",
-                INVALID_VALUE: "非法参数",
-                CONFIRM_CHANGES: "数据已变化，确认修改？",
-
-                SETTING: "设置",
-                GENERAL: "一般",
-                ADVANCED: "高级",
-                TIPS: "小贴士",
-                COLOR: "颜色",
-                COPY: "复制",
-                COPIED: "复制成功",
-
-                JSBOX_ICON: "JSBox 内置图标",
-                SF_SYMBOLS: "SF Symbols",
-                IMAGE_BASE64: "图片 / base64",
-
-                PREVIEW: "预览",
-                SELECT_IMAGE_PHOTO: "从相册选择图片",
-                SELECT_IMAGE_ICLOUD: "从 iCloud 选择图片",
-                CLEAR_IMAGE: "清除图片",
-                NO_IMAGE: "无图片",
-
-                ABOUT: "关于",
-                VERSION: "Version",
-                AUTHOR: "作者",
-                AT_BOTTOM: "已经到底啦~"
-            },
-            false
-        )
-        Kernel.l10n(
-            "en",
-            {
-                OK: "OK",
-                DONE: "Done",
-                CANCEL: "Cancel",
-                CLEAR: "Clear",
-                BACK: "Back",
-                ERROR: "Error",
-                SUCCESS: "Success",
-                INVALID_VALUE: "Invalid value",
-                CONFIRM_CHANGES: "The data has changed, confirm the modification?",
-
-                SETTING: "Setting",
-                GENERAL: "General",
-                ADVANCED: "Advanced",
-                TIPS: "Tips",
-                COLOR: "Color",
-                COPY: "Copy",
-                COPIED: "Copide",
-
-                JSBOX_ICON: "JSBox in app icon",
-                SF_SYMBOLS: "SF Symbols",
-                IMAGE_BASE64: "Image / base64",
-
-                PREVIEW: "Preview",
-                SELECT_IMAGE_PHOTO: "Select From Photo",
-                SELECT_IMAGE_ICLOUD: "Select From iCloud",
-                CLEAR_IMAGE: "Clear Image",
-                NO_IMAGE: "No Image",
-
-                ABOUT: "About",
-                VERSION: "Version",
-                AUTHOR: "Author",
-                AT_BOTTOM: "It's the end~"
-            },
-            false
-        )
-    }
-
-    setUserData(userData) {
-        this.userData = userData
-        return this
-    }
-
-    setStructure(structure) {
-        this.structure = structure
-        return this
-    }
-
-    /**
-     * 设置结构文件目录。
-     * 若调用了 setStructure(structure) 或构造函数传递了 structure 数据，则不会加载结构文件
-     * @param {string} structurePath
-     * @returns {this}
-     */
-    setStructurePath(structurePath) {
-        if (!this.structure) {
-            this.setStructure(FileStorage.readFromRootAsJSON(structurePath))
-        }
-        return this
-    }
-
-    /**
-     * 设置一个独一无二的名字，防止多个 Setting 导致 UI 冲突
-     * @param {string} name 名字
-     */
-    setName(name) {
-        this.name = name
-        return this
-    }
-
-    setFooter(footer) {
-        this.#footer = footer
-        return this
-    }
-
-    set footer(footer) {
-        this.#footer = footer
-    }
-
-    get footer() {
-        if (this.#footer === undefined) {
-            let info = FileStorage.readFromRootAsJSON("config.json", {})["info"] ?? {}
-            if (!info.version || !info.author) {
-                try {
-                    info = __INFO__
-                } catch {}
-            }
-            this.#footer = {}
-            if (info.version && info.author) {
-                this.#footer = {
-                    type: "view",
-                    props: { height: 70 },
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                font: $font(14),
-                                text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
-                                textColor: $color({
-                                    light: "#C0C0C0",
-                                    dark: "#545454"
-                                }),
-                                align: $align.center
-                            },
-                            layout: make => {
-                                make.left.right.inset(0)
-                                make.top.inset(10)
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-        return this.#footer
-    }
-
-    setReadonly() {
-        this.#readonly = true
-        return this
-    }
-
-    set(key, value) {
-        if (this.#readonly) {
-            throw new SettingReadonlyError()
-        }
-        this.#checkLoadConfigError()
-        this.setting[key] = value
-        this.fileStorage.write(this.dataFile, $data({ string: JSON.stringify(this.setting) }))
-        this.callEvent("onSet", key, value)
-        return true
-    }
-
-    get(key, _default = null) {
-        this.#checkLoadConfigError()
-        if (Object.prototype.hasOwnProperty.call(this.setting, key)) return this.setting[key]
-        else return _default
-    }
-
-    getColor(color) {
-        return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
-    }
-
-    getImagePath(key, compress = false) {
-        let name = $text.MD5(key) + ".jpg"
-        if (compress) {
-            name = "compress." + name
+        // `icon[1]` color
+        // if `icon[0]` is array, same as `icon[0]`
+        if (!icon[1]) {
+            icon[1] = [SettingItem.iconDefaultColor, SettingItem.iconDefaultColor]
+        } else if (!Array.isArray(icon[1])) {
+            icon[1] = [icon[1], icon[1]]
         }
 
-        return this.imagePath + name
+        this.#icon = icon
+        return this
+    }
+    get icon() {
+        return this.#icon
     }
 
-    /**
-     *
-     * @param {string} key
-     * @param {boolean} compress
-     * @param {string} format "data"|"image" default "image"
-     * @returns
-     */
-    getImage(key, compress = false, format = "image") {
-        try {
-            const data = this.fileStorage.readSync(this.getImagePath(key, compress))
-            switch (format) {
-                case "data":
-                    return data
-                case "image":
-                    return data.image
-                default:
-                    return data.image
-            }
-        } catch (error) {
-            if (error instanceof FileStorageFileNotFoundError) {
-                return null
-            }
-            throw error
-        }
+    set(value) {
+        return this.setting.set(this.key, value)
+    }
+
+    get(_default = null) {
+        return this.setting.getOriginal(this.key, _default)
     }
 
     getId(key) {
-        return `setting-${this.name}-${key}`
+        return `setting-${this.setting.name}-${key}`
     }
 
-    #touchHighlightStart(id) {
-        $(id).bgcolor = $color("systemFill")
-    }
-
-    #touchHighlightEnd(id, duration = 0.3) {
-        if (duration === 0) {
-            $(id).bgcolor = $color("clear")
-        } else {
-            $ui.animate({
-                duration: duration,
-                animation: () => {
-                    $(id).bgcolor = $color("clear")
-                }
-            })
-        }
-    }
-
-    #withTouchEvents(id, events, withTappedHighlight = false, highlightEndDelay = 0) {
-        events = Object.assign(events, {
-            touchesBegan: () => {
-                this.#touchHighlightStart(id)
-                // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-                this.#withTouchEventsT[id] = $delay(1, () => this.#touchHighlightEnd(id, 0))
-            },
-            touchesMoved: () => {
-                this.#withTouchEventsT[id]?.cancel()
-                this.#touchHighlightEnd(id, 0)
-            }
-        })
-        if (withTappedHighlight) {
-            const tapped = events.tapped
-            events.tapped = () => {
-                // highlight
-                this.#touchHighlightStart(id)
-                setTimeout(() => this.#touchHighlightEnd(id), highlightEndDelay * 1000)
-                if (typeof tapped === "function") tapped()
-            }
-        }
-        return events
-    }
-
-    createLineLabel(title, icon) {
-        if (!icon[1]) icon[1] = "#00CC00"
-        if (typeof icon[1] !== "object") {
-            icon[1] = [icon[1], icon[1]]
-        }
-        if (typeof icon[0] !== "object") {
-            icon[0] = [icon[0], icon[0]]
-        }
+    createLineLabel() {
         return {
             type: "view",
             views: [
@@ -450,7 +106,7 @@ class Setting extends Controller {
                     // icon
                     type: "view",
                     props: {
-                        bgcolor: $color(icon[1][0], icon[1][1]),
+                        bgcolor: $color(this.icon[1][0], this.icon[1][1]),
                         cornerRadius: 5,
                         smoothCorners: true
                     },
@@ -459,7 +115,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 tintColor: $color("white"),
-                                image: $image(icon[0][0], icon[0][1])
+                                image: $image(this.icon[0][0], this.icon[0][1])
                             },
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
@@ -469,23 +125,22 @@ class Setting extends Controller {
                     ],
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
-                        make.size.equalTo(this.iconSize)
-                        make.left.inset(this.edgeOffset)
+                        make.size.equalTo(SettingItem.iconSize)
+                        make.left.inset(SettingItem.edgeOffset)
                     }
                 },
                 {
                     // title
                     type: "label",
                     props: {
-                        text: title,
+                        text: this.title,
                         lines: 1,
-                        textColor: this.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.height.equalTo(view.super)
-                        make.left.equalTo(view.prev.right).offset(this.edgeOffset)
+                        make.left.equalTo(view.prev.right).offset(SettingItem.edgeOffset)
                         make.width.greaterThanOrEqualTo(10)
                     }
                 }
@@ -497,17 +152,32 @@ class Setting extends Controller {
         }
     }
 
-    createInfo(icon, title, value) {
+    options(...options) {
+        this.#options = options ?? []
+        return this
+    }
+
+    getView() {}
+
+    create() {
+        return this.getView(...this.#options)
+    }
+
+    static from(item) {
+        return new this(item.setting, item.key, item.title, item.icon)
+    }
+}
+
+class SettingInfo extends SettingItem {
+    getView(value) {
         const isArray = Array.isArray(value)
         const text = isArray ? value[0] : value
         const moreInfo = isArray ? value[1] : value
         return {
             type: "view",
-            props: {
-                selectable: true
-            },
+            props: { selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "label",
                     props: {
@@ -517,7 +187,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(this.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
                         make.width.equalTo(180)
                     }
                 },
@@ -527,7 +197,7 @@ class Setting extends Controller {
                     events: {
                         tapped: () => {
                             $ui.alert({
-                                title: title,
+                                title: this.title,
                                 message: moreInfo,
                                 actions: [
                                     {
@@ -551,27 +221,25 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createSwitch(key, icon, title) {
-        const id = this.getId(key)
+class SettingSwitch extends SettingItem {
+    getView() {
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "switch",
                     props: {
-                        on: this.get(key),
+                        on: this.get(),
                         onColor: $color("#00CC00")
                     },
                     events: {
                         changed: sender => {
                             try {
-                                this.set(key, sender.on)
+                                this.set(sender.on)
                             } catch (error) {
                                 // 恢复开关状态
                                 sender.on = !sender.on
@@ -581,24 +249,22 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(this.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
                     }
                 }
             ],
             layout: $layout.fill
         }
     }
+}
 
-    createString(key, icon, title) {
-        const id = this.getId(key)
+class SettingString extends SettingItem {
+    getView() {
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "button",
                     props: {
@@ -617,9 +283,9 @@ class Setting extends Controller {
                                     {
                                         type: "text",
                                         props: {
-                                            id: `${this.name}-string-${key}`,
+                                            id: `${this.id}-string`,
                                             align: $align.left,
-                                            text: this.get(key)
+                                            text: this.get()
                                         },
                                         layout: make => {
                                             make.left.right.inset(10)
@@ -642,7 +308,7 @@ class Setting extends Controller {
                                         },
                                         events: {
                                             tapped: () => {
-                                                this.set(key, $(`${this.name}-string-${key}`).text)
+                                                this.set($(`${this.id}-string`).text)
                                                 popover.dismiss()
                                             }
                                         }
@@ -661,24 +327,21 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createStepper(key, icon, title, min, max) {
-        const id = this.getId(key)
-        const labelId = `${id}-label`
+class SettingStepper extends SettingItem {
+    getView(min, max) {
+        const labelId = `${this.id}-label`
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "label",
                     props: {
                         id: labelId,
-                        text: this.get(key),
-                        textColor: this.textColor,
+                        text: this.get(),
                         align: $align.left
                     },
                     layout: (make, view) => {
@@ -691,48 +354,94 @@ class Setting extends Controller {
                     props: {
                         min: min,
                         max: max,
-                        value: this.get(key)
+                        value: this.get()
                     },
                     events: {
                         changed: sender => {
                             $(labelId).text = sender.value
                             try {
-                                this.set(key, sender.value)
+                                this.set(sender.value)
                             } catch (error) {
                                 // 恢复标签显示数据
-                                $(labelId).text = this.get(key)
+                                $(labelId).text = this.get()
                                 throw error
                             }
                         }
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(this.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
                     }
                 }
             ],
             layout: $layout.fill
         }
     }
+}
 
-    createScript(icon, title, script) {
-        const id = this.getId($text.uuid)
-        const buttonId = `${id}-button`
+class SettingScript extends SettingItem {
+    // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
+    #withTouchEventT
+    method = this.setting.method
+
+    #touchHighlightStart() {
+        $(this.id).bgcolor = $color("systemFill")
+    }
+
+    #touchHighlightEnd(duration = 0.3) {
+        if (duration === 0) {
+            $(this.id).bgcolor = $color("clear")
+        } else {
+            $ui.animate({
+                duration: duration,
+                animation: () => {
+                    $(this.id).bgcolor = $color("clear")
+                }
+            })
+        }
+    }
+
+    #withTouchEvent(events, withTappedHighlight = false, highlightEndDelay = 0) {
+        events = Object.assign(events, {
+            touchesBegan: () => {
+                this.#touchHighlightStart()
+                // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
+                this.#withTouchEventT = $delay(1, () => this.#touchHighlightEnd(0))
+            },
+            touchesMoved: () => {
+                this.#withTouchEventT?.cancel()
+                this.#touchHighlightEnd(0)
+            }
+        })
+        if (withTappedHighlight) {
+            const tapped = events.tapped
+            events.tapped = () => {
+                // highlight
+                this.#touchHighlightStart()
+                $delay(highlightEndDelay, () => this.#touchHighlightEnd())
+                if (typeof tapped === "function") tapped()
+            }
+        }
+        return events
+    }
+
+    getView(script) {
+        const buttonId = `${this.id}-button`
         const rightSymbol = "chevron.right"
         const start = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
             $(`${buttonId}-spinner`).alpha = 1
-            this.#touchHighlightStart(id)
+            this.#touchHighlightStart()
         }
         const cancel = () => {
             $(buttonId).alpha = 1
             $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd(id)
+            this.#touchHighlightEnd()
         }
         const done = () => {
             $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd(id)
+            this.#touchHighlightEnd()
             const button = $(buttonId)
             // 成功动画
             button.symbol = "checkmark"
@@ -757,9 +466,9 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: { id },
+            props: { id: this.id },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
@@ -793,14 +502,14 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
+                        make.right.inset(SettingItem.edgeOffset)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 },
                 { type: "view", layout: $layout.fill }
             ],
-            events: this.#withTouchEvents(id, {
+            events: this.#withTouchEvent({
                 tapped: () => {
                     /**
                      * @type {ScriptAnimate}
@@ -809,13 +518,13 @@ class Setting extends Controller {
                         start: start, // 会出现加载动画
                         cancel: cancel, // 会直接恢复箭头图标
                         done: done, // 会出现对号，然后恢复箭头
-                        touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
-                        touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
+                        touchHighlightStart: () => this.#touchHighlightStart(), // 被点击的一行颜色加深
+                        touchHighlightEnd: () => this.#touchHighlightEnd() // 被点击的一行颜色恢复
                     }
                     // 执行代码
                     if (typeof script === "function") {
                         script(animate)
-                    } else if (script.startsWith("this.")) {
+                    } else if (script.startsWith("this.method")) {
                         // 传递 animate 对象
                         eval(`(()=>{return ${script}(animate)})()`)
                     } else {
@@ -826,8 +535,10 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createTab(key, icon, title, items, values) {
+class SettingTab extends SettingItem {
+    getView(items, values) {
         if (typeof items === "string") {
             items = eval(`(()=>{return ${items}()})()`)
         } else if (typeof items === "function") {
@@ -839,33 +550,29 @@ class Setting extends Controller {
             values = values()
         }
 
-        const id = this.getId(key)
         const isCustomizeValues = items?.length > 0 && values?.length === items?.length
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "tab",
                     props: {
                         items: items ?? [],
-                        index: isCustomizeValues ? values.indexOf(this.get(key)) : this.get(key),
+                        index: isCustomizeValues ? values.indexOf(this.get()) : this.get(),
                         dynamicWidth: true
                     },
                     layout: (make, view) => {
-                        make.right.inset(this.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
                         make.centerY.equalTo(view.prev)
                     },
                     events: {
                         changed: sender => {
                             if (isCustomizeValues) {
-                                this.set(key, values[sender.index])
+                                this.set(values[sender.index])
                             } else {
-                                this.set(key, sender.index)
+                                this.set(sender.index)
                             }
                         }
                     }
@@ -874,10 +581,11 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createMenu(key, icon, title, items, values, pullDown) {
-        const id = this.getId(key)
-        const labelId = `${id}-label`
+class SettingMenu extends SettingItem {
+    getView(items, values, pullDown) {
+        const labelId = `${this.id}-label`
 
         // 数据生成函数
         const getItems = () => {
@@ -911,9 +619,9 @@ class Setting extends Controller {
         const handler = (title, idx) => {
             if (isCustomizeValues) {
                 const tmpValues = getValues()
-                this.set(key, tmpValues[idx])
+                this.set(tmpValues[idx])
             } else {
-                this.set(key, idx)
+                this.set(idx)
             }
             $(labelId).title = title
         }
@@ -928,12 +636,9 @@ class Setting extends Controller {
 
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
@@ -953,8 +658,8 @@ class Setting extends Controller {
                                       }
                                     : undefined,
                                 title: isCustomizeValues
-                                    ? tmpItems[tmpValues.indexOf(this.get(key))]
-                                    : tmpItems[this.get(key)],
+                                    ? tmpItems[tmpValues.indexOf(this.get())]
+                                    : tmpItems[this.get()],
                                 titleColor: $color("secondaryText"),
                                 bgcolor: $color("clear"),
                                 id: labelId
@@ -967,8 +672,8 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
+                        make.right.inset(SettingItem.edgeOffset)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -977,18 +682,22 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createColor(key, icon, title) {
-        const id = this.getId(key)
-        const colorId = `${id}-color`
+class SettingColor extends SettingItem {
+    get(_default = null) {
+        const color = super.get(_default)
+        if (!color) return _default
+        return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
+    }
+
+    getView() {
+        const colorId = `${this.id}-color`
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
@@ -997,14 +706,14 @@ class Setting extends Controller {
                             type: "view",
                             props: {
                                 id: colorId,
-                                bgcolor: this.getColor(this.get(key)),
+                                bgcolor: this.get(),
                                 circular: true,
                                 borderWidth: 1,
                                 borderColor: $color("#e3e3e3")
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.right.inset(this.edgeOffset)
+                                make.right.inset(SettingItem.edgeOffset)
                                 make.size.equalTo(20)
                             }
                         },
@@ -1013,8 +722,8 @@ class Setting extends Controller {
                             type: "view",
                             events: {
                                 tapped: async () => {
-                                    const color = await $picker.color({ color: this.getColor(this.get(key)) })
-                                    this.set(key, color.components)
+                                    const color = await $picker.color({ color: this.get() })
+                                    this.set(color.components)
                                     $(colorId).bgcolor = $rgba(
                                         color.components.red,
                                         color.components.green,
@@ -1030,7 +739,7 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.height.equalTo(this.rowHeight)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -1038,9 +747,10 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createDate(key, icon, title, mode = 2) {
-        const id = this.getId(key)
+class SettingDate extends SettingItem {
+    getView(mode = 2) {
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -1059,21 +769,18 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
                         {
                             type: "label",
                             props: {
-                                id: `${id}-label`,
+                                id: `${this.id}-label`,
                                 color: $color("secondaryText"),
-                                text: this.get(key) ? getFormatDate(this.get(key)) : "None"
+                                text: this.get() ? getFormatDate(this.get()) : "None"
                             },
                             layout: (make, view) => {
                                 make.right.inset(0)
@@ -1083,20 +790,20 @@ class Setting extends Controller {
                     ],
                     events: {
                         tapped: async () => {
-                            const settingData = this.get(key)
+                            const settingData = this.get()
                             const date = await $picker.date({
                                 props: {
                                     mode: mode,
                                     date: settingData ? settingData : Date.now()
                                 }
                             })
-                            this.set(key, date.getTime())
-                            $(`${id}-label`).text = getFormatDate(date)
+                            this.set(date.getTime())
+                            $(`${this.id}-label`).text = getFormatDate(date)
                         }
                     },
                     layout: (make, view) => {
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
+                        make.right.inset(SettingItem.edgeOffset)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -1104,38 +811,21 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createNumber(key, icon, title) {
-        return this.createInput(key, icon, title, false, $kbType.decimal, text => {
-            const isNumber = str => {
-                const reg = /^[0-9]+.?[0-9]*$/
-                return reg.test(str)
-            }
-            if (text === "" || !isNumber(text)) {
-                $ui.toast($l10n("INVALID_VALUE"))
-                return false
-            }
-
-            return this.set(key, Number(text))
-        })
-    }
-
-    createInput(key, icon, title, secure = false, kbType = $kbType.default, saveFunc) {
+class SettingInput extends SettingItem {
+    getView(secure = false, kbType = $kbType.default, saveFunc) {
         if (saveFunc === undefined) {
             saveFunc = data => {
-                return this.set(key, data)
+                return this.set(data)
             }
         }
-        const id = this.getId(key)
-        const inputId = id + "-input"
+        const inputId = this.id + "-input"
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "input",
                     props: {
@@ -1144,7 +834,7 @@ class Setting extends Controller {
                         align: $align.right,
                         bgcolor: $color("clear"),
                         textColor: $color("secondaryText"),
-                        text: this.get(key),
+                        text: this.get(),
                         font: $font(16),
                         secure: secure,
                         accessoryView: UIKit.blurBox({ height: 44 }, [
@@ -1157,7 +847,7 @@ class Setting extends Controller {
                                     titleColor: $color("primaryText")
                                 },
                                 layout: (make, view) => {
-                                    make.right.inset(this.edgeOffset)
+                                    make.right.inset(SettingItem.edgeOffset)
                                     make.centerY.equalTo(view.super)
                                 },
                                 events: {
@@ -1174,13 +864,13 @@ class Setting extends Controller {
                                     titleColor: $color("primaryText")
                                 },
                                 layout: (make, view) => {
-                                    make.left.inset(this.edgeOffset)
+                                    make.left.inset(SettingItem.edgeOffset)
                                     make.centerY.equalTo(view.super)
                                 },
                                 events: {
                                     tapped: () => {
                                         const sender = $(inputId)
-                                        const savedData = this.get(key, "")
+                                        const savedData = this.get("")
                                         if (sender.text !== savedData) {
                                             sender.text = savedData
                                         }
@@ -1191,10 +881,10 @@ class Setting extends Controller {
                         ])
                     },
                     layout: (make, view) => {
-                        // 与标题间距 this.edgeOffset
-                        make.left.equalTo(view.prev.get("label").right).offset(this.edgeOffset)
-                        make.right.inset(this.edgeOffset)
-                        const width = UIKit.getContentSize($font(16), this.get(key)).width
+                        // 与标题间距 SettingItem.edgeOffset
+                        make.left.equalTo(view.prev.get("label").right).offset(SettingItem.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
+                        const width = UIKit.getContentSize($font(16), this.get("")).width
                         make.width.greaterThanOrEqualTo(width + 30) // 30 大约是清空按钮的宽度
                         make.height.equalTo(view.super)
                     },
@@ -1211,7 +901,7 @@ class Setting extends Controller {
                             sender.blur()
                         },
                         didEndEditing: async sender => {
-                            const savedData = this.get(key, "")
+                            const savedData = this.get("")
                             if (!saveFunc(sender.text)) {
                                 sender.text = savedData
                             }
@@ -1227,27 +917,38 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
+class SettingNumber extends SettingItem {
+    getView() {
+        return SettingInput.from(this).getView(false, $kbType.decimal, text => {
+            const isNumber = str => {
+                const reg = /^[0-9]+.?[0-9]*$/
+                return reg.test(str)
+            }
+            if (text === "" || !isNumber(text)) {
+                $ui.toast($l10n("INVALID_VALUE"))
+                return false
+            }
+
+            return this.set(Number(text))
+        })
+    }
+}
+
+class SettingIcon extends SettingItem {
     /**
      *
-     * @param {string} key
-     * @param {string} icon
-     * @param {string} title
-     * @param {object} events
      * @param {string|Object} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns {object}
      */
-    createIcon(key, icon, title, bgcolor = "#000000") {
-        const id = this.getId(key)
-        const imageId = `${id}-image`
+    getView(bgcolor = "#000000") {
+        const imageId = `${this.id}-image`
         return {
             type: "view",
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
@@ -1259,7 +960,7 @@ class Setting extends Controller {
                                 smoothCorners: true
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.edgeOffset)
+                                make.right.inset(SettingItem.edgeOffset)
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(30, 30))
                             }
@@ -1268,8 +969,8 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: imageId,
-                                image: $image(this.get(key)),
-                                icon: $icon(this.get(key).slice(5, this.get(key).indexOf(".")), $color("#ffffff")),
+                                image: $image(this.get()),
+                                icon: $icon(this.get()?.slice(5, this.get().indexOf(".")), $color("#ffffff")),
                                 tintColor: $color("#ffffff")
                             },
                             layout: (make, view) => {
@@ -1286,7 +987,7 @@ class Setting extends Controller {
                                 handler: async (title, idx) => {
                                     if (idx === 0) {
                                         const icon = await $ui.selectIcon()
-                                        this.set(key, icon)
+                                        this.set(icon)
                                         $(imageId).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
                                     } else if (idx === 1 || idx === 2) {
                                         $input.text({
@@ -1297,7 +998,7 @@ class Setting extends Controller {
                                                     $ui.toast($l10n("INVALID_VALUE"))
                                                     return
                                                 }
-                                                this.set(key, text)
+                                                this.set(text)
                                                 if (idx === 1) $(imageId).symbol = text
                                                 else $(imageId).image = $image(text)
                                             }
@@ -1309,7 +1010,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.right.inset(0)
-                        make.height.equalTo(this.rowHeight)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -1317,18 +1018,18 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
+}
 
-    createPush(key, icon, title, view, tapped) {
-        const id = this.getId(key)
+class SettingPush extends SettingItem {
+    method = this.setting.method
+
+    getView(view, tapped) {
         return {
             type: "view",
             layout: $layout.fill,
-            props: {
-                id,
-                selectable: true
-            },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     // 仅用于显示图片
                     type: "button",
@@ -1339,7 +1040,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
-                        make.right.inset(this.edgeOffset)
+                        make.right.inset(SettingItem.edgeOffset)
                         make.height.equalTo(view.super)
                     }
                 },
@@ -1353,23 +1054,23 @@ class Setting extends Controller {
                         } else if (typeof view === "function") {
                             view = view()
                         }
-                        if (this.isUseJsboxNav) {
+                        if (this.setting.isUseJsboxNav) {
                             UIKit.push({
-                                title: title,
+                                title: this.title,
                                 props: view.props ?? {},
                                 views: [view]
                             })
                         } else {
                             const navigationView = new NavigationView()
-                            navigationView.setView(view).navigationBarTitle(title)
+                            navigationView.setView(view).navigationBarTitle(this.title)
                             navigationView.navigationBarItems.addPopButton()
                             navigationView.navigationBar.setLargeTitleDisplayMode(
                                 NavigationBar.largeTitleDisplayModeNever
                             )
-                            if (this.hasSectionTitle(view)) {
+                            if (this.setting.hasSectionTitle(view)) {
                                 navigationView.navigationBar.setContentViewHeightOffset(-10)
                             }
-                            this.viewController.push(navigationView)
+                            this.setting.viewController.push(navigationView)
                         }
                     }
                     if (typeof tapped === "function") {
@@ -1381,20 +1082,47 @@ class Setting extends Controller {
             }
         }
     }
+}
 
-    createChild(icon, title, children) {
-        return this.createPush($text.uuid, icon, title, undefined, push => {
-            if (this.events?.onChildPush) {
-                this.callEvent("onChildPush", this.getListView(children, {}), title)
+class SettingChild extends SettingItem {
+    getView(children) {
+        return SettingPush.from(this).getView(undefined, push => {
+            if (this.setting.events?.onChildPush) {
+                this.setting.callEvent("onChildPush", this.setting.getListView(children, {}), this.title)
             } else {
-                push(this.getListView(children, {}))
+                push(this.setting.getListView(children, {}))
             }
         })
     }
+}
 
-    createImage(key, icon, title) {
-        const id = this.getId(key)
-        const imageId = `${id}-image`
+class SettingImage extends SettingItem {
+    getImagePath(compress = false) {
+        let name = $text.MD5(this.key) + ".jpg"
+        if (compress) {
+            name = "compress." + name
+        }
+
+        return this.setting.imagePath + name
+    }
+
+    getImage(compress = false) {
+        try {
+            return this.setting.fileStorage.readSync(this.getImagePath(compress))
+        } catch (error) {
+            if (error instanceof FileStorageFileNotFoundError) {
+                return null
+            }
+            throw error
+        }
+    }
+
+    get(_default = null) {
+        return this.getImage(false) ?? null
+    }
+
+    getView() {
+        const imageId = `${this.id}-image`
         const noneImage = $image("questionmark.square.dashed")
 
         const withLoading = action => {
@@ -1419,7 +1147,7 @@ class Setting extends Controller {
             {
                 title: $l10n("PREVIEW"),
                 handler: withLoading(() => {
-                    const data = this.getImage(key, false, "data")
+                    const data = this.getImage(false)
                     if (data) {
                         Kernel.quickLookImage(data)
                     } else {
@@ -1442,8 +1170,8 @@ class Setting extends Controller {
                             }
                             // 控制压缩图片大小
                             const image = Kernel.compressImage(resp.data.image)
-                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
-                            this.fileStorage.write(this.getImagePath(key), resp.data)
+                            this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
+                            this.setting.fileStorage.write(this.getImagePath(), resp.data)
                             $(imageId).image = image
                             $ui.success($l10n("SUCCESS"))
                         })
@@ -1455,8 +1183,8 @@ class Setting extends Controller {
                             if (!data) return
                             // 控制压缩图片大小
                             const image = Kernel.compressImage(data.image)
-                            this.fileStorage.write(this.getImagePath(key, true), image.jpg(0.8))
-                            this.fileStorage.write(this.getImagePath(key), data)
+                            this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
+                            this.setting.fileStorage.write(this.getImagePath(), data)
                             $(imageId).image = image
                             $ui.success($l10n("SUCCESS"))
                         })
@@ -1467,8 +1195,8 @@ class Setting extends Controller {
                 title: $l10n("CLEAR_IMAGE"),
                 destructive: true,
                 handler: withLoading(() => {
-                    this.fileStorage.delete(this.getImagePath(key, true))
-                    this.fileStorage.delete(this.getImagePath(key))
+                    this.setting.fileStorage.delete(this.getImagePath(true))
+                    this.setting.fileStorage.delete(this.getImagePath())
                     $(imageId).image = noneImage
                     $ui.success($l10n("SUCCESS"))
                 })
@@ -1477,9 +1205,9 @@ class Setting extends Controller {
 
         return {
             type: "view",
-            props: { id, selectable: true },
+            props: { id: this.id, selectable: true },
             views: [
-                this.createLineLabel(title, icon),
+                this.createLineLabel(),
                 {
                     type: "view",
                     views: [
@@ -1487,10 +1215,10 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: imageId,
-                                image: this.getImage(key, true) ?? noneImage
+                                image: this.getImage(true)?.image ?? noneImage
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.edgeOffset)
+                                make.right.inset(SettingItem.edgeOffset)
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(30, 30))
                             }
@@ -1518,7 +1246,7 @@ class Setting extends Controller {
                                 bgcolor: $color("clear")
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.edgeOffset)
+                                make.right.inset(SettingItem.edgeOffset)
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(30, 30))
                             }
@@ -1526,7 +1254,7 @@ class Setting extends Controller {
                     ],
                     layout: (make, view) => {
                         make.right.inset(0)
-                        make.height.equalTo(this.rowHeight)
+                        make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -1534,118 +1262,23 @@ class Setting extends Controller {
             layout: $layout.fill
         }
     }
-
-    #getSections(structure) {
-        const sections = []
-        for (let section of structure) {
-            const rows = []
-            for (let item of section.items) {
-                let row = null
-                if (!item.icon) item.icon = ["square.grid.2x2.fill", "#00CC00"]
-                if (typeof item.items === "object") item.items = item.items.map(item => $l10n(item))
-                // 更新标题值
-                item.title = $l10n(item.title)
-                switch (item.type) {
-                    case "switch":
-                        row = this.createSwitch(item.key, item.icon, item.title)
-                        break
-                    case "stepper":
-                        row = this.createStepper(item.key, item.icon, item.title, item.min ?? 1, item.max ?? 12)
-                        break
-                    case "string":
-                        row = this.createString(item.key, item.icon, item.title)
-                        break
-                    case "info":
-                        row = this.createInfo(item.icon, item.title, item.value)
-                        break
-                    case "script":
-                        row = this.createScript(item.icon, item.title, item.value)
-                        break
-                    case "tab":
-                        row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
-                        break
-                    case "menu":
-                        row = this.createMenu(
-                            item.key,
-                            item.icon,
-                            item.title,
-                            item.items,
-                            item.values,
-                            item.pullDown ?? false
-                        )
-                        break
-                    case "color":
-                        row = this.createColor(item.key, item.icon, item.title)
-                        break
-                    case "date":
-                        row = this.createDate(item.key, item.icon, item.title, item.mode)
-                        break
-                    case "number":
-                        row = this.createNumber(item.key, item.icon, item.title)
-                        break
-                    case "input":
-                        row = this.createInput(item.key, item.icon, item.title, item.secure)
-                        break
-                    case "icon":
-                        row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
-                        break
-                    case "push":
-                        row = this.createPush(item.key, item.icon, item.title, item.view)
-                        break
-                    case "child":
-                        row = this.createChild(item.icon, item.title, item.children)
-                        break
-                    case "image":
-                        row = this.createImage(item.key, item.icon, item.title)
-                        break
-                    default:
-                        continue
-                }
-                rows.push(row)
-            }
-            sections.push({
-                title: $l10n(section.title ?? ""),
-                rows: rows
-            })
-        }
-        return sections
-    }
-
-    getListView(structure, footer = this.footer) {
-        return {
-            type: "list",
-            props: {
-                id: this.name,
-                style: 2,
-                separatorInset: $insets(0, this.iconSize + this.edgeOffset * 2, 0, this.edgeOffset), // 分割线边距
-                bgcolor: UIKit.scrollViewBackgroundColor,
-                footer: footer,
-                data: this.#getSections(structure ?? this.structure)
-            },
-            layout: $layout.fill,
-            events: {
-                rowHeight: (sender, indexPath) => {
-                    const info = sender.object(indexPath)?.props?.info ?? {}
-                    return info.rowHeight ?? this.rowHeight
-                }
-            }
-        }
-    }
-
-    getNavigationView() {
-        const navigationView = new NavigationView()
-        navigationView.setView(this.getListView(this.structure)).navigationBarTitle($l10n("SETTING"))
-        if (this.hasSectionTitle(this.structure)) {
-            navigationView.navigationBar.setContentViewHeightOffset(-10)
-        }
-        return navigationView
-    }
-
-    getPage() {
-        return this.getNavigationView().getPage()
-    }
 }
 
 module.exports = {
-    Setting
+    SettingItem,
+    SettingInfo,
+    SettingSwitch,
+    SettingString,
+    SettingStepper,
+    SettingScript,
+    SettingTab,
+    SettingMenu,
+    SettingColor,
+    SettingDate,
+    SettingInput,
+    SettingNumber,
+    SettingIcon,
+    SettingPush,
+    SettingChild,
+    SettingImage
 }

@@ -126,12 +126,15 @@ class Matrix extends View {
     rebuildTemplate() {
         let templateProps = {}
         if (this.props.template.props !== undefined) {
+            if (this.props.template.props.cornerRadius !== undefined) {
+                // 不能裁切子视图，否则标题会被裁切
+                this.props.template.props.clipsToBounds = false
+            }
             templateProps = Object.assign(this.props.template.props, {
                 id: "__templateProps",
                 hidden: false
             })
         }
-        this.props.template.props = {}
 
         // rebuild template
         const templateViews = [
