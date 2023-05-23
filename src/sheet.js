@@ -3,7 +3,6 @@ const { View } = require("./view")
 const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
-const { BarButtonItem } = require("./navigation-view/navigation-bar-items")
 
 class SheetAddNavBarError extends Error {
     constructor() {

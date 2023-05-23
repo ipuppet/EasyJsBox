@@ -256,13 +256,17 @@ class Kernel {
         }
     }
 
-    KeyboardRender(view) {
+    KeyboardRender(view = {}) {
+        if (!view.id) view.id = $text.uuid
+
         $ui.render({ events: view.events ?? {} })
+
         const { Toast } = require("./toast")
         $ui.toast = Toast.info
         $ui.success = Toast.success
         $ui.warning = Toast.warning
         $ui.error = Toast.error
+
         $delay(0, () => {
             $ui.controller.view.hidden = true
             $ui.controller.view.layout(view.layout)
