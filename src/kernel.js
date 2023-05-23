@@ -225,6 +225,13 @@ class Kernel {
     }
 
     UIRender(view = {}) {
+        const query = $context.query
+        if (query.type === "alertFromKeyboard") {
+            const object = JSON.parse($text.URLDecode(query.value))
+            object.actions = [{ title: $l10n("CANCEL") }]
+            $ui.alert(object)
+            return
+        }
         try {
             view.props = Object.assign(
                 {
@@ -266,6 +273,10 @@ class Kernel {
         $ui.success = Toast.success
         $ui.warning = Toast.warning
         $ui.error = Toast.error
+        $ui.alert = object => {
+            const value = $text.URLEncode(JSON.stringify(object))
+            $app.openURL(`jsbox://run?name=${this.title}&type=alertFromKeyboard&value=${value}`)
+        }
 
         $delay(0, () => {
             $ui.controller.view.hidden = true
