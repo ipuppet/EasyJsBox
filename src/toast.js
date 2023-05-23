@@ -86,7 +86,12 @@ class Toast {
     }
 
     show() {
-        $ui.controller.view.insertAtIndex($ui.create(this.blurBox), 0)
+        const blurBox = $ui.create(this.blurBox)
+        if ($ui.controller.view.hidden) {
+            $ui.controller.view.super.insertAtIndex(blurBox, 0)
+        } else {
+            $ui.controller.view.insertAtIndex(blurBox, 0)
+        }
         const toast = $(this.id)
         toast.layout((make, view) => {
             make.center.equalTo(view.super)

@@ -224,7 +224,7 @@ class Kernel {
         $app.openURL(`jsbox://run?name=${this.title}`)
     }
 
-    UIRender(view) {
+    UIRender(view = {}) {
         try {
             view.props = Object.assign(
                 {
@@ -254,6 +254,20 @@ class Kernel {
         } catch (error) {
             this.print(error)
         }
+    }
+
+    KeyboardRender(view) {
+        $ui.render({ events: view.events ?? {} })
+        const { Toast } = require("./toast")
+        $ui.toast = Toast.info
+        $ui.success = Toast.success
+        $ui.warning = Toast.warning
+        $ui.error = Toast.error
+        $delay(0, () => {
+            $ui.controller.view.hidden = true
+            $ui.controller.view.layout(view.layout)
+            $ui.controller.view.super.add(view)
+        })
     }
 
     async checkUpdate() {
