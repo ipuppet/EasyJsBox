@@ -269,14 +269,12 @@ class Kernel {
         $ui.render({ events: view.events ?? {} })
 
         const { Toast } = require("./toast")
+        const { Alert } = require("./alert")
         $ui.toast = Toast.info
         $ui.success = Toast.success
         $ui.warning = Toast.warning
         $ui.error = Toast.error
-        $ui.alert = object => {
-            const value = $text.URLEncode(JSON.stringify(object))
-            $app.openURL(`jsbox://run?name=${this.title}&type=alertFromKeyboard&value=${value}`)
-        }
+        $ui.alert = Alert.fromJsbox
 
         $delay(0, () => {
             $ui.controller.view.hidden = true
