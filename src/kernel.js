@@ -268,18 +268,9 @@ class Kernel {
 
         $ui.render({ events: view.events ?? {} })
 
-        const { Toast } = require("./toast")
-        const { Alert } = require("./alert")
-        $ui.toast = Toast.info
-        $ui.success = Toast.success
-        $ui.warning = Toast.warning
-        $ui.error = Toast.error
-        $ui.alert = Alert.fromJsbox
-
         $delay(0, () => {
-            $ui.controller.view.hidden = true
+            $ui.controller.view = $ui.create(view)
             $ui.controller.view.layout(view.layout)
-            $ui.controller.view.super.add(view)
         })
     }
 
