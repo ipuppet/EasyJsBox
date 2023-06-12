@@ -24,6 +24,7 @@ class Request {
 
     cacheContainerKey = $addin?.current?.name + ".request.cache"
 
+    #sharedURLCache
     #useCache = false
     #ignoreCacheExp = false
     cacheLife = 1000 * 60 * 60 * 24 * 30 // ms
@@ -95,6 +96,13 @@ class Request {
 
     clearCache() {
         $cache.remove(this.cacheContainerKey)
+    }
+
+    clearNSURLCache() {
+        if (!this.#sharedURLCache) {
+            this.#sharedURLCache = $objc("NSURLCache").$sharedURLCache()
+        }
+        this.#sharedURLCache.$removeAllCachedResponses()
     }
 
     enableCache() {
