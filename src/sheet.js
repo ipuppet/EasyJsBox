@@ -1,14 +1,12 @@
 const { ValidationError } = require("./validation-error")
-const { View } = require("./view")
 const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
-const { BarButtonItem } = require("./navigation-view/navigation-bar-items")
 
-class SheetAddNavBarError extends Error {
+class SheetViewUndefinedError extends Error {
     constructor() {
         super("Please call setView(view) first.")
-        this.name = "SheetAddNavBarError"
+        this.name = "SheetViewUndefinedError"
     }
 }
 
@@ -19,7 +17,7 @@ class SheetViewTypeError extends ValidationError {
     }
 }
 
-class Sheet extends View {
+class Sheet {
     #present = () => {}
     #dismiss = () => {}
     style = Sheet.UIModalPresentationStyle.PageSheet
@@ -67,7 +65,7 @@ class Sheet extends View {
             return
         }
         const { title = "", popButton = { title: $l10n("CLOSE") }, rightButtons = [] } = this.#navBar
-        if (this.view === undefined) throw new SheetAddNavBarError()
+        if (this.view === undefined) throw new SheetViewUndefinedError()
 
         this.navigationView = new NavigationView()
         const navBar = this.navigationView.navigationBar

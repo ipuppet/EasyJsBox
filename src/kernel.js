@@ -225,6 +225,13 @@ class Kernel {
     }
 
     UIRender(view = {}) {
+        const query = $context.query
+        if (query.type === "alertFromKeyboard") {
+            const object = JSON.parse($text.URLDecode(query.value))
+            object.actions = [{ title: $l10n("CANCEL") }]
+            $ui.alert(object)
+            return
+        }
         try {
             view.props = Object.assign(
                 {
@@ -256,17 +263,14 @@ class Kernel {
         }
     }
 
-    KeyboardRender(view) {
+    KeyboardRender(view = {}) {
+        if (!view.id) view.id = $text.uuid
+
         $ui.render({ events: view.events ?? {} })
-        const { Toast } = require("./toast")
-        $ui.toast = Toast.info
-        $ui.success = Toast.success
-        $ui.warning = Toast.warning
-        $ui.error = Toast.error
+
         $delay(0, () => {
-            $ui.controller.view.hidden = true
+            $ui.controller.view = $ui.create(view)
             $ui.controller.view.layout(view.layout)
-            $ui.controller.view.super.add(view)
         })
     }
 

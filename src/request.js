@@ -24,10 +24,11 @@ class Request {
 
     cacheContainerKey = $addin?.current?.name + ".request.cache"
 
+    #sharedURLCache
     #useCache = false
     #ignoreCacheExp = false
     cacheLife = 1000 * 60 * 60 * 24 * 30 // ms
-    isLogRequest = false
+    #isLogRequest = false
     timeout = 5
 
     logger
@@ -47,7 +48,7 @@ class Request {
     }
 
     #logRequest(message) {
-        if (this.isLogRequest && typeof logger === "function") {
+        if (this.#isLogRequest && typeof this.logger === "function") {
             this.logger(message)
         }
     }
@@ -58,11 +59,15 @@ class Request {
      * @returns
      */
     logRequest(logger) {
-        this.isLogRequest = true
+        this.#isLogRequest = true
         if (typeof logger === "function") {
             this.logger = logger
         }
         return this
+    }
+
+    disableLogRequest() {
+        this.#isLogRequest = false
     }
 
     getCacheKey(url) {
@@ -93,8 +98,19 @@ class Request {
         $cache.remove(this.cacheContainerKey)
     }
 
-    useCache() {
+    clearNSURLCache() {
+        if (!this.#sharedURLCache) {
+            this.#sharedURLCache = $objc("NSURLCache").$sharedURLCache()
+        }
+        this.#sharedURLCache.$removeAllCachedResponses()
+    }
+
+    enableCache() {
         this.#useCache = true
+        return this
+    }
+    disableCache() {
+        this.#useCache = false
         return this
     }
 

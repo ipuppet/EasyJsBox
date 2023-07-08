@@ -33,6 +33,7 @@ class SettingItem {
      * @type {Setting}
      */
     setting
+    method
     #id
     #key
     #icon
@@ -41,6 +42,7 @@ class SettingItem {
 
     constructor(setting, key, title, icon) {
         this.setting = setting
+        this.method = this.setting?.method ?? {}
         this.key = key
         this.title = title
         this.icon = icon
@@ -92,6 +94,22 @@ class SettingItem {
 
     get(_default = null) {
         return this.setting.getOriginal(this.key, _default)
+    }
+
+    evalValues(object) {
+        let result
+        if (typeof object === "string") {
+            if (object.startsWith("this.method")) {
+                result = eval(`(()=>{return ${object}()})()`)
+            } else {
+                result = eval(`(()=>{return ${object}})()`)
+            }
+        } else if (typeof object === "function") {
+            result = object()
+        } else {
+            result = object ?? []
+        }
+        return result
     }
 
     getId(key) {
@@ -382,7 +400,6 @@ class SettingStepper extends SettingItem {
 class SettingScript extends SettingItem {
     // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
     #withTouchEventT
-    method = this.setting.method
 
     #touchHighlightStart() {
         $(this.id).bgcolor = $color("systemFill")
@@ -539,16 +556,8 @@ class SettingScript extends SettingItem {
 
 class SettingTab extends SettingItem {
     getView(items, values) {
-        if (typeof items === "string") {
-            items = eval(`(()=>{return ${items}()})()`)
-        } else if (typeof items === "function") {
-            items = items()
-        }
-        if (typeof values === "string") {
-            values = eval(`(()=>{return ${values}()})()`)
-        } else if (typeof values === "function") {
-            values = values()
-        }
+        items = this.evalValues(items)
+        values = this.evalValues(values)
 
         const isCustomizeValues = items?.length > 0 && values?.length === items?.length
         return {
@@ -587,38 +596,14 @@ class SettingMenu extends SettingItem {
     getView(items, values, pullDown) {
         const labelId = `${this.id}-label`
 
-        // 数据生成函数
-        const getItems = () => {
-            let res
-            if (typeof items === "string") {
-                res = eval(`(()=>{return ${items}()})()`)
-            } else if (typeof items === "function") {
-                res = items()
-            } else {
-                res = items ?? []
-            }
-            return res
-        }
-        const getValues = () => {
-            let res
-            if (typeof values === "string") {
-                res = eval(`(()=>{return ${values}()})()`)
-            } else if (typeof values === "function") {
-                res = values()
-            } else {
-                res = values
-            }
-            return res
-        }
-
-        const tmpItems = getItems()
-        const tmpValues = getValues()
+        const tmpItems = this.evalValues(items)
+        const tmpValues = this.evalValues(values)
 
         const isCustomizeValues = tmpItems?.length > 0 && tmpValues?.length === tmpItems?.length
 
         const handler = (title, idx) => {
             if (isCustomizeValues) {
-                const tmpValues = getValues()
+                const tmpValues = this.evalValues(values)
                 this.set(tmpValues[idx])
             } else {
                 this.set(idx)
@@ -629,7 +614,7 @@ class SettingMenu extends SettingItem {
             if (pullDown) return
 
             $ui.menu({
-                items: getItems(),
+                items: this.evalValues(items),
                 handler
             })
         }

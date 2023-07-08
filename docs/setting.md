@@ -203,6 +203,8 @@ const animate = {
 
 `items` 若为字符串，将尝试将其作为函数执行并使用其返回值。
 
+支持 `script` 类型的 `this.method`，其他形式则应为函数，如 `() => [ "Hello World" ]`
+
 可选参数 `values`, 与 `items` 一一对应的数组，同样可传入字符串代码动态执行。
 
 传入 `values` 后，`get` 函数将返回 `values` 内的值。

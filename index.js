@@ -12,6 +12,7 @@ String.prototype.trim = function (char, type) {
 }
 
 const { VERSION } = require("./src/version")
+const { Alert, AlertAction } = require("./src/alert")
 const { Controller } = require("./src/controller")
 const { FileManager } = require("./src/file-manager")
 const { FileStorageParameterError, FileStorageFileNotFoundError, FileStorage } = require("./src/file-storage")
@@ -38,6 +39,8 @@ const { SearchBar, SearchBarController } = require("./src/navigation-view/search
 
 module.exports = {
     VERSION,
+    Alert,
+    AlertAction,
     Controller,
     FileManager,
     FileStorageParameterError,
