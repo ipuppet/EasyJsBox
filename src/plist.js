@@ -15,8 +15,10 @@ class Plist {
             case "key":
             case "string":
                 return xml.string
+            case "date":
+                return new Date(xml.string)
             case "array":
-                return xml.children().map(i => i.tag)
+                return this.arrayToJs(xml)
             default:
                 return xml.node
         }
