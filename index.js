@@ -20,6 +20,7 @@ const { FixedFooterView } = require("./src/fixed-footer-view")
 const { Kernel } = require("./src/kernel")
 const { Logger } = require("./src/logger")
 const { Matrix } = require("./src/matrix")
+const { Plist } = require("./src/plist")
 const { Request } = require("./src/request")
 const { WebDAV } = require("./src/webdav")
 const { Setting } = require("./src/setting/setting")
@@ -50,6 +51,7 @@ module.exports = {
     Kernel,
     Logger,
     Matrix,
+    Plist,
     Request,
     WebDAV,
     Setting,
