@@ -11,6 +11,20 @@ class Controller {
         return this
     }
 
+    appendEvent(event, callback) {
+        const old = this.events[event]
+        if (typeof old === "function") {
+            this.events[event] = (...args) => {
+                old(...args)
+                callback(...args)
+            }
+        } else {
+            this.setEvent(event, callback)
+        }
+
+        return this
+    }
+
     callEvent(event, ...args) {
         if (typeof this.events[event] === "function") {
             this.events[event](...args)
