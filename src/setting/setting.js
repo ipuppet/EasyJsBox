@@ -446,7 +446,7 @@ class Setting extends Controller {
         return sections
     }
 
-    getListView(structure, footer = this.footer) {
+    getListView(structure = this.structure, footer = this.footer) {
         return {
             type: "list",
             props: {
@@ -460,7 +460,7 @@ class Setting extends Controller {
                 ), // 分割线边距
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
-                data: this.#getSections(structure ?? this.structure)
+                data: this.#getSections(structure)
             },
             layout: $layout.fill,
             events: {
