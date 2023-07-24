@@ -1,4 +1,6 @@
-const { FileStorage } = require("./file-storage")
+/**
+ * @typedef {import("./file-storage").FileStorage} FileStorage
+ */
 
 class Logger {
     print
@@ -8,7 +10,6 @@ class Logger {
     }
 
     /**
-     *
      * @param {FileStorage} fs
      * @param {string} path
      */
