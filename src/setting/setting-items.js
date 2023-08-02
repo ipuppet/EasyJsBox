@@ -1,6 +1,6 @@
 const { FileStorageFileNotFoundError } = require("../file-storage")
-const { Kernel } = require("../kernel")
 const { UIKit } = require("../ui-kit")
+const { Sheet } = require("../sheet")
 const { NavigationView } = require("../navigation-view/navigation-view")
 const { NavigationBar } = require("../navigation-view/navigation-bar")
 
@@ -1134,7 +1134,7 @@ class SettingImage extends SettingItem {
                 handler: withLoading(() => {
                     const data = this.getImage(false)
                     if (data) {
-                        Kernel.quickLookImage(data)
+                        Sheet.quickLookImage(data)
                     } else {
                         $ui.toast($l10n("NO_IMAGE"))
                     }
@@ -1154,7 +1154,7 @@ class SettingImage extends SettingItem {
                                 return
                             }
                             // 控制压缩图片大小
-                            const image = Kernel.compressImage(resp.data.image)
+                            const image = UIKit.compressImage(resp.data.image)
                             this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
                             this.setting.fileStorage.write(this.getImagePath(), resp.data)
                             $(imageId).image = image
@@ -1167,7 +1167,7 @@ class SettingImage extends SettingItem {
                             const data = await $drive.open()
                             if (!data) return
                             // 控制压缩图片大小
-                            const image = Kernel.compressImage(data.image)
+                            const image = UIKit.compressImage(data.image)
                             this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
                             this.setting.fileStorage.write(this.getImagePath(), data)
                             $(imageId).image = image

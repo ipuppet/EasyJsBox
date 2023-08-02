@@ -1,6 +1,5 @@
 const { UIKit } = require("./ui-kit")
 const { Sheet } = require("./sheet")
-const { Kernel } = require("./kernel")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
 
@@ -19,37 +18,6 @@ class FileManager {
 
         this.edges = 10
         this.iconSize = 25
-
-        this.loadL10n()
-    }
-
-    loadL10n() {
-        Kernel.l10n(
-            "zh-Hans",
-            {
-                FILE_MANAGER_DELETE_CONFIRM_MSG: "确认要删除吗",
-                DELETE: "删除",
-                CANCEL: "取消",
-                CLOSE: "关闭",
-                SHARE: "分享",
-                SAVE: "保存",
-                SAVE_SUCCESS: "保存成功"
-            },
-            false
-        )
-        Kernel.l10n(
-            "en",
-            {
-                FILE_MANAGER_DELETE_CONFIRM_MSG: "Are you sure you want to delete",
-                DELETE: "Delete",
-                CANCEL: "Cancel",
-                CLOSE: "Close",
-                SHARE: "Share",
-                SAVE: "Save",
-                SAVE_SUCCESS: "Save Success"
-            },
-            false
-        )
     }
 
     /**
@@ -82,7 +50,7 @@ class FileManager {
     edit(info) {
         const file = $file.read(info.path)
         if (file.info?.mimeType?.startsWith("image")) {
-            Kernel.quickLookImage(file, info.path.substring(info.path.lastIndexOf("/") + 1))
+            Sheet.quickLookImage(file, info.path.substring(info.path.lastIndexOf("/") + 1))
         } else {
             const sheet = new Sheet()
             const id = $text.uuid
@@ -151,7 +119,7 @@ class FileManager {
             const info = item.info.info
             if (!info.isDirectory) {
                 try {
-                    data[i].size.text = Kernel.bytesToSize($file.read(info.path).info.size)
+                    data[i].size.text = UIKit.bytesToSize($file.read(info.path).info.size)
                 } catch (error) {
                     data[i].size.text = error
                 }
@@ -245,7 +213,7 @@ class FileManager {
                         color: $color("red"),
                         handler: (sender, indexPath) => {
                             const info = sender.object(indexPath).info.info
-                            Kernel.deleteConfirm(
+                            UIKit.deleteConfirm(
                                 $l10n("FILE_MANAGER_DELETE_CONFIRM_MSG") + ' "' + info.file + '" ?',
                                 () => {
                                     this.delete(info)

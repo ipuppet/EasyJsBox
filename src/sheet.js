@@ -1,5 +1,4 @@
 const { ValidationError } = require("./validation-error")
-const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
 
@@ -48,7 +47,7 @@ class Sheet {
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
         const ViewController = $objc("UIViewController").invoke("alloc.init")
         const ViewControllerView = ViewController.$view()
-        ViewControllerView.$setBackgroundColor(UIKit.primaryViewBackgroundColor)
+        //ViewControllerView.$setBackgroundColor($color("clear"))
         ViewControllerView.$addSubview(UIView)
         ViewController.$setModalPresentationStyle(this.style)
         ViewController.$setModalInPresentation(this.#preventDismiss)
@@ -148,6 +147,43 @@ class Sheet {
      */
     dismiss() {
         this.#dismiss()
+    }
+
+    static quickLookImage(data, title = $l10n("PREVIEW")) {
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { data: data },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            .addNavBar({
+                title,
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(data)
+                    }
+                ]
+            })
+            .init()
+            .present()
     }
 }
 

@@ -1,4 +1,6 @@
 const { VERSION } = require("./version")
+const { UIKit } = require("./ui-kit")
+const { L10n } = require("./l10n")
 
 class Kernel {
     startTime = Date.now()
@@ -10,87 +12,14 @@ class Kernel {
         if ($app.isDebugging) {
             this.debug()
         }
+
+        L10n.init()
     }
 
     /**
      * @type {boolean}
      */
     static isTaio = $app.info.bundleID.includes("taio")
-
-    static l10n(language, content, override = true) {
-        if (typeof content === "string") {
-            const strings = {}
-            const strArr = content.split(";")
-            strArr.forEach(line => {
-                line = line.trim()
-                if (line !== "") {
-                    const kv = line.split("=")
-                    strings[kv[0].trim().slice(1, -1)] = kv[1].trim().slice(1, -1)
-                }
-            })
-            content = strings
-        }
-        const strings = $app.strings
-        if (override) {
-            strings[language] = Object.assign($app.strings[language], content)
-        } else {
-            strings[language] = Object.assign(content, $app.strings[language])
-        }
-        $app.strings = strings
-    }
-
-    /**
-     * 压缩图片
-     * @param {$image} image $image
-     * @param {number} maxSize 图片最大尺寸 单位：像素
-     * @returns {$image}
-     */
-    static compressImage(image, maxSize = 1280 * 720) {
-        const info = $imagekit.info(image)
-        if (info.height * info.width > maxSize) {
-            const scale = maxSize / (info.height * info.width)
-            image = $imagekit.scaleBy(image, scale)
-        }
-        return image
-    }
-
-    static quickLookImage(data, title = $l10n("PREVIEW")) {
-        const { Sheet } = require("./sheet")
-        const sheet = new Sheet()
-        sheet
-            .setView({
-                type: "view",
-                views: [
-                    {
-                        type: "scroll",
-                        props: {
-                            zoomEnabled: true,
-                            maxZoomScale: 3
-                        },
-                        layout: $layout.fill,
-                        views: [
-                            {
-                                type: "image",
-                                props: { data: data },
-                                layout: $layout.fill
-                            }
-                        ]
-                    }
-                ],
-                layout: $layout.fill
-            })
-            .addNavBar({
-                title,
-                rightButtons: [
-                    {
-                        symbol: "square.and.arrow.up",
-                        tapped: () => $share.sheet(data)
-                    }
-                ]
-            })
-            .init()
-            .present()
-    }
 
     static objectEqual(a, b) {
         let aProps = Object.getOwnPropertyNames(a)
@@ -143,32 +72,6 @@ class Kernel {
             }
         }
         return result
-    }
-
-    static deleteConfirm(message, conformAction) {
-        $ui.alert({
-            title: $l10n("DELETE_CONFIRM_TITLE"),
-            message,
-            actions: [
-                {
-                    title: $l10n("DELETE"),
-                    style: $alertActionType.destructive,
-                    handler: () => {
-                        conformAction()
-                    }
-                },
-                { title: $l10n("CANCEL") }
-            ]
-        })
-    }
-
-    static bytesToSize(bytes) {
-        if (bytes === 0) return "0 B"
-        const k = 1024,
-            sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
-            i = Math.floor(Math.log(bytes) / Math.log(k))
-
-        return (bytes / Math.pow(k, i)).toPrecision(3) + " " + sizes[i]
     }
 
     debug(print, error) {
@@ -246,7 +149,6 @@ class Kernel {
                 view.events = {}
             }
             const oldLayoutSubviews = view.events.layoutSubviews
-            const { UIKit } = require("./ui-kit")
             view.events.layoutSubviews = () => {
                 $app.notify({
                     name: "interfaceOrientationEvent",
@@ -283,7 +185,7 @@ class Kernel {
             throw configRes.error
         }
 
-        const latestVersion = srcRes.data.match(/.*VERSION.?\"([0-9\.]+)\"/)[1]
+        const latestVersion = configRes.data.match(/.*VERSION.+\"([0-9\.]+)\"/)[1]
 
         this.print(`easy-jsbox latest version: ${latestVersion}`)
         if (Kernel.versionCompare(latestVersion, VERSION) > 0) {
@@ -300,9 +202,6 @@ class Kernel {
         return false
     }
 }
-
-Kernel.l10n("zh-Hans", { DELETE_CONFIRM_TITLE: "删除前确认" }, false)
-Kernel.l10n("en", { DELETE_CONFIRM_TITLE: "Delete Confirmation" }, false)
 
 module.exports = {
     Kernel
