@@ -62,7 +62,6 @@ class Setting extends Controller {
     // 存储数据
     setting = {}
     settingItems = {}
-    exclude = ["script", "info"]
     // 初始用户数据，若未定义则尝试从给定的文件读取
     userData
     // fileStorage
@@ -122,7 +121,7 @@ class Setting extends Controller {
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.getOriginal = args.get
-            this.userData = args.userData ?? {}
+            this.setUserData(args.userData ?? {})
         } else {
             this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
@@ -143,66 +142,66 @@ class Setting extends Controller {
         return this
     }
 
-    #checkLoadConfigError() {
+    #checkLoadConfig() {
         if (!this.#loadConfigStatus) {
             throw new SettingLoadConfigError()
         }
     }
 
     loader(item) {
-        if (this.settingItems[item.key]) {
-            return this.settingItems[item.key]
-        }
-        if (Array.isArray(item.items)) item.items = item.items.map(item => $l10n(item))
-        item.title = $l10n(item.title)
         item.setting = this
 
         let settingItem = null
         switch (item.type) {
             case "info":
-                settingItem = SettingInfo.from(item).options(item.value)
+                settingItem = new SettingInfo(item)
                 break
             case "switch":
-                settingItem = SettingSwitch.from(item)
+                settingItem = new SettingSwitch(item)
                 break
             case "string":
-                settingItem = SettingString.from(item)
+                settingItem = new SettingString(item)
                 break
             case "stepper":
-                settingItem = SettingStepper.from(item).options(item.min ?? 1, item.max ?? 12)
+                settingItem = new SettingStepper(item).with({ min: item.min ?? 1, max: item.max ?? 12 })
                 break
             case "script":
-                settingItem = SettingScript.from(item).options(item.value)
+                // item.script ?? item.value 兼容旧版本
+                settingItem = new SettingScript(item).with({ script: item.script ?? item.value })
                 break
             case "tab":
-                settingItem = SettingTab.from(item).options(item.items, item.values)
+                settingItem = new SettingTab(item).with({ items: item.items, values: item.values })
                 break
             case "menu":
-                settingItem = SettingMenu.from(item).options(item.items, item.values, item.pullDown ?? false)
+                settingItem = new SettingMenu(item).with({
+                    items: item.items,
+                    values: item.values,
+                    pullDown: item.pullDown ?? false
+                })
                 break
             case "color":
-                settingItem = SettingColor.from(item)
+                settingItem = new SettingColor(item)
                 break
             case "date":
-                settingItem = SettingDate.from(item).options(item.mode)
+                settingItem = new SettingDate(item).with({ mode: item.mode })
                 break
             case "input":
-                settingItem = SettingInput.from(item).options(item.secure)
+                settingItem = new SettingInput(item).with({ secure: item.secure })
                 break
             case "number":
-                settingItem = SettingNumber.from(item)
+                settingItem = new SettingNumber(item)
                 break
             case "icon":
-                settingItem = SettingIcon.from(item).options(item.bgcolor)
+                settingItem = new SettingIcon(item).with({ bgcolor: item.bgcolor })
                 break
             case "push":
-                settingItem = SettingPush.from(item).options(item.view)
+                settingItem = new SettingPush(item).with({ view: item.view })
                 break
             case "child":
-                settingItem = SettingChild.from(item).options(item.children)
+                settingItem = new SettingChild(item).with({ children: item.children })
                 break
             case "image":
-                settingItem = SettingImage.from(item)
+                settingItem = new SettingImage(item)
                 break
         }
         return settingItem
@@ -213,17 +212,39 @@ class Setting extends Controller {
      * @returns {this}
      */
     loadConfig() {
+        this.#loadConfigStatus = false
         // 永远使用 setting 结构文件内的值
         const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
+        const isExclude = item => {
+            if (item instanceof SettingItem) {
+                return item instanceof SettingScript || item instanceof SettingInfo
+            }
+            const exclude = ["script", "info"]
+            return exclude.includes(item.type)
+        }
         const setValue = structure => {
-            for (let section of structure) {
-                for (let item of section.items) {
-                    if (item.type === "child") {
-                        setValue(item.children)
-                    } else if (!this.exclude.includes(item.type)) {
-                        this.setting[item.key] = item.key in userData ? userData[item.key] : item.value
+            for (let i in structure) {
+                for (let j in structure[i].items) {
+                    // item 指向 structure[i].items[j] 所指的对象
+                    let item = structure[i].items[j]
+                    if (!(item instanceof SettingItem)) {
+                        // 修改 items[j] 的指向以修改原始 this.structure
+                        // 此时 item 仍然指向原对象
+                        structure[i].items[j] = this.loader(item)
+                    }
+                    if (!structure[i].items[j].setting) {
+                        structure[i].items[j].setting = this
+                    }
+                    if (structure[i].items[j] instanceof SettingChild) {
+                        setValue(structure[i].items[j].options.children)
+                    } else if (!isExclude(item)) {
+                        if (item.key in userData) {
+                            this.setting[item.key] = userData[item.key]
+                        } else {
+                            this.setting[item.key] = item.value ?? item.default
+                        }
                         // 只保留有取值需求的 settingItem
-                        this.settingItems[item.key] = this.loader(item)
+                        this.settingItems[item.key] = structure[i].items[j]
                     }
                 }
             }
@@ -234,7 +255,7 @@ class Setting extends Controller {
     }
 
     hasSectionTitle(structure) {
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         return structure[0]?.title ? true : false
     }
 
@@ -245,7 +266,7 @@ class Setting extends Controller {
 
     setStructure(structure) {
         this.structure = structure
-        return this
+        return this.loadConfig()
     }
 
     /**
@@ -325,7 +346,7 @@ class Setting extends Controller {
         if (this.#readonly) {
             throw new SettingReadonlyError()
         }
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         this.setting[key] = value
         this.fileStorage.write(this.dataFile, $data({ string: JSON.stringify(this.setting) }))
         this.callEvent("onSet", key, value)
@@ -333,17 +354,21 @@ class Setting extends Controller {
     }
 
     getOriginal(key, _default = null) {
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         if (Object.prototype.hasOwnProperty.call(this.setting, key)) return this.setting[key]
         else return _default
     }
 
+    getItem(key) {
+        return this.settingItems[key]
+    }
+
     get(key, _default = null) {
-        this.#checkLoadConfigError()
-        if (!this.settingItems[key]) {
+        this.#checkLoadConfig()
+        if (!this.getItem(key)) {
             return this.getOriginal(key, _default)
         }
-        return this.settingItems[key].get(_default)
+        return this.getItem(key).get(_default)
     }
 
     #getSections(structure) {
@@ -351,9 +376,9 @@ class Setting extends Controller {
         for (let section of structure) {
             const rows = []
             for (let item of section.items) {
-                let row = this.loader(item)?.create()
-                if (!row) continue
-                rows.push(row)
+                // 跳过无 UI 项
+                if (!(item instanceof SettingItem)) continue
+                rows.push(item.create())
             }
             sections.push({
                 title: $l10n(section.title ?? ""),

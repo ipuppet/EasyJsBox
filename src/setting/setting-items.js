@@ -33,19 +33,22 @@ class SettingItem {
      * @type {Setting}
      */
     setting
-    method
     #id
     #key
     #icon
     title
-    #options = []
+    #options = {}
 
-    constructor(setting, key, title, icon) {
+    constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
-        this.method = this.setting?.method ?? {}
         this.key = key
-        this.title = title
+        this.title = $l10n(title)
         this.icon = icon
+        this.default = value
+    }
+
+    get method() {
+        return this.setting.method
     }
 
     set key(key) {
@@ -88,11 +91,19 @@ class SettingItem {
         return this.#icon
     }
 
+    get options() {
+        return this.#options
+    }
+    set options(options) {
+        this.#options = options ?? {}
+        return this
+    }
+
     set(value) {
         return this.setting.set(this.key, value)
     }
 
-    get(_default = null) {
+    get(_default = this.default) {
         return this.setting.getOriginal(this.key, _default)
     }
 
@@ -110,10 +121,6 @@ class SettingItem {
             result = object ?? []
         }
         return result
-    }
-
-    getId(key) {
-        return `setting-${this.setting.name}-${key}`
     }
 
     createLineLabel() {
@@ -170,27 +177,18 @@ class SettingItem {
         }
     }
 
-    options(...options) {
-        this.#options = options ?? []
-        return this
-    }
-
     getView() {}
 
     create() {
-        return this.getView(...this.#options)
-    }
-
-    static from(item) {
-        return new this(item.setting, item.key, item.title, item.icon)
+        return this.getView(this.options)
     }
 }
 
 class SettingInfo extends SettingItem {
-    getView(value) {
-        const isArray = Array.isArray(value)
-        const text = isArray ? value[0] : value
-        const moreInfo = isArray ? value[1] : value
+    getView() {
+        const isArray = Array.isArray(this.default)
+        const text = isArray ? this.default[0] : this.default
+        const moreInfo = isArray ? this.default[1] : this.default
         return {
             type: "view",
             props: { selectable: true },
@@ -348,7 +346,12 @@ class SettingString extends SettingItem {
 }
 
 class SettingStepper extends SettingItem {
-    getView(min, max) {
+    with({ min, max } = {}) {
+        this.options = { min, max }
+        return this
+    }
+
+    getView({ min, max } = {}) {
         const labelId = `${this.id}-label`
         return {
             type: "view",
@@ -442,7 +445,12 @@ class SettingScript extends SettingItem {
         return events
     }
 
-    getView(script) {
+    with({ script } = {}) {
+        this.options = { script }
+        return this
+    }
+
+    getView({ script } = {}) {
         const buttonId = `${this.id}-button`
         const rightSymbol = "chevron.right"
         const start = () => {
@@ -555,7 +563,13 @@ class SettingScript extends SettingItem {
 }
 
 class SettingTab extends SettingItem {
-    getView(items, values) {
+    with({ items, values } = {}) {
+        if (Array.isArray(items)) items = items.map(item => $l10n(item))
+        this.options = { items, values }
+        return this
+    }
+
+    getView({ items, values } = {}) {
         items = this.evalValues(items)
         values = this.evalValues(values)
 
@@ -593,7 +607,13 @@ class SettingTab extends SettingItem {
 }
 
 class SettingMenu extends SettingItem {
-    getView(items, values, pullDown) {
+    with({ items, values, pullDown } = {}) {
+        if (Array.isArray(items)) items = items.map(item => $l10n(item))
+        this.options = { items, values, pullDown }
+        return this
+    }
+
+    getView({ items, values, pullDown } = {}) {
         const labelId = `${this.id}-label`
 
         const tmpItems = this.evalValues(items)
@@ -735,7 +755,12 @@ class SettingColor extends SettingItem {
 }
 
 class SettingDate extends SettingItem {
-    getView(mode = 2) {
+    with({ mode = 2 } = {}) {
+        this.options = { mode }
+        return this
+    }
+
+    getView({ mode = 2 } = {}) {
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -799,7 +824,12 @@ class SettingDate extends SettingItem {
 }
 
 class SettingInput extends SettingItem {
-    getView(secure = false, kbType = $kbType.default, saveFunc) {
+    with({ secure = false, kbType = $kbType.default, saveFunc } = {}) {
+        this.options = { secure, kbType, saveFunc }
+        return this
+    }
+
+    getView({ secure = false, kbType = $kbType.default, saveFunc } = {}) {
         if (saveFunc === undefined) {
             saveFunc = data => {
                 return this.set(data)
@@ -906,28 +936,37 @@ class SettingInput extends SettingItem {
 
 class SettingNumber extends SettingItem {
     getView() {
-        return SettingInput.from(this).getView(false, $kbType.decimal, text => {
-            const isNumber = str => {
-                const reg = /^[0-9]+.?[0-9]*$/
-                return reg.test(str)
-            }
-            if (text === "" || !isNumber(text)) {
-                $ui.toast($l10n("INVALID_VALUE"))
-                return false
-            }
+        return new SettingInput(this).getView({
+            secure: false,
+            kbType: $kbType.decimal,
+            saveFunc: text => {
+                const isNumber = str => {
+                    const reg = /^[0-9]+.?[0-9]*$/
+                    return reg.test(str)
+                }
+                if (text === "" || !isNumber(text)) {
+                    $ui.toast($l10n("INVALID_VALUE"))
+                    return false
+                }
 
-            return this.set(Number(text))
+                return this.set(Number(text))
+            }
         })
     }
 }
 
 class SettingIcon extends SettingItem {
+    with({ bgcolor = "#000000" } = {}) {
+        this.options = { bgcolor }
+        return this
+    }
+
     /**
      *
      * @param {string|Object} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns {object}
      */
-    getView(bgcolor = "#000000") {
+    getView({ bgcolor = "#000000" } = {}) {
         const imageId = `${this.id}-image`
         return {
             type: "view",
@@ -1006,9 +1045,12 @@ class SettingIcon extends SettingItem {
 }
 
 class SettingPush extends SettingItem {
-    method = this.setting.method
+    with({ view, tapped } = {}) {
+        this.options = { view, tapped }
+        return this
+    }
 
-    getView(view, tapped) {
+    getView({ view, tapped } = {}) {
         return {
             type: "view",
             layout: $layout.fill,
@@ -1070,12 +1112,19 @@ class SettingPush extends SettingItem {
 }
 
 class SettingChild extends SettingItem {
-    getView(children) {
-        return SettingPush.from(this).getView(undefined, push => {
-            if (this.setting.events?.onChildPush) {
-                this.setting.callEvent("onChildPush", this.setting.getListView(children, {}), this.title)
-            } else {
-                push(this.setting.getListView(children, {}))
+    with({ children } = {}) {
+        this.options = { children }
+        return this
+    }
+
+    getView({ children } = {}) {
+        return new SettingPush(this).getView({
+            tapped: push => {
+                if (this.setting.events?.onChildPush) {
+                    this.setting.callEvent("onChildPush", this.setting.getListView(children, {}), this.title)
+                } else {
+                    push(this.setting.getListView(children, {}))
+                }
             }
         })
     }
