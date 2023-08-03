@@ -181,15 +181,33 @@ class FileManager {
     }
 
     #pushPage(title, view) {
+        const tapped = () => {
+            const path = $file.absolutePath($(this.listId).info.basePath)
+            $ui.alert({
+                title: "Path",
+                message: path
+            })
+        }
+
         if (this.viewController) {
             const nv = new NavigationView()
             nv.setView(view).navigationBarTitle(title)
             nv.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+            nv.navigationBarItems.addRightButton({
+                symbol: "info.circle",
+                tapped
+            })
             this.viewController.push(nv)
         } else {
             UIKit.push({
                 title,
-                views: [view]
+                views: [view],
+                navButtons: [
+                    {
+                        symbol: "info.circle",
+                        handler: tapped
+                    }
+                ]
             })
         }
     }
@@ -253,6 +271,9 @@ class FileManager {
         }
     }
 
+    /**
+     * @param {string} basePath JSBox path
+     */
     push(basePath = "") {
         const pathName = basePath.substring(basePath.lastIndexOf("/"))
         this.#pushPage(pathName, this.getListView(basePath))
