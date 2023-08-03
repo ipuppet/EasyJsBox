@@ -91,6 +91,7 @@ class Setting extends Controller {
                         make.size.equalTo(view.super)
                     }
                 })
+                .addNavBar({ title: "README", popButton: { symbol: "x.circle" } })
                 .init()
                 .present()
         }
