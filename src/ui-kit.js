@@ -10,6 +10,11 @@ class UIKit {
     }
 
     /**
+     * @type {boolean}
+     */
+    static isTaio = $app.info.bundleID.includes("taio")
+
+    /**
      * 对齐方式
      */
     static align = { left: 0, right: 1, top: 2, bottom: 3 }
@@ -60,7 +65,8 @@ class UIKit {
     }
 
     static get topSafeAreaInsets() {
-        return UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.top ?? 0
+        // Taio 不是全屏运行，故为 0
+        return UIKit.isTaio ? 0 : UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.top ?? 0
     }
 
     static get bottomSafeAreaInsets() {

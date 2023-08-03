@@ -16,11 +16,6 @@ class Kernel {
         L10n.init()
     }
 
-    /**
-     * @type {boolean}
-     */
-    static isTaio = $app.info.bundleID.includes("taio")
-
     static objectEqual(a, b) {
         let aProps = Object.getOwnPropertyNames(a)
         let bProps = Object.getOwnPropertyNames(b)

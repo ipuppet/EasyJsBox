@@ -57,7 +57,7 @@ class NavigationView extends Controller {
         }
 
         const scrollView = this.view.scrollableView
-        const topSafeAreaInsets = $app.isDebugging || Kernel.isTaio ? 0 : UIKit.topSafeAreaInsets
+        const topSafeAreaInsets = $app.isDebugging ? 0 : UIKit.topSafeAreaInsets
         const navigationBarHeight =
             this.navigationBar.largeTitleDisplayMode === NavigationBar.largeTitleDisplayModeNever
                 ? this.navigationBar.navigationBarNormalHeight
