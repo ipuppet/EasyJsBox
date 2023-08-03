@@ -55,6 +55,7 @@ class UIKit {
     static NavigationBarLargeTitleHeight =
         $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height +
         UIKit.NavigationBarNormalHeight
+    static PageSheetNavigationBarNormalHeight = 56
 
     /**
      * 判断是否是分屏模式

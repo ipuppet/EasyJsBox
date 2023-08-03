@@ -1,6 +1,7 @@
 const { ValidationError } = require("./validation-error")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
+const { UIKit } = require("./ui-kit")
 
 class SheetViewUndefinedError extends Error {
     constructor() {
@@ -70,7 +71,7 @@ class Sheet {
         const navBar = this.navigationView.navigationBar
         navBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         navBar.navigationBarLargeTitleHeight -= navBar.navigationBarNormalHeight
-        navBar.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
+        navBar.navigationBarNormalHeight = UIKit.PageSheetNavigationBarNormalHeight
         navBar.navigationBarLargeTitleHeight += navBar.navigationBarNormalHeight
         if (
             this.style === Sheet.UIModalPresentationStyle.FullScreen ||

@@ -10,7 +10,6 @@ class NavigationBar extends View {
     static largeTitleDisplayModeAutomatic = 0
     static largeTitleDisplayModeAlways = 1
     static largeTitleDisplayModeNever = 2
-    static pageSheetNavigationBarHeight = 56
 
     /**
      * @type {NavigationBarItems}
