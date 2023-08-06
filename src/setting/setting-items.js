@@ -107,7 +107,7 @@ class SettingItem {
         return this.setting.getOriginal(this.key, _default)
     }
 
-    evalValues(object) {
+    evalValues(object, _default = []) {
         let result
         if (typeof object === "string") {
             if (object.startsWith("this.method")) {
@@ -118,7 +118,7 @@ class SettingItem {
         } else if (typeof object === "function") {
             result = object()
         } else {
-            result = object ?? []
+            result = object ?? _default
         }
         return result
     }
@@ -1045,12 +1045,12 @@ class SettingIcon extends SettingItem {
 }
 
 class SettingPush extends SettingItem {
-    with({ view, tapped } = {}) {
-        this.options = { view, tapped }
+    with({ view, tapped, navButtons } = {}) {
+        this.options = { view, tapped, navButtons }
         return this
     }
 
-    getView({ view, tapped } = {}) {
+    getView({ view, tapped, navButtons = [] } = {}) {
         return {
             type: "view",
             layout: $layout.fill,
@@ -1076,17 +1076,31 @@ class SettingPush extends SettingItem {
             events: {
                 tapped: () => {
                     const push = view => {
-                        if (typeof view === "string" && view.startsWith("this.method")) {
-                            view = eval(`(()=>{return ${view}()})()`)
-                        } else if (typeof view === "function") {
-                            view = view()
+                        view = this.evalValues(view, {})
+                        navButtons = this.evalValues(navButtons)
+                        if (navButtons.length > 0) {
+                            navButtons.map(button => {
+                                if (typeof button.tapped === "string") {
+                                    const buttonTappedString = button.tapped
+                                    button.tapped = () => {
+                                        eval(buttonTappedString)
+                                    }
+                                }
+                                button.handler = button.tapped
+                                return button
+                            })
                         }
+
                         if (this.setting.isUseJsboxNav) {
-                            UIKit.push({
+                            const options = {
                                 title: this.title,
                                 props: view.props ?? {},
                                 views: [view]
-                            })
+                            }
+                            if (navButtons.length > 0) {
+                                options.navButtons = navButtons
+                            }
+                            UIKit.push(options)
                         } else {
                             const navigationView = new NavigationView()
                             navigationView.setView(view).navigationBarTitle(this.title)
@@ -1097,6 +1111,11 @@ class SettingPush extends SettingItem {
                             if (this.setting.hasSectionTitle(view)) {
                                 navigationView.navigationBar.setContentViewHeightOffset(-10)
                             }
+
+                            if (navButtons.length > 0) {
+                                navigationView.navigationBarItems.setRightButtons(navButtons)
+                            }
+
                             this.setting.viewController.push(navigationView)
                         }
                     }

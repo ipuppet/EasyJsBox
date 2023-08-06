@@ -196,7 +196,7 @@ class Setting extends Controller {
                 settingItem = new SettingIcon(item).with({ bgcolor: item.bgcolor })
                 break
             case "push":
-                settingItem = new SettingPush(item).with({ view: item.view })
+                settingItem = new SettingPush(item).with({ view: item.view, navButtons: item.navButtons })
                 break
             case "child":
                 settingItem = new SettingChild(item).with({ children: item.children })

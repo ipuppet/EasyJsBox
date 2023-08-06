@@ -177,6 +177,8 @@ setting.method.readme = animate => {
 }
 ```
 
+其中，`animate` 定义如下：
+
 ```js
 const animate = {
     start: callable(), // 会出现加载动画
@@ -321,6 +323,16 @@ const animate = {
 
 如果 `view` 以 `this.method` 开头且结尾无括号，则会执函数获取子视图，和 `script` 一样需要向 `setting.method` 写入方法。
 
+```js
+setting.method.readme = animate => {
+    return {
+        type: "view",
+        props: {},
+        layout: $layout.fill
+    }
+}
+```
+
 ```json
 {
     "icon": [
@@ -330,16 +342,8 @@ const animate = {
     "type": "push",
     "key": "my.push",
     "value": "data.save.in.my.push",
-    "view": [
-        {
-            "title": "Section 1",
-            "items": []
-        },
-        {
-            "title": "Section 2",
-            "items": []
-        }
-    ]
+    "navButtons": "this.method.getMyNavButtons",
+    "view": "this.method.getMyView"
 }
 ```
 
