@@ -99,16 +99,27 @@ class BarButtonItem extends View {
 
     setFontSize(fontSize) {
         this.fontSize = fontSize
+        if ($(this.id)) {
+            $(this.id).font = $font(this.fontSize)
+        }
         return this
     }
 
     setColor(color = UIKit.textColor) {
         this.color = color
+        if ($(this.id)) {
+            $(this.id).titleColor = this.color
+            $(`icon-button-${this.id}`).titleColor = this.color
+            $(`icon-checkmark-${this.id}`).titleColor = this.color
+        }
         return this
     }
 
     setTitle(title) {
         this.title = title
+        if ($(this.id)) {
+            $(this.id).title = this.title
+        }
         return this
     }
 
@@ -119,6 +130,9 @@ class BarButtonItem extends View {
      */
     setSymbol(symbol) {
         this.symbol = symbol
+        if ($(this.id)) {
+            $(this.id).symbol = this.symbol
+        }
         return this
     }
 
@@ -179,6 +193,13 @@ class BarButtonItem extends View {
         })
     }
 
+    hide() {
+        $(this.id + "-container").hidden = true
+    }
+    show() {
+        $(this.id + "-container").hidden = false
+    }
+
     getView() {
         const userTapped = this.events.tapped
         this.events.tapped = sender => {
@@ -195,7 +216,10 @@ class BarButtonItem extends View {
 
         return {
             type: "view",
-            props: { info: { align: this.align } },
+            props: {
+                id: this.id + "-container",
+                info: { align: this.align }
+            },
             views: [
                 {
                     type: "button",
@@ -371,6 +395,10 @@ class NavigationBarItems {
 
     getButton(id) {
         return this.#buttonIndex[id]
+    }
+
+    getButtons() {
+        return Object.values(this.#buttonIndex)
     }
 
     /**
