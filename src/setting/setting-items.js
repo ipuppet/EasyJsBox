@@ -112,9 +112,11 @@ class SettingItem {
         let result
         if (typeof object === "string") {
             if (object.startsWith("this.method")) {
-                result = eval(`(()=>{return ${object}()})()`)
+                result = new Function("method", `return ${object.replace("this.", "")}()`)(this.method)
+                //result = $addin.eval(`(()=>{return ${object}()})()`)
             } else {
-                result = eval(`(()=>{return ${object}})()`)
+                result = new Function(`return {${object}}`)()
+                //result = $addin.eval(`(()=>{return ${object}})()`)
             }
         } else if (typeof object === "function") {
             result = object()
@@ -425,7 +427,6 @@ class SettingScript extends SettingItem {
                 })
             }
         })
-        $delay(0.6, () => {})
     }
 
     with({ script } = {}) {
@@ -445,12 +446,17 @@ class SettingScript extends SettingItem {
         // 执行代码
         const { script } = this.options
         if (typeof script === "function") {
-            script(animate)
+            await script(animate)
         } else if (script.startsWith("this.method")) {
-            // 传递 animate 对象
-            eval(`(()=>{return ${script}(animate)})()`)
+            const scriptToFunction = new Function(
+                "method",
+                "animate",
+                `return async()=>{await ${script.replace("this.", "")}(animate)}`
+            )(this.method, animate)
+            await scriptToFunction()
         } else {
-            eval(script)
+            const scriptToFunction = new Function("animate", `return async()=>{${script}}`)(animate)
+            await scriptToFunction()
         }
     }
 
@@ -1003,7 +1009,7 @@ class SettingPush extends SettingItem {
                 if (typeof button.tapped === "string") {
                     const buttonTappedString = button.tapped
                     button.tapped = () => {
-                        eval(buttonTappedString)
+                        this.evalValues(buttonTappedString)
                     }
                 }
                 button.handler = button.tapped

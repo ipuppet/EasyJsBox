@@ -163,10 +163,14 @@
 `this` 为 `Setting` 实例，需要向 `setting.method` 写入方法，如：
 
 ```js
-setting.method.readme = animate => {
-    console.log("Hello World!")
+setting.method.readme = async animate => {
+    console.log("Hello")
+    await $wait(1)
+    console.log("World")
 }
 ```
+
+框架会等待函数执行完毕并自动处理列表项点击高亮动画
 
 其中，`animate` 定义如下：
 
@@ -174,9 +178,7 @@ setting.method.readme = animate => {
 const animate = {
     start: callable(), // 会出现加载动画
     cancel: callable(), // 会直接恢复箭头图标
-    done: callable(), // 会出现对号，然后恢复箭头
-    touchHighlightStart: callable(), // 被点击的一行颜色加深
-    touchHighlightEnd: callable() // 被点击的一行颜色恢复
+    done: callable() // 会出现对号，然后恢复箭头
 }
 ```
 
@@ -189,6 +191,20 @@ const animate = {
     "title": "README",
     "type": "script",
     "value": "this.method.readme"
+}
+```
+
+`script` 类型支持 async 异步函数
+
+```json
+{
+    "icon": [
+        "book.fill",
+        "#A569BD"
+    ],
+    "title": "README_ASYNC",
+    "type": "script",
+    "value": "const content=await getReadme();show(content)"
 }
 ```
 
