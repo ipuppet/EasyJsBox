@@ -21,6 +21,7 @@ const {
     SettingChild,
     SettingImage
 } = require("./setting-items")
+const { Logger } = require("../logger")
 
 class SettingLoadConfigError extends Error {
     constructor() {
@@ -66,6 +67,10 @@ class Setting extends Controller {
     userData
     // fileStorage
     fileStorage
+    /**
+     * @type {Logger}
+     */
+    logger
     imagePath
     // 用来控制 child 类型
     viewController = new ViewController()
@@ -132,6 +137,7 @@ class Setting extends Controller {
         } else {
             this.setStructurePath(args.structurePath ?? "setting.json")
         }
+        this.logger = args.logger ?? new Logger()
         this.isUseJsboxNav = args.isUseJsboxNav ?? false
         // 不能使用 uuid
         this.imagePath = (args.name ?? "default") + ".image" + "/"
@@ -150,8 +156,6 @@ class Setting extends Controller {
     }
 
     loader(item) {
-        item.setting = this
-
         let settingItem = null
         switch (item.type) {
             case "info":
@@ -216,13 +220,7 @@ class Setting extends Controller {
         this.#loadConfigStatus = false
         // 永远使用 setting 结构文件内的值
         const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
-        const isExclude = item => {
-            if (item instanceof SettingItem) {
-                return item instanceof SettingScript || item instanceof SettingInfo
-            }
-            const exclude = ["script", "info"]
-            return exclude.includes(item.type)
-        }
+
         const setValue = structure => {
             for (let i in structure) {
                 for (let j in structure[i].items) {
@@ -232,20 +230,21 @@ class Setting extends Controller {
                         // 修改 items[j] 的指向以修改原始 this.structure
                         // 此时 item 仍然指向原对象
                         structure[i].items[j] = this.loader(item)
+                        // 修改 item 指向
+                        item = structure[i].items[j]
                     }
-                    if (!structure[i].items[j].setting) {
-                        structure[i].items[j].setting = this
-                    }
-                    if (structure[i].items[j] instanceof SettingChild) {
-                        setValue(structure[i].items[j].options.children)
-                    } else if (!isExclude(item)) {
+                    if (!item.setting) item.setting = this
+
+                    if (item instanceof SettingChild) {
+                        setValue(item.options.children)
+                    } else if (!(item instanceof SettingScript || item instanceof SettingInfo)) {
                         if (item.key in userData) {
                             this.setting[item.key] = userData[item.key]
                         } else {
-                            this.setting[item.key] = item.value ?? item.default
+                            this.setting[item.key] = item.default
                         }
                         // 只保留有取值需求的 settingItem
-                        this.settingItems[item.key] = structure[i].items[j]
+                        this.settingItems[item.key] = item
                     }
                 }
             }
@@ -374,26 +373,28 @@ class Setting extends Controller {
 
     #getSections(structure) {
         const sections = []
-        for (let section of structure) {
+        for (let section in structure) {
             const rows = []
-            for (let item of section.items) {
+            for (let row in structure[section].items) {
+                let item = structure[section].items[row]
                 // 跳过无 UI 项
                 if (!(item instanceof SettingItem)) continue
-                rows.push(item.create())
+                if (!item.setting) item.setting = this
+                rows.push(item.create($indexPath(section, row)))
             }
             sections.push({
-                title: $l10n(section.title ?? ""),
+                title: $l10n(structure[section].title ?? ""),
                 rows: rows
             })
         }
         return sections
     }
 
-    getListView(structure = this.structure, footer = this.footer) {
+    getListView(structure = this.structure, footer = this.footer, id = this.name) {
         return {
             type: "list",
             props: {
-                id: this.name,
+                id,
                 style: 2,
                 separatorInset: $insets(
                     0,
@@ -406,9 +407,24 @@ class Setting extends Controller {
             },
             layout: $layout.fill,
             events: {
-                rowHeight: (sender, indexPath) => {
-                    const info = sender.object(indexPath)?.props?.info ?? {}
+                rowHeight: (tableView, indexPath) => {
+                    const info = tableView.object(indexPath)?.props?.info ?? {}
                     return info.rowHeight ?? SettingItem.rowHeight
+                },
+                didSelect: async (tableView, indexPath, data) => {
+                    tableView = tableView.ocValue()
+                    tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath.ocValue(), false, 0)
+
+                    const item = structure[indexPath.section]?.items[indexPath.row]
+                    if (typeof item?.tapped === "function") {
+                        try {
+                            await item.tapped()
+                        } catch (error) {
+                            this.logger.error(error)
+                        }
+                    }
+
+                    tableView.$deselectRowAtIndexPath_animated(indexPath, true)
                 }
             }
         }

@@ -1,3 +1,5 @@
+const { Logger } = require("./logger")
+
 class RequestError extends Error {
     constructor({ message, code, type } = {}) {
         super(message)
@@ -31,14 +33,17 @@ class Request {
     #isLogRequest = false
     timeout = 5
 
+    /**
+     * @type {Logger}
+     */
     logger
 
     /**
      *
-     * @param {Function} logger
+     * @param {Logger} logger
      */
     constructor(logger) {
-        if (typeof logger === "function") {
+        if (logger instanceof Logger) {
             this.logger = logger
         }
     }
@@ -48,21 +53,16 @@ class Request {
     }
 
     #logRequest(message) {
-        if (this.#isLogRequest && typeof this.logger === "function") {
-            this.logger(message)
+        if (this.#isLogRequest && this.logger instanceof Logger) {
+            this.logger.info(message)
         }
     }
 
     /**
      * 记录请求
-     * @param {Function} logger
-     * @returns
      */
-    logRequest(logger) {
+    logRequest() {
         this.#isLogRequest = true
-        if (typeof logger === "function") {
-            this.logger = logger
-        }
         return this
     }
 

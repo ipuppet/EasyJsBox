@@ -10,7 +10,7 @@ class Kernel {
 
     constructor() {
         if ($app.isDebugging) {
-            this.debug()
+            console.log("You are running EasyJsBox in debug mode.")
         }
 
         L10n.init()
@@ -67,36 +67,6 @@ class Kernel {
             }
         }
         return result
-    }
-
-    debug(print, error) {
-        this.debugMode = true
-        $app.idleTimerDisabled = true
-        if (typeof print === "function") {
-            this.debugPrint = print
-        }
-        if (typeof error === "function") {
-            this.debugError = error
-        }
-        this.print("You are running EasyJsBox in debug mode.")
-    }
-
-    print(message) {
-        if (!this.debugMode) return
-        if (typeof this.debugPrint === "function") {
-            this.debugPrint(message)
-        } else {
-            console.log(message)
-        }
-    }
-
-    error(error) {
-        if (!this.debugMode) return
-        if (typeof this.debugError === "function") {
-            this.debugError(error)
-        } else {
-            console.error(error)
-        }
     }
 
     useJsboxNav() {

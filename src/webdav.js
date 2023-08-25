@@ -42,7 +42,7 @@ class WebDAV extends Request {
     }
 
     constructor({ host, user, password, basepath = "" } = {}) {
-        super(msg => console.log(msg))
+        super()
 
         this.host = host
         this.user = user

@@ -76,15 +76,6 @@
 
     当更新键值对时触发。
 
-- `onChildPush(listView, title)`
-
-    可重写child类型的push事件。
-
-    **Parameter**
-    
-    - listView 生成的子列表视图对象
-    - title 子列表的标题
-
 ### Structure
 
 > 组件提供的设置项类型，保存在`setting.json`文件或实例化类时提供的文件中。

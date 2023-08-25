@@ -38,6 +38,7 @@ class SettingItem {
     #icon
     title
     #options = {}
+    indexPath
 
     constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
@@ -62,7 +63,7 @@ class SettingItem {
 
     get id() {
         if (!this.#id) {
-            this.#id = `setting-${this.setting.name}-${this.key}`
+            this.#id = `setting-${$text.uuid}-${this.key}`
         }
         return this.#id
     }
@@ -179,16 +180,31 @@ class SettingItem {
 
     getView() {}
 
-    create() {
+    create(indexPath) {
+        this.indexPath = indexPath
         return this.getView(this.options)
     }
 }
 
 class SettingInfo extends SettingItem {
+    get isArray() {
+        return Array.isArray(this.default)
+    }
+
+    async tapped() {
+        const moreInfo = this.isArray ? this.default[1] : this.default
+        const result = await $ui.alert({
+            title: this.title,
+            message: moreInfo,
+            actions: [{ title: $l10n("COPY") }, { title: $l10n("OK") }]
+        })
+        if (result.index === 0) {
+            $clipboard.text = moreInfo
+            $ui.toast($l10n("COPIED"))
+        }
+    }
+
     getView() {
-        const isArray = Array.isArray(this.default)
-        const text = isArray ? this.default[0] : this.default
-        const moreInfo = isArray ? this.default[1] : this.default
         return {
             type: "view",
             props: { selectable: true },
@@ -197,7 +213,7 @@ class SettingInfo extends SettingItem {
                 {
                     type: "label",
                     props: {
-                        text: text,
+                        text: this.isArray ? this.default[0] : this.default,
                         align: $align.right,
                         textColor: $color("darkGray")
                     },
@@ -205,32 +221,6 @@ class SettingInfo extends SettingItem {
                         make.centerY.equalTo(view.prev)
                         make.right.inset(SettingItem.edgeOffset)
                         make.width.equalTo(180)
-                    }
-                },
-                {
-                    // 监听点击动作
-                    type: "view",
-                    events: {
-                        tapped: () => {
-                            $ui.alert({
-                                title: this.title,
-                                message: moreInfo,
-                                actions: [
-                                    {
-                                        title: $l10n("COPY"),
-                                        handler: () => {
-                                            $clipboard.text = moreInfo
-                                            $ui.toast($l10n("COPIED"))
-                                        }
-                                    },
-                                    { title: $l10n("OK") }
-                                ]
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.right.inset(0)
-                        make.size.equalTo(view.super)
                     }
                 }
             ],
@@ -401,48 +391,41 @@ class SettingStepper extends SettingItem {
 }
 
 class SettingScript extends SettingItem {
-    // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-    #withTouchEventT
+    rightSymbol = "chevron.right"
+    buttonId = `${this.id}-button`
 
-    #touchHighlightStart() {
-        $(this.id).bgcolor = $color("systemFill")
+    start() {
+        // 隐藏 button，显示 spinner
+        $(this.buttonId).alpha = 0
+        $(`${this.buttonId}-spinner`).alpha = 1
     }
-
-    #touchHighlightEnd(duration = 0.3) {
-        if (duration === 0) {
-            $(this.id).bgcolor = $color("clear")
-        } else {
-            $ui.animate({
-                duration: duration,
-                animation: () => {
-                    $(this.id).bgcolor = $color("clear")
-                }
-            })
-        }
+    cancel() {
+        $(this.buttonId).alpha = 1
+        $(`${this.buttonId}-spinner`).alpha = 0
     }
-
-    #withTouchEvent(events, withTappedHighlight = false, highlightEndDelay = 0) {
-        events = Object.assign(events, {
-            touchesBegan: () => {
-                this.#touchHighlightStart()
-                // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-                this.#withTouchEventT = $delay(1, () => this.#touchHighlightEnd(0))
-            },
-            touchesMoved: () => {
-                this.#withTouchEventT?.cancel()
-                this.#touchHighlightEnd(0)
+    done() {
+        $(`${this.buttonId}-spinner`).alpha = 0
+        const button = $(this.buttonId)
+        // 成功动画
+        button.symbol = "checkmark"
+        $ui.animate({
+            duration: 0.6,
+            animation: () => (button.alpha = 1),
+            completion: () => {
+                $ui.animate({
+                    duration: 0.4,
+                    animation: () => (button.alpha = 0),
+                    completion: () => {
+                        button.symbol = this.rightSymbol
+                        $ui.animate({
+                            duration: 0.4,
+                            animation: () => (button.alpha = 1)
+                        })
+                    }
+                })
             }
         })
-        if (withTappedHighlight) {
-            const tapped = events.tapped
-            events.tapped = () => {
-                // highlight
-                this.#touchHighlightStart()
-                $delay(highlightEndDelay, () => this.#touchHighlightEnd())
-                if (typeof tapped === "function") tapped()
-            }
-        }
-        return events
+        $delay(0.6, () => {})
     }
 
     with({ script } = {}) {
@@ -450,48 +433,32 @@ class SettingScript extends SettingItem {
         return this
     }
 
-    getView({ script } = {}) {
-        const buttonId = `${this.id}-button`
+    async tapped() {
+        /**
+         * @type {ScriptAnimate}
+         */
+        const animate = {
+            start: () => this.start(), // 会出现加载动画
+            cancel: () => this.cancel(), // 会直接恢复箭头图标
+            done: () => this.done() // 会出现对号，然后恢复箭头
+        }
+        // 执行代码
+        const { script } = this.options
+        if (typeof script === "function") {
+            script(animate)
+        } else if (script.startsWith("this.method")) {
+            // 传递 animate 对象
+            eval(`(()=>{return ${script}(animate)})()`)
+        } else {
+            eval(script)
+        }
+    }
+
+    getView() {
         const rightSymbol = "chevron.right"
-        const start = () => {
-            // 隐藏 button，显示 spinner
-            $(buttonId).alpha = 0
-            $(`${buttonId}-spinner`).alpha = 1
-            this.#touchHighlightStart()
-        }
-        const cancel = () => {
-            $(buttonId).alpha = 1
-            $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd()
-        }
-        const done = () => {
-            $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd()
-            const button = $(buttonId)
-            // 成功动画
-            button.symbol = "checkmark"
-            $ui.animate({
-                duration: 0.6,
-                animation: () => (button.alpha = 1),
-                completion: () => {
-                    $ui.animate({
-                        duration: 0.4,
-                        animation: () => (button.alpha = 0),
-                        completion: () => {
-                            button.symbol = rightSymbol
-                            $ui.animate({
-                                duration: 0.4,
-                                animation: () => (button.alpha = 1)
-                            })
-                        }
-                    })
-                }
-            })
-            $delay(0.6, () => {})
-        }
         return {
             type: "view",
-            props: { id: this.id },
+            props: { id: this.id, selectable: true },
             views: [
                 this.createLineLabel(),
                 {
@@ -501,7 +468,7 @@ class SettingScript extends SettingItem {
                             // 仅用于显示图片
                             type: "button",
                             props: {
-                                id: buttonId,
+                                id: this.buttonId,
                                 symbol: rightSymbol,
                                 bgcolor: $color("clear"),
                                 tintColor: $color("secondaryText")
@@ -515,7 +482,7 @@ class SettingScript extends SettingItem {
                         {
                             type: "spinner",
                             props: {
-                                id: `${buttonId}-spinner`,
+                                id: `${this.buttonId}-spinner`,
                                 loading: true,
                                 alpha: 0 // 透明度用于渐变完成动画
                             },
@@ -531,32 +498,8 @@ class SettingScript extends SettingItem {
                         make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
-                },
-                { type: "view", layout: $layout.fill }
-            ],
-            events: this.#withTouchEvent({
-                tapped: () => {
-                    /**
-                     * @type {ScriptAnimate}
-                     */
-                    const animate = {
-                        start: start, // 会出现加载动画
-                        cancel: cancel, // 会直接恢复箭头图标
-                        done: done, // 会出现对号，然后恢复箭头
-                        touchHighlightStart: () => this.#touchHighlightStart(), // 被点击的一行颜色加深
-                        touchHighlightEnd: () => this.#touchHighlightEnd() // 被点击的一行颜色恢复
-                    }
-                    // 执行代码
-                    if (typeof script === "function") {
-                        script(animate)
-                    } else if (script.startsWith("this.method")) {
-                        // 传递 animate 对象
-                        eval(`(()=>{return ${script}(animate)})()`)
-                    } else {
-                        eval(script)
-                    }
                 }
-            }),
+            ],
             layout: $layout.fill
         }
     }
@@ -1045,12 +988,57 @@ class SettingIcon extends SettingItem {
 }
 
 class SettingPush extends SettingItem {
-    with({ view, tapped, navButtons } = {}) {
-        this.options = { view, tapped, navButtons }
+    with({ view, navButtons = [] } = {}) {
+        this.options = { view, navButtons }
         return this
     }
 
-    getView({ view, tapped, navButtons = [] } = {}) {
+    async tapped() {
+        let { view, navButtons } = this.options
+
+        view = this.evalValues(view, {})
+        navButtons = this.evalValues(navButtons)
+        if (navButtons.length > 0) {
+            navButtons.map(button => {
+                if (typeof button.tapped === "string") {
+                    const buttonTappedString = button.tapped
+                    button.tapped = () => {
+                        eval(buttonTappedString)
+                    }
+                }
+                button.handler = button.tapped
+                return button
+            })
+        }
+
+        if (this.setting.isUseJsboxNav) {
+            const options = {
+                title: this.title,
+                props: view.props ?? {},
+                views: [view]
+            }
+            if (navButtons.length > 0) {
+                options.navButtons = navButtons
+            }
+            UIKit.push(options)
+        } else {
+            const navigationView = new NavigationView()
+            navigationView.setView(view).navigationBarTitle(this.title)
+            navigationView.navigationBarItems.addPopButton()
+            navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+            if (this.setting.hasSectionTitle(view)) {
+                navigationView.navigationBar.setContentViewHeightOffset(-10)
+            }
+
+            if (navButtons.length > 0) {
+                navigationView.navigationBarItems.setRightButtons(navButtons)
+            }
+
+            this.setting.viewController.push(navigationView)
+        }
+    }
+
+    getView() {
         return {
             type: "view",
             layout: $layout.fill,
@@ -1070,82 +1058,21 @@ class SettingPush extends SettingItem {
                         make.right.inset(SettingItem.edgeOffset)
                         make.height.equalTo(view.super)
                     }
-                },
-                { type: "view", layout: $layout.fill }
-            ],
-            events: {
-                tapped: () => {
-                    const push = view => {
-                        view = this.evalValues(view, {})
-                        navButtons = this.evalValues(navButtons)
-                        if (navButtons.length > 0) {
-                            navButtons.map(button => {
-                                if (typeof button.tapped === "string") {
-                                    const buttonTappedString = button.tapped
-                                    button.tapped = () => {
-                                        eval(buttonTappedString)
-                                    }
-                                }
-                                button.handler = button.tapped
-                                return button
-                            })
-                        }
-
-                        if (this.setting.isUseJsboxNav) {
-                            const options = {
-                                title: this.title,
-                                props: view.props ?? {},
-                                views: [view]
-                            }
-                            if (navButtons.length > 0) {
-                                options.navButtons = navButtons
-                            }
-                            UIKit.push(options)
-                        } else {
-                            const navigationView = new NavigationView()
-                            navigationView.setView(view).navigationBarTitle(this.title)
-                            navigationView.navigationBarItems.addPopButton()
-                            navigationView.navigationBar.setLargeTitleDisplayMode(
-                                NavigationBar.largeTitleDisplayModeNever
-                            )
-                            if (this.setting.hasSectionTitle(view)) {
-                                navigationView.navigationBar.setContentViewHeightOffset(-10)
-                            }
-
-                            if (navButtons.length > 0) {
-                                navigationView.navigationBarItems.setRightButtons(navButtons)
-                            }
-
-                            this.setting.viewController.push(navigationView)
-                        }
-                    }
-                    if (typeof tapped === "function") {
-                        tapped(push)
-                    } else {
-                        push(view)
-                    }
                 }
-            }
+            ]
         }
     }
 }
 
-class SettingChild extends SettingItem {
+class SettingChild extends SettingPush {
     with({ children } = {}) {
-        this.options = { children }
-        return this
-    }
-
-    getView({ children } = {}) {
-        return new SettingPush(this).getView({
-            tapped: push => {
-                if (this.setting.events?.onChildPush) {
-                    this.setting.callEvent("onChildPush", this.setting.getListView(children, {}), this.title)
-                } else {
-                    push(this.setting.getListView(children, {}))
-                }
+        super.with({
+            view: () => {
+                return this.setting.getListView(children, {}, this.id)
             }
         })
+        this.options.children = children
+        return this
     }
 }
 
