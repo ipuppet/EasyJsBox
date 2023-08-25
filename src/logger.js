@@ -43,7 +43,7 @@ class Logger {
             this.writer(this.format(msg, level))
         }
         // 控制台不格式化
-        console[level](msg)
+        if ($app.isDebugging) console[level](msg)
     }
     info(msg) {
         this.log(msg, Logger.level.info)
