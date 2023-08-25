@@ -11,6 +11,7 @@ class Kernel {
     constructor() {
         if ($app.isDebugging) {
             console.log("You are running EasyJsBox in debug mode.")
+            $app.idleTimerDisabled = true
         }
 
         L10n.init()
