@@ -42,7 +42,7 @@ class WebDAV extends Request {
     }
 
     constructor({ host, user, password, basepath = "" } = {}) {
-        super(msg => console.log(msg))
+        super()
 
         this.host = host
         this.user = user
@@ -90,22 +90,12 @@ class WebDAV extends Request {
             props = [props]
         }
         const propString = props.map(prop => `<D:${prop}/>`).join()
-        const body = `
-        <?xml version="1.0" encoding="utf-8" ?>
-        <D:propfind xmlns:D="DAV:">
-            <D:prop>${propString}</D:prop>
-        </D:propfind>
-        `
+        const body = `<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:"><D:prop>${propString}</D:prop></D:propfind>`
         const resp = await this.request(path, "PROPFIND", body, { Depth: depth })
         return $xml.parse({ string: resp.data })
     }
     async propfindAll(path, depth = 0) {
-        const body = `
-        <?xml version="1.0" encoding="utf-8" ?>
-        <D:propfind xmlns:D="DAV:">
-            <D:allprop/>
-        </D:propfind>
-        `
+        const body = `<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:"><D:allprop/></D:propfind>`
         const resp = await this.request(path, "PROPFIND", body, { Depth: depth })
         return $xml.parse({ string: resp.data })
     }
@@ -213,16 +203,7 @@ class WebDAV extends Request {
             throw new Error("Your WebDAV service does not support the `LOCK` method.")
         }
 
-        const body = `
-        <?xml version="1.0" encoding="utf-8" ?>
-        <D:lockinfo xmlns:D='DAV:'>
-            <D:lockscope><D:exclusive/></D:lockscope>
-            <D:locktype><D:write/></D:locktype>
-            <D:owner>
-                <D:href>${this.namespace}</D:href>
-            </D:owner>
-        </D:lockinfo>
-        `
+        const body = `<?xml version="1.0" encoding="utf-8" ?><D:lockinfo xmlns:D='DAV:'><D:lockscope><D:exclusive/></D:lockscope><D:locktype><D:write/></D:locktype><D:owner><D:href>${this.namespace}</D:href></D:owner></D:lockinfo>`
         const resp = await this.request(path, "LOCK", body, {
             Timeout: timeout,
             Depth: infinity ? "infinity" : 0

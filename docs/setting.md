@@ -76,15 +76,6 @@
 
     当更新键值对时触发。
 
-- `onChildPush(listView, title)`
-
-    可重写child类型的push事件。
-
-    **Parameter**
-    
-    - listView 生成的子列表视图对象
-    - title 子列表的标题
-
 ### Structure
 
 > 组件提供的设置项类型，保存在`setting.json`文件或实例化类时提供的文件中。
@@ -172,18 +163,22 @@
 `this` 为 `Setting` 实例，需要向 `setting.method` 写入方法，如：
 
 ```js
-setting.method.readme = animate => {
-    console.log("Hello World!")
+setting.method.readme = async animate => {
+    console.log("Hello")
+    await $wait(1)
+    console.log("World")
 }
 ```
+
+框架会等待函数执行完毕并自动处理列表项点击高亮动画
+
+其中，`animate` 定义如下：
 
 ```js
 const animate = {
     start: callable(), // 会出现加载动画
     cancel: callable(), // 会直接恢复箭头图标
-    done: callable(), // 会出现对号，然后恢复箭头
-    touchHighlightStart: callable(), // 被点击的一行颜色加深
-    touchHighlightEnd: callable() // 被点击的一行颜色恢复
+    done: callable() // 会出现对号，然后恢复箭头
 }
 ```
 
@@ -196,6 +191,20 @@ const animate = {
     "title": "README",
     "type": "script",
     "value": "this.method.readme"
+}
+```
+
+`script` 类型支持 async 异步函数
+
+```json
+{
+    "icon": [
+        "book.fill",
+        "#A569BD"
+    ],
+    "title": "README_ASYNC",
+    "type": "script",
+    "value": "const content=await getReadme();show(content)"
 }
 ```
 
@@ -321,6 +330,16 @@ const animate = {
 
 如果 `view` 以 `this.method` 开头且结尾无括号，则会执函数获取子视图，和 `script` 一样需要向 `setting.method` 写入方法。
 
+```js
+setting.method.readme = animate => {
+    return {
+        type: "view",
+        props: {},
+        layout: $layout.fill
+    }
+}
+```
+
 ```json
 {
     "icon": [
@@ -330,16 +349,8 @@ const animate = {
     "type": "push",
     "key": "my.push",
     "value": "data.save.in.my.push",
-    "view": [
-        {
-            "title": "Section 1",
-            "items": []
-        },
-        {
-            "title": "Section 2",
-            "items": []
-        }
-    ]
+    "navButtons": "this.method.getMyNavButtons",
+    "view": "this.method.getMyView"
 }
 ```
 

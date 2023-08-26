@@ -10,6 +10,11 @@ class UIKit {
     }
 
     /**
+     * @type {boolean}
+     */
+    static isTaio = $app.info.bundleID.includes("taio")
+
+    /**
      * 对齐方式
      */
     static align = { left: 0, right: 1, top: 2, bottom: 3 }
@@ -50,6 +55,7 @@ class UIKit {
     static NavigationBarLargeTitleHeight =
         $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height +
         UIKit.NavigationBarNormalHeight
+    static PageSheetNavigationBarNormalHeight = 56
 
     /**
      * 判断是否是分屏模式
@@ -60,7 +66,8 @@ class UIKit {
     }
 
     static get topSafeAreaInsets() {
-        return UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.top ?? 0
+        // Taio 不是全屏运行，故为 0
+        return UIKit.isTaio ? 0 : UIKit.#sharedApplication?.$keyWindow()?.$safeAreaInsets()?.top ?? 0
     }
 
     static get bottomSafeAreaInsets() {
@@ -244,6 +251,47 @@ class UIKit {
                 }
             ]
         })
+    }
+
+    /**
+     * 压缩图片
+     * @param {$image} image $image
+     * @param {number} maxSize 图片最大尺寸 单位：像素
+     * @returns {$image}
+     */
+    static compressImage(image, maxSize = 1280 * 720) {
+        const info = $imagekit.info(image)
+        if (info.height * info.width > maxSize) {
+            const scale = maxSize / (info.height * info.width)
+            image = $imagekit.scaleBy(image, scale)
+        }
+        return image
+    }
+
+    static deleteConfirm(message, conformAction) {
+        $ui.alert({
+            title: $l10n("DELETE_CONFIRM_TITLE"),
+            message,
+            actions: [
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        conformAction()
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
+
+    static bytesToSize(bytes) {
+        if (bytes === 0) return "0 B"
+        const k = 1024,
+            sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+            i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return (bytes / Math.pow(k, i)).toPrecision(3) + " " + sizes[i]
     }
 }
 

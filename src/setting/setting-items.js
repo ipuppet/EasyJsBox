@@ -1,6 +1,6 @@
 const { FileStorageFileNotFoundError } = require("../file-storage")
-const { Kernel } = require("../kernel")
 const { UIKit } = require("../ui-kit")
+const { Sheet } = require("../sheet")
 const { NavigationView } = require("../navigation-view/navigation-view")
 const { NavigationBar } = require("../navigation-view/navigation-bar")
 
@@ -33,19 +33,22 @@ class SettingItem {
      * @type {Setting}
      */
     setting
-    method
     #id
     #key
     #icon
     title
-    #options = []
+    #options = {}
 
-    constructor(setting, key, title, icon) {
+    constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
-        this.method = this.setting?.method ?? {}
         this.key = key
-        this.title = title
+        this.title = $l10n(title)
         this.icon = icon
+        this.default = value
+    }
+
+    get method() {
+        return this.setting.method
     }
 
     set key(key) {
@@ -59,7 +62,7 @@ class SettingItem {
 
     get id() {
         if (!this.#id) {
-            this.#id = `setting-${this.setting.name}-${this.key}`
+            this.#id = `setting-${$text.uuid}-${this.key}`
         }
         return this.#id
     }
@@ -88,32 +91,38 @@ class SettingItem {
         return this.#icon
     }
 
+    get options() {
+        return this.#options
+    }
+    set options(options) {
+        this.#options = options ?? {}
+        return this
+    }
+
     set(value) {
         return this.setting.set(this.key, value)
     }
 
-    get(_default = null) {
+    get(_default = this.default) {
         return this.setting.getOriginal(this.key, _default)
     }
 
-    evalValues(object) {
+    evalValues(object, _default = []) {
         let result
         if (typeof object === "string") {
             if (object.startsWith("this.method")) {
-                result = eval(`(()=>{return ${object}()})()`)
+                result = new Function("method", `return ${object.replace("this.", "")}()`)(this.method)
+                //result = $addin.eval(`(()=>{return ${object}()})()`)
             } else {
-                result = eval(`(()=>{return ${object}})()`)
+                result = new Function(`return {${object}}`)()
+                //result = $addin.eval(`(()=>{return ${object}})()`)
             }
         } else if (typeof object === "function") {
             result = object()
         } else {
-            result = object ?? []
+            result = object ?? _default
         }
         return result
-    }
-
-    getId(key) {
-        return `setting-${this.setting.name}-${key}`
     }
 
     createLineLabel() {
@@ -170,36 +179,41 @@ class SettingItem {
         }
     }
 
-    options(...options) {
-        this.#options = options ?? []
-        return this
-    }
-
     getView() {}
 
     create() {
-        return this.getView(...this.#options)
-    }
-
-    static from(item) {
-        return new this(item.setting, item.key, item.title, item.icon)
+        return this.getView(this.options)
     }
 }
 
 class SettingInfo extends SettingItem {
-    getView(value) {
-        const isArray = Array.isArray(value)
-        const text = isArray ? value[0] : value
-        const moreInfo = isArray ? value[1] : value
+    get isArray() {
+        return Array.isArray(this.default)
+    }
+
+    async tapped() {
+        const moreInfo = this.isArray ? this.default[1] : this.default
+        const result = await $ui.alert({
+            title: this.title,
+            message: moreInfo,
+            actions: [{ title: $l10n("COPY") }, { title: $l10n("OK") }]
+        })
+        if (result.index === 0) {
+            $clipboard.text = moreInfo
+            $ui.toast($l10n("COPIED"))
+        }
+    }
+
+    getView() {
         return {
             type: "view",
-            props: { selectable: true },
+            props: { selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
                     type: "label",
                     props: {
-                        text: text,
+                        text: this.isArray ? this.default[0] : this.default,
                         align: $align.right,
                         textColor: $color("darkGray")
                     },
@@ -207,32 +221,6 @@ class SettingInfo extends SettingItem {
                         make.centerY.equalTo(view.prev)
                         make.right.inset(SettingItem.edgeOffset)
                         make.width.equalTo(180)
-                    }
-                },
-                {
-                    // 监听点击动作
-                    type: "view",
-                    events: {
-                        tapped: () => {
-                            $ui.alert({
-                                title: this.title,
-                                message: moreInfo,
-                                actions: [
-                                    {
-                                        title: $l10n("COPY"),
-                                        handler: () => {
-                                            $clipboard.text = moreInfo
-                                            $ui.toast($l10n("COPIED"))
-                                        }
-                                    },
-                                    { title: $l10n("OK") }
-                                ]
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.right.inset(0)
-                        make.size.equalTo(view.super)
                     }
                 }
             ],
@@ -348,7 +336,12 @@ class SettingString extends SettingItem {
 }
 
 class SettingStepper extends SettingItem {
-    getView(min, max) {
+    with({ min, max } = {}) {
+        this.options = { min, max }
+        return this
+    }
+
+    getView({ min, max } = {}) {
         const labelId = `${this.id}-label`
         return {
             type: "view",
@@ -398,92 +391,78 @@ class SettingStepper extends SettingItem {
 }
 
 class SettingScript extends SettingItem {
-    // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-    #withTouchEventT
+    rightSymbol = "chevron.right"
+    buttonId = `${this.id}-button`
 
-    #touchHighlightStart() {
-        $(this.id).bgcolor = $color("systemFill")
+    start() {
+        // 隐藏 button，显示 spinner
+        $(this.buttonId).alpha = 0
+        $(`${this.buttonId}-spinner`).alpha = 1
     }
-
-    #touchHighlightEnd(duration = 0.3) {
-        if (duration === 0) {
-            $(this.id).bgcolor = $color("clear")
-        } else {
-            $ui.animate({
-                duration: duration,
-                animation: () => {
-                    $(this.id).bgcolor = $color("clear")
-                }
-            })
-        }
+    cancel() {
+        $(this.buttonId).alpha = 1
+        $(`${this.buttonId}-spinner`).alpha = 0
     }
-
-    #withTouchEvent(events, withTappedHighlight = false, highlightEndDelay = 0) {
-        events = Object.assign(events, {
-            touchesBegan: () => {
-                this.#touchHighlightStart()
-                // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-                this.#withTouchEventT = $delay(1, () => this.#touchHighlightEnd(0))
-            },
-            touchesMoved: () => {
-                this.#withTouchEventT?.cancel()
-                this.#touchHighlightEnd(0)
+    done() {
+        $(`${this.buttonId}-spinner`).alpha = 0
+        const button = $(this.buttonId)
+        // 成功动画
+        button.symbol = "checkmark"
+        $ui.animate({
+            duration: 0.6,
+            animation: () => (button.alpha = 1),
+            completion: () => {
+                $ui.animate({
+                    duration: 0.4,
+                    animation: () => (button.alpha = 0),
+                    completion: () => {
+                        button.symbol = this.rightSymbol
+                        $ui.animate({
+                            duration: 0.4,
+                            animation: () => (button.alpha = 1)
+                        })
+                    }
+                })
             }
         })
-        if (withTappedHighlight) {
-            const tapped = events.tapped
-            events.tapped = () => {
-                // highlight
-                this.#touchHighlightStart()
-                $delay(highlightEndDelay, () => this.#touchHighlightEnd())
-                if (typeof tapped === "function") tapped()
-            }
-        }
-        return events
     }
 
-    getView(script) {
-        const buttonId = `${this.id}-button`
+    with({ script } = {}) {
+        this.options = { script }
+        return this
+    }
+
+    async tapped() {
+        /**
+         * @type {ScriptAnimate}
+         */
+        const animate = {
+            start: () => this.start(), // 会出现加载动画
+            cancel: () => this.cancel(), // 会直接恢复箭头图标
+            done: () => this.done() // 会出现对号，然后恢复箭头
+        }
+        // 执行代码
+        const { script } = this.options
+        if (typeof script === "function") {
+            await script(animate)
+        } else if (script.startsWith("this.method")) {
+            const scriptToFunction = new Function(
+                "method",
+                "animate",
+                `return async()=>{await ${script.replace("this.", "")}(animate)}`
+            )(this.method, animate)
+            await scriptToFunction()
+        } else {
+            const scriptToFunction = new Function("animate", `return async()=>{${script}}`)(animate)
+            await scriptToFunction()
+        }
+    }
+
+    getView() {
         const rightSymbol = "chevron.right"
-        const start = () => {
-            // 隐藏 button，显示 spinner
-            $(buttonId).alpha = 0
-            $(`${buttonId}-spinner`).alpha = 1
-            this.#touchHighlightStart()
-        }
-        const cancel = () => {
-            $(buttonId).alpha = 1
-            $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd()
-        }
-        const done = () => {
-            $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd()
-            const button = $(buttonId)
-            // 成功动画
-            button.symbol = "checkmark"
-            $ui.animate({
-                duration: 0.6,
-                animation: () => (button.alpha = 1),
-                completion: () => {
-                    $ui.animate({
-                        duration: 0.4,
-                        animation: () => (button.alpha = 0),
-                        completion: () => {
-                            button.symbol = rightSymbol
-                            $ui.animate({
-                                duration: 0.4,
-                                animation: () => (button.alpha = 1)
-                            })
-                        }
-                    })
-                }
-            })
-            $delay(0.6, () => {})
-        }
         return {
             type: "view",
-            props: { id: this.id },
+            props: { id: this.id, selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
@@ -493,7 +472,7 @@ class SettingScript extends SettingItem {
                             // 仅用于显示图片
                             type: "button",
                             props: {
-                                id: buttonId,
+                                id: this.buttonId,
                                 symbol: rightSymbol,
                                 bgcolor: $color("clear"),
                                 tintColor: $color("secondaryText")
@@ -507,7 +486,7 @@ class SettingScript extends SettingItem {
                         {
                             type: "spinner",
                             props: {
-                                id: `${buttonId}-spinner`,
+                                id: `${this.buttonId}-spinner`,
                                 loading: true,
                                 alpha: 0 // 透明度用于渐变完成动画
                             },
@@ -523,39 +502,21 @@ class SettingScript extends SettingItem {
                         make.height.equalTo(SettingItem.rowHeight)
                         make.width.equalTo(view.super)
                     }
-                },
-                { type: "view", layout: $layout.fill }
-            ],
-            events: this.#withTouchEvent({
-                tapped: () => {
-                    /**
-                     * @type {ScriptAnimate}
-                     */
-                    const animate = {
-                        start: start, // 会出现加载动画
-                        cancel: cancel, // 会直接恢复箭头图标
-                        done: done, // 会出现对号，然后恢复箭头
-                        touchHighlightStart: () => this.#touchHighlightStart(), // 被点击的一行颜色加深
-                        touchHighlightEnd: () => this.#touchHighlightEnd() // 被点击的一行颜色恢复
-                    }
-                    // 执行代码
-                    if (typeof script === "function") {
-                        script(animate)
-                    } else if (script.startsWith("this.method")) {
-                        // 传递 animate 对象
-                        eval(`(()=>{return ${script}(animate)})()`)
-                    } else {
-                        eval(script)
-                    }
                 }
-            }),
+            ],
             layout: $layout.fill
         }
     }
 }
 
 class SettingTab extends SettingItem {
-    getView(items, values) {
+    with({ items, values } = {}) {
+        if (Array.isArray(items)) items = items.map(item => $l10n(item))
+        this.options = { items, values }
+        return this
+    }
+
+    getView({ items, values } = {}) {
         items = this.evalValues(items)
         values = this.evalValues(values)
 
@@ -593,7 +554,13 @@ class SettingTab extends SettingItem {
 }
 
 class SettingMenu extends SettingItem {
-    getView(items, values, pullDown) {
+    with({ items, values, pullDown } = {}) {
+        if (Array.isArray(items)) items = items.map(item => $l10n(item))
+        this.options = { items, values, pullDown }
+        return this
+    }
+
+    getView({ items, values, pullDown } = {}) {
         const labelId = `${this.id}-label`
 
         const tmpItems = this.evalValues(items)
@@ -735,7 +702,12 @@ class SettingColor extends SettingItem {
 }
 
 class SettingDate extends SettingItem {
-    getView(mode = 2) {
+    with({ mode = 2 } = {}) {
+        this.options = { mode }
+        return this
+    }
+
+    getView({ mode = 2 } = {}) {
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -799,7 +771,12 @@ class SettingDate extends SettingItem {
 }
 
 class SettingInput extends SettingItem {
-    getView(secure = false, kbType = $kbType.default, saveFunc) {
+    with({ secure = false, kbType = $kbType.default, saveFunc } = {}) {
+        this.options = { secure, kbType, saveFunc }
+        return this
+    }
+
+    getView({ secure = false, kbType = $kbType.default, saveFunc } = {}) {
         if (saveFunc === undefined) {
             saveFunc = data => {
                 return this.set(data)
@@ -906,28 +883,37 @@ class SettingInput extends SettingItem {
 
 class SettingNumber extends SettingItem {
     getView() {
-        return SettingInput.from(this).getView(false, $kbType.decimal, text => {
-            const isNumber = str => {
-                const reg = /^[0-9]+.?[0-9]*$/
-                return reg.test(str)
-            }
-            if (text === "" || !isNumber(text)) {
-                $ui.toast($l10n("INVALID_VALUE"))
-                return false
-            }
+        return new SettingInput(this).getView({
+            secure: false,
+            kbType: $kbType.decimal,
+            saveFunc: text => {
+                const isNumber = str => {
+                    const reg = /^[0-9]+.?[0-9]*$/
+                    return reg.test(str)
+                }
+                if (text === "" || !isNumber(text)) {
+                    $ui.toast($l10n("INVALID_VALUE"))
+                    return false
+                }
 
-            return this.set(Number(text))
+                return this.set(Number(text))
+            }
         })
     }
 }
 
 class SettingIcon extends SettingItem {
+    with({ bgcolor = "#000000" } = {}) {
+        this.options = { bgcolor }
+        return this
+    }
+
     /**
      *
      * @param {string|Object} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns {object}
      */
-    getView(bgcolor = "#000000") {
+    getView({ bgcolor = "#000000" } = {}) {
         const imageId = `${this.id}-image`
         return {
             type: "view",
@@ -1006,13 +992,64 @@ class SettingIcon extends SettingItem {
 }
 
 class SettingPush extends SettingItem {
-    method = this.setting.method
+    with({ view, navButtons = [] } = {}) {
+        this.options = { view, navButtons }
+        return this
+    }
 
-    getView(view, tapped) {
+    tapped() {
+        let { view, navButtons } = this.options
+
+        view = this.evalValues(view, {})
+        navButtons = this.evalValues(navButtons)
+        if (navButtons.length > 0) {
+            navButtons.map(button => {
+                if (typeof button.tapped === "string") {
+                    const buttonTappedString = button.tapped
+                    button.tapped = () => {
+                        this.evalValues(buttonTappedString)
+                    }
+                }
+                button.handler = button.tapped
+                return button
+            })
+        }
+
+        return new Promise((resolve, reject) => {
+            if (this.setting.isUseJsboxNav) {
+                const options = {
+                    title: this.title,
+                    props: view.props ?? {},
+                    views: [view],
+                    disappeared: () => resolve()
+                }
+                if (navButtons.length > 0) {
+                    options.navButtons = navButtons
+                }
+                UIKit.push(options)
+            } else {
+                const navigationView = new NavigationView()
+                navigationView.setView(view).navigationBarTitle(this.title)
+                navigationView.navigationBarItems.addPopButton()
+                navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+                if (this.setting.hasSectionTitle(view)) {
+                    navigationView.navigationBar.setContentViewHeightOffset(-10)
+                }
+
+                if (navButtons.length > 0) {
+                    navigationView.navigationBarItems.setRightButtons(navButtons)
+                }
+                this.setting.viewController.setEvent("onPop", () => resolve())
+
+                this.setting.viewController.push(navigationView)
+            }
+        })
+    }
+
+    getView() {
         return {
             type: "view",
-            layout: $layout.fill,
-            props: { id: this.id, selectable: true },
+            props: { id: this.id, selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
@@ -1028,56 +1065,22 @@ class SettingPush extends SettingItem {
                         make.right.inset(SettingItem.edgeOffset)
                         make.height.equalTo(view.super)
                     }
-                },
-                { type: "view", layout: $layout.fill }
-            ],
-            events: {
-                tapped: () => {
-                    const push = view => {
-                        if (typeof view === "string" && view.startsWith("this.method")) {
-                            view = eval(`(()=>{return ${view}()})()`)
-                        } else if (typeof view === "function") {
-                            view = view()
-                        }
-                        if (this.setting.isUseJsboxNav) {
-                            UIKit.push({
-                                title: this.title,
-                                props: view.props ?? {},
-                                views: [view]
-                            })
-                        } else {
-                            const navigationView = new NavigationView()
-                            navigationView.setView(view).navigationBarTitle(this.title)
-                            navigationView.navigationBarItems.addPopButton()
-                            navigationView.navigationBar.setLargeTitleDisplayMode(
-                                NavigationBar.largeTitleDisplayModeNever
-                            )
-                            if (this.setting.hasSectionTitle(view)) {
-                                navigationView.navigationBar.setContentViewHeightOffset(-10)
-                            }
-                            this.setting.viewController.push(navigationView)
-                        }
-                    }
-                    if (typeof tapped === "function") {
-                        tapped(push)
-                    } else {
-                        push(view)
-                    }
                 }
-            }
+            ],
+            layout: $layout.fill
         }
     }
 }
 
-class SettingChild extends SettingItem {
-    getView(children) {
-        return SettingPush.from(this).getView(undefined, push => {
-            if (this.setting.events?.onChildPush) {
-                this.setting.callEvent("onChildPush", this.setting.getListView(children, {}), this.title)
-            } else {
-                push(this.setting.getListView(children, {}))
+class SettingChild extends SettingPush {
+    with({ children } = {}) {
+        super.with({
+            view: () => {
+                return this.setting.getListView(children, {}, this.id)
             }
         })
+        this.options.children = children
+        return this
     }
 }
 
@@ -1134,7 +1137,7 @@ class SettingImage extends SettingItem {
                 handler: withLoading(() => {
                     const data = this.getImage(false)
                     if (data) {
-                        Kernel.quickLookImage(data)
+                        Sheet.quickLookImage(data)
                     } else {
                         $ui.toast($l10n("NO_IMAGE"))
                     }
@@ -1154,7 +1157,7 @@ class SettingImage extends SettingItem {
                                 return
                             }
                             // 控制压缩图片大小
-                            const image = Kernel.compressImage(resp.data.image)
+                            const image = UIKit.compressImage(resp.data.image)
                             this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
                             this.setting.fileStorage.write(this.getImagePath(), resp.data)
                             $(imageId).image = image
@@ -1167,7 +1170,7 @@ class SettingImage extends SettingItem {
                             const data = await $drive.open()
                             if (!data) return
                             // 控制压缩图片大小
-                            const image = Kernel.compressImage(data.image)
+                            const image = UIKit.compressImage(data.image)
                             this.setting.fileStorage.write(this.getImagePath(true), image.jpg(0.8))
                             this.setting.fileStorage.write(this.getImagePath(), data)
                             $(imageId).image = image

@@ -1,19 +1,30 @@
-const { FileStorage } = require("./file-storage")
+/**
+ * @typedef {import("./file-storage").FileStorage} FileStorage
+ */
 
 class Logger {
-    print
+    static level = {
+        info: "info",
+        warn: "warn",
+        error: "error"
+    }
 
-    constructor(print) {
-        this.print = print ?? console.log
+    writer
+    fsLevels = [Logger.level.error]
+
+    /**
+     * @param {Array} levels
+     */
+    printToFile(levels) {
+        this.fsLevels = levels
     }
 
     /**
-     *
      * @param {FileStorage} fs
      * @param {string} path
      */
-    printToFile(fs, path) {
-        this.print = msg => {
+    setWriter(fs, path) {
+        this.writer = msg => {
             if (fs.exists(path)) {
                 let old = fs.readSync(path)?.string ?? ""
                 msg = old + msg
@@ -24,20 +35,24 @@ class Logger {
 
     format(msg, level) {
         const time = new Date().toUTCString()
-        return `${time} [${level}] ${msg}\n`
+        return `${time} [${level.toUpperCase()}] ${msg}\n`
     }
 
     log(msg, level) {
-        this.print(this.format(msg, level))
+        if (this.writer && this.fsLevels.includes(level)) {
+            this.writer(this.format(msg, level))
+        }
+        // 控制台不格式化
+        if ($app.isDebugging) console[level](msg)
     }
     info(msg) {
-        this.log(msg, "INFO")
+        this.log(msg, Logger.level.info)
+    }
+    warn(msg) {
+        this.log(msg, Logger.level.warn)
     }
     error(msg) {
-        this.log(msg, "ERROR")
-    }
-    alert(msg) {
-        this.log(msg, "ALERT")
+        this.log(msg, Logger.level.error)
     }
 }
 

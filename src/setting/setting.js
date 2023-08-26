@@ -1,7 +1,5 @@
 const { Controller } = require("../controller")
 const { FileStorage } = require("../file-storage")
-const { Kernel } = require("../kernel")
-const { UIKit } = require("../ui-kit")
 const { Sheet } = require("../sheet")
 const { NavigationView } = require("../navigation-view/navigation-view")
 const { ViewController } = require("../navigation-view/view-controller")
@@ -23,6 +21,7 @@ const {
     SettingChild,
     SettingImage
 } = require("./setting-items")
+const { Logger } = require("../logger")
 
 class SettingLoadConfigError extends Error {
     constructor() {
@@ -64,11 +63,14 @@ class Setting extends Controller {
     // 存储数据
     setting = {}
     settingItems = {}
-    exclude = ["script", "info"]
     // 初始用户数据，若未定义则尝试从给定的文件读取
     userData
     // fileStorage
     fileStorage
+    /**
+     * @type {Logger}
+     */
+    logger
     imagePath
     // 用来控制 child 类型
     viewController = new ViewController()
@@ -94,6 +96,7 @@ class Setting extends Controller {
                         make.size.equalTo(view.super)
                     }
                 })
+                .addNavBar({ title: "README", popButton: { symbol: "x.circle" } })
                 .init()
                 .present()
         }
@@ -124,7 +127,7 @@ class Setting extends Controller {
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.getOriginal = args.get
-            this.userData = args.userData ?? {}
+            this.setUserData(args.userData ?? {})
         } else {
             this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
@@ -134,12 +137,11 @@ class Setting extends Controller {
         } else {
             this.setStructurePath(args.structurePath ?? "setting.json")
         }
+        this.logger = args.logger ?? new Logger()
         this.isUseJsboxNav = args.isUseJsboxNav ?? false
         // 不能使用 uuid
         this.imagePath = (args.name ?? "default") + ".image" + "/"
         this.setName(args.name ?? $text.uuid)
-        // l10n
-        this.loadL10n()
     }
 
     useJsboxNav() {
@@ -147,67 +149,70 @@ class Setting extends Controller {
         return this
     }
 
-    #checkLoadConfigError() {
+    #checkLoadConfig() {
         if (!this.#loadConfigStatus) {
             throw new SettingLoadConfigError()
         }
     }
 
     loader(item) {
-        if (this.settingItems[item.key]) {
-            return this.settingItems[item.key]
-        }
-        if (Array.isArray(item.items)) item.items = item.items.map(item => $l10n(item))
-        item.title = $l10n(item.title)
-        item.setting = this
-
         let settingItem = null
         switch (item.type) {
             case "info":
-                settingItem = SettingInfo.from(item).options(item.value)
+                settingItem = new SettingInfo(item)
                 break
             case "switch":
-                settingItem = SettingSwitch.from(item)
+                settingItem = new SettingSwitch(item)
                 break
             case "string":
-                settingItem = SettingString.from(item)
+                settingItem = new SettingString(item)
                 break
             case "stepper":
-                settingItem = SettingStepper.from(item).options(item.min ?? 1, item.max ?? 12)
+                settingItem = new SettingStepper(item).with({ min: item.min ?? 1, max: item.max ?? 12 })
                 break
             case "script":
-                settingItem = SettingScript.from(item).options(item.value)
+                // item.script ?? item.value 兼容旧版本
+                settingItem = new SettingScript(item).with({ script: item.script ?? item.value })
                 break
             case "tab":
-                settingItem = SettingTab.from(item).options(item.items, item.values)
+                settingItem = new SettingTab(item).with({ items: item.items, values: item.values })
                 break
             case "menu":
-                settingItem = SettingMenu.from(item).options(item.items, item.values, item.pullDown ?? false)
+                settingItem = new SettingMenu(item).with({
+                    items: item.items,
+                    values: item.values,
+                    pullDown: item.pullDown ?? false
+                })
                 break
             case "color":
-                settingItem = SettingColor.from(item)
+                settingItem = new SettingColor(item)
                 break
             case "date":
-                settingItem = SettingDate.from(item).options(item.mode)
+                settingItem = new SettingDate(item).with({ mode: item.mode })
                 break
             case "input":
-                settingItem = SettingInput.from(item).options(item.secure)
+                settingItem = new SettingInput(item).with({ secure: item.secure })
                 break
             case "number":
-                settingItem = SettingNumber.from(item)
+                settingItem = new SettingNumber(item)
                 break
             case "icon":
-                settingItem = SettingIcon.from(item).options(item.bgcolor)
+                settingItem = new SettingIcon(item).with({ bgcolor: item.bgcolor })
                 break
             case "push":
-                settingItem = SettingPush.from(item).options(item.view)
+                settingItem = new SettingPush(item).with({ view: item.view, navButtons: item.navButtons })
                 break
             case "child":
-                settingItem = SettingChild.from(item).options(item.children)
+                settingItem = new SettingChild(item).with({ children: item.children })
                 break
             case "image":
-                settingItem = SettingImage.from(item)
+                settingItem = new SettingImage(item)
                 break
+            default:
+                settingItem = item
+                settingItem.default = item.value
+                settingItem.get = (...args) => this.get(...args)
+                settingItem.set = (...args) => this.set(...args)
         }
         return settingItem
     }
@@ -217,17 +222,35 @@ class Setting extends Controller {
      * @returns {this}
      */
     loadConfig() {
+        this.#loadConfigStatus = false
         // 永远使用 setting 结构文件内的值
         const userData = this.userData ?? this.fileStorage.readAsJSON(this.dataFile, {})
+
         const setValue = structure => {
-            for (let section of structure) {
-                for (let item of section.items) {
-                    if (item.type === "child") {
-                        setValue(item.children)
-                    } else if (!this.exclude.includes(item.type)) {
-                        this.setting[item.key] = item.key in userData ? userData[item.key] : item.value
-                        // 只保留有取值需求的 settingItem
-                        this.settingItems[item.key] = this.loader(item)
+            for (let i in structure) {
+                for (let j in structure[i].items) {
+                    // item 指向 structure[i].items[j] 所指的对象
+                    let item = structure[i].items[j]
+                    if (!(item instanceof SettingItem)) {
+                        // 修改 items[j] 的指向以修改原始 this.structure
+                        // 此时 item 仍然指向原对象
+                        structure[i].items[j] = this.loader(item)
+                        // 修改 item 指向
+                        item = structure[i].items[j]
+                    }
+                    if (!item.setting) item.setting = this
+
+                    // 部分类型可通过此属性快速查找 tapped
+                    this.settingItems[item.key] = item
+
+                    if (item instanceof SettingChild) {
+                        setValue(item.options.children)
+                    } else if (!(item instanceof SettingScript || item instanceof SettingInfo)) {
+                        if (item.key in userData) {
+                            this.setting[item.key] = userData[item.key]
+                        } else {
+                            this.setting[item.key] = item.default
+                        }
                     }
                 }
             }
@@ -238,87 +261,8 @@ class Setting extends Controller {
     }
 
     hasSectionTitle(structure) {
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         return structure[0]?.title ? true : false
-    }
-
-    loadL10n() {
-        Kernel.l10n(
-            "zh-Hans",
-            {
-                OK: "好",
-                DONE: "完成",
-                CANCEL: "取消",
-                CLEAR: "清除",
-                BACK: "返回",
-                ERROR: "发生错误",
-                SUCCESS: "成功",
-                INVALID_VALUE: "非法参数",
-                CONFIRM_CHANGES: "数据已变化，确认修改？",
-
-                SETTING: "设置",
-                GENERAL: "一般",
-                ADVANCED: "高级",
-                TIPS: "小贴士",
-                COLOR: "颜色",
-                COPY: "复制",
-                COPIED: "复制成功",
-
-                JSBOX_ICON: "JSBox 内置图标",
-                SF_SYMBOLS: "SF Symbols",
-                IMAGE_BASE64: "图片 / base64",
-
-                PREVIEW: "预览",
-                SELECT_IMAGE_PHOTO: "从相册选择图片",
-                SELECT_IMAGE_ICLOUD: "从 iCloud 选择图片",
-                CLEAR_IMAGE: "清除图片",
-                NO_IMAGE: "无图片",
-
-                ABOUT: "关于",
-                VERSION: "Version",
-                AUTHOR: "作者",
-                AT_BOTTOM: "已经到底啦~"
-            },
-            false
-        )
-        Kernel.l10n(
-            "en",
-            {
-                OK: "OK",
-                DONE: "Done",
-                CANCEL: "Cancel",
-                CLEAR: "Clear",
-                BACK: "Back",
-                ERROR: "Error",
-                SUCCESS: "Success",
-                INVALID_VALUE: "Invalid value",
-                CONFIRM_CHANGES: "The data has changed, confirm the modification?",
-
-                SETTING: "Setting",
-                GENERAL: "General",
-                ADVANCED: "Advanced",
-                TIPS: "Tips",
-                COLOR: "Color",
-                COPY: "Copy",
-                COPIED: "Copide",
-
-                JSBOX_ICON: "JSBox in app icon",
-                SF_SYMBOLS: "SF Symbols",
-                IMAGE_BASE64: "Image / base64",
-
-                PREVIEW: "Preview",
-                SELECT_IMAGE_PHOTO: "Select From Photo",
-                SELECT_IMAGE_ICLOUD: "Select From iCloud",
-                CLEAR_IMAGE: "Clear Image",
-                NO_IMAGE: "No Image",
-
-                ABOUT: "About",
-                VERSION: "Version",
-                AUTHOR: "Author",
-                AT_BOTTOM: "It's the end~"
-            },
-            false
-        )
     }
 
     setUserData(userData) {
@@ -328,7 +272,7 @@ class Setting extends Controller {
 
     setStructure(structure) {
         this.structure = structure
-        return this
+        return this.loadConfig()
     }
 
     /**
@@ -408,7 +352,7 @@ class Setting extends Controller {
         if (this.#readonly) {
             throw new SettingReadonlyError()
         }
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         this.setting[key] = value
         this.fileStorage.write(this.dataFile, $data({ string: JSON.stringify(this.setting) }))
         this.callEvent("onSet", key, value)
@@ -416,41 +360,48 @@ class Setting extends Controller {
     }
 
     getOriginal(key, _default = null) {
-        this.#checkLoadConfigError()
+        this.#checkLoadConfig()
         if (Object.prototype.hasOwnProperty.call(this.setting, key)) return this.setting[key]
         else return _default
     }
 
+    getItem(key) {
+        return this.settingItems[key]
+    }
+
     get(key, _default = null) {
-        this.#checkLoadConfigError()
-        if (!this.settingItems[key]) {
+        this.#checkLoadConfig()
+        if (!this.getItem(key)) {
             return this.getOriginal(key, _default)
         }
-        return this.settingItems[key].get(_default)
+        return this.getItem(key).get(_default)
     }
 
     #getSections(structure) {
         const sections = []
-        for (let section of structure) {
+        for (let section in structure) {
             const rows = []
-            for (let item of section.items) {
-                let row = this.loader(item)?.create()
-                if (!row) continue
-                rows.push(row)
+            for (let row in structure[section].items) {
+                let item = structure[section].items[row]
+                // 跳过无 UI 项
+                if (!(item instanceof SettingItem)) {
+                    continue
+                }
+                rows.push(item.create())
             }
             sections.push({
-                title: $l10n(section.title ?? ""),
+                title: $l10n(structure[section].title ?? ""),
                 rows: rows
             })
         }
         return sections
     }
 
-    getListView(structure, footer = this.footer) {
+    getListView(structure = this.structure, footer = this.footer, id = this.name) {
         return {
             type: "list",
             props: {
-                id: this.name,
+                id,
                 style: 2,
                 separatorInset: $insets(
                     0,
@@ -458,15 +409,29 @@ class Setting extends Controller {
                     0,
                     SettingItem.edgeOffset
                 ), // 分割线边距
-                bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
-                data: this.#getSections(structure ?? this.structure)
+                data: this.#getSections(structure)
             },
             layout: $layout.fill,
             events: {
-                rowHeight: (sender, indexPath) => {
-                    const info = sender.object(indexPath)?.props?.info ?? {}
+                rowHeight: (tableView, indexPath) => {
+                    const info = tableView.object(indexPath)?.props?.info ?? {}
                     return info.rowHeight ?? SettingItem.rowHeight
+                },
+                didSelect: async (tableView, indexPath, data) => {
+                    tableView = tableView.ocValue()
+
+                    const item = this.getItem(data.props.info.key)
+                    if (typeof item?.tapped === "function") {
+                        tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath.ocValue(), false, 0)
+                        try {
+                            await item.tapped()
+                        } catch (error) {
+                            this.logger.error(error)
+                        }
+                    }
+
+                    tableView.$deselectRowAtIndexPath_animated(indexPath, true)
                 }
             }
         }

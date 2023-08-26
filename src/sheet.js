@@ -1,7 +1,7 @@
 const { ValidationError } = require("./validation-error")
-const { UIKit } = require("./ui-kit")
 const { NavigationView } = require("./navigation-view/navigation-view")
 const { NavigationBar } = require("./navigation-view/navigation-bar")
+const { UIKit } = require("./ui-kit")
 
 class SheetViewUndefinedError extends Error {
     constructor() {
@@ -44,19 +44,17 @@ class Sheet {
 
     init() {
         this.initNavBar()
-        const { width, height } = $device.info.screen
-        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
-        const ViewController = $objc("UIViewController").invoke("alloc.init")
-        const ViewControllerView = ViewController.$view()
-        ViewControllerView.$setBackgroundColor(UIKit.primaryViewBackgroundColor)
-        ViewControllerView.$addSubview(UIView)
-        ViewController.$setModalPresentationStyle(this.style)
-        ViewController.$setModalInPresentation(this.#preventDismiss)
+        const sheetVC = $objc("UIViewController").invoke("alloc.init")
+
+        const view = sheetVC.$view()
+        view.$addSubview($ui.create({ type: "view" }))
+        sheetVC.$setModalPresentationStyle(this.style)
+        sheetVC.$setModalInPresentation(this.#preventDismiss)
         this.#present = () => {
-            ViewControllerView.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
-            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", ViewController, true, undefined)
+            view.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
+            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", sheetVC, true, null)
         }
-        this.#dismiss = () => ViewController.invoke("dismissViewControllerAnimated:completion:", true, undefined)
+        this.#dismiss = () => sheetVC.invoke("dismissViewControllerAnimated:completion:", true, null)
         return this
     }
 
@@ -71,7 +69,7 @@ class Sheet {
         const navBar = this.navigationView.navigationBar
         navBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         navBar.navigationBarLargeTitleHeight -= navBar.navigationBarNormalHeight
-        navBar.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
+        navBar.navigationBarNormalHeight = UIKit.PageSheetNavigationBarNormalHeight
         navBar.navigationBarLargeTitleHeight += navBar.navigationBarNormalHeight
         if (
             this.style === Sheet.UIModalPresentationStyle.FullScreen ||
@@ -86,9 +84,11 @@ class Sheet {
         // 返回按钮
         popButton.events = Object.assign(
             {
-                tapped: () => {
+                tapped: async () => {
+                    if (typeof popButton.tapped === "function") {
+                        await popButton.tapped()
+                    }
                     this.dismiss()
-                    if (typeof popButton.tapped === "function") popButton.tapped()
                 }
             },
             popButton.events ?? {}
@@ -148,6 +148,43 @@ class Sheet {
      */
     dismiss() {
         this.#dismiss()
+    }
+
+    static quickLookImage(data, title = $l10n("PREVIEW")) {
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { data: data },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            .addNavBar({
+                title,
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(data)
+                    }
+                ]
+            })
+            .init()
+            .present()
     }
 }
 

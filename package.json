@@ -1,17 +1,9 @@
 {
     "license": "MIT",
     "scripts": {
-        "build": "parcel build"
+        "build": "node build.js"
     },
-    "jsbox": "dist/easy-jsbox.js",
-    "targets": {
-        "jsbox": {
-            "source": "./index.js",
-            "includeNodeModules": false,
-            "sourceMap": false,
-            "outputFormat": "commonjs",
-            "scopeHoist": true,
-            "optimize": true
-        }
+    "dependencies": {
+        "esbuild": "0.18.17"
     }
 }
