@@ -44,19 +44,17 @@ class Sheet {
 
     init() {
         this.initNavBar()
-        const { width, height } = $device.info.screen
-        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
-        const ViewController = $objc("UIViewController").invoke("alloc.init")
-        const ViewControllerView = ViewController.$view()
-        //ViewControllerView.$setBackgroundColor($color("clear"))
-        ViewControllerView.$addSubview(UIView)
-        ViewController.$setModalPresentationStyle(this.style)
-        ViewController.$setModalInPresentation(this.#preventDismiss)
+        const sheetVC = $objc("UIViewController").invoke("alloc.init")
+
+        const view = sheetVC.$view()
+        view.$addSubview($ui.create({ type: "view" }))
+        sheetVC.$setModalPresentationStyle(this.style)
+        sheetVC.$setModalInPresentation(this.#preventDismiss)
         this.#present = () => {
-            ViewControllerView.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
-            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", ViewController, true, undefined)
+            view.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
+            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", sheetVC, true, null)
         }
-        this.#dismiss = () => ViewController.invoke("dismissViewControllerAnimated:completion:", true, undefined)
+        this.#dismiss = () => sheetVC.invoke("dismissViewControllerAnimated:completion:", true, null)
         return this
     }
 
@@ -86,9 +84,11 @@ class Sheet {
         // 返回按钮
         popButton.events = Object.assign(
             {
-                tapped: () => {
+                tapped: async () => {
+                    if (typeof popButton.tapped === "function") {
+                        await popButton.tapped()
+                    }
                     this.dismiss()
-                    if (typeof popButton.tapped === "function") popButton.tapped()
                 }
             },
             popButton.events ?? {}

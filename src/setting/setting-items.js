@@ -38,7 +38,6 @@ class SettingItem {
     #icon
     title
     #options = {}
-    indexPath
 
     constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
@@ -182,8 +181,7 @@ class SettingItem {
 
     getView() {}
 
-    create(indexPath) {
-        this.indexPath = indexPath
+    create() {
         return this.getView(this.options)
     }
 }
@@ -209,7 +207,7 @@ class SettingInfo extends SettingItem {
     getView() {
         return {
             type: "view",
-            props: { selectable: true },
+            props: { selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
@@ -464,7 +462,7 @@ class SettingScript extends SettingItem {
         const rightSymbol = "chevron.right"
         return {
             type: "view",
-            props: { id: this.id, selectable: true },
+            props: { id: this.id, selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
@@ -999,7 +997,7 @@ class SettingPush extends SettingItem {
         return this
     }
 
-    async tapped() {
+    tapped() {
         let { view, navButtons } = this.options
 
         view = this.evalValues(view, {})
@@ -1017,38 +1015,41 @@ class SettingPush extends SettingItem {
             })
         }
 
-        if (this.setting.isUseJsboxNav) {
-            const options = {
-                title: this.title,
-                props: view.props ?? {},
-                views: [view]
-            }
-            if (navButtons.length > 0) {
-                options.navButtons = navButtons
-            }
-            UIKit.push(options)
-        } else {
-            const navigationView = new NavigationView()
-            navigationView.setView(view).navigationBarTitle(this.title)
-            navigationView.navigationBarItems.addPopButton()
-            navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
-            if (this.setting.hasSectionTitle(view)) {
-                navigationView.navigationBar.setContentViewHeightOffset(-10)
-            }
+        return new Promise((resolve, reject) => {
+            if (this.setting.isUseJsboxNav) {
+                const options = {
+                    title: this.title,
+                    props: view.props ?? {},
+                    views: [view],
+                    disappeared: () => resolve()
+                }
+                if (navButtons.length > 0) {
+                    options.navButtons = navButtons
+                }
+                UIKit.push(options)
+            } else {
+                const navigationView = new NavigationView()
+                navigationView.setView(view).navigationBarTitle(this.title)
+                navigationView.navigationBarItems.addPopButton()
+                navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+                if (this.setting.hasSectionTitle(view)) {
+                    navigationView.navigationBar.setContentViewHeightOffset(-10)
+                }
 
-            if (navButtons.length > 0) {
-                navigationView.navigationBarItems.setRightButtons(navButtons)
-            }
+                if (navButtons.length > 0) {
+                    navigationView.navigationBarItems.setRightButtons(navButtons)
+                }
+                this.setting.viewController.setEvent("onPop", () => resolve())
 
-            this.setting.viewController.push(navigationView)
-        }
+                this.setting.viewController.push(navigationView)
+            }
+        })
     }
 
     getView() {
         return {
             type: "view",
-            layout: $layout.fill,
-            props: { id: this.id, selectable: true },
+            props: { id: this.id, selectable: true, info: { key: this.key } },
             views: [
                 this.createLineLabel(),
                 {
@@ -1065,7 +1066,8 @@ class SettingPush extends SettingItem {
                         make.height.equalTo(view.super)
                     }
                 }
-            ]
+            ],
+            layout: $layout.fill
         }
     }
 }

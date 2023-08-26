@@ -208,6 +208,11 @@ class Setting extends Controller {
             case "image":
                 settingItem = new SettingImage(item)
                 break
+            default:
+                settingItem = item
+                settingItem.default = item.value
+                settingItem.get = (...args) => this.get(...args)
+                settingItem.set = (...args) => this.set(...args)
         }
         return settingItem
     }
@@ -235,6 +240,9 @@ class Setting extends Controller {
                     }
                     if (!item.setting) item.setting = this
 
+                    // 部分类型可通过此属性快速查找 tapped
+                    this.settingItems[item.key] = item
+
                     if (item instanceof SettingChild) {
                         setValue(item.options.children)
                     } else if (!(item instanceof SettingScript || item instanceof SettingInfo)) {
@@ -243,8 +251,6 @@ class Setting extends Controller {
                         } else {
                             this.setting[item.key] = item.default
                         }
-                        // 只保留有取值需求的 settingItem
-                        this.settingItems[item.key] = item
                     }
                 }
             }
@@ -378,9 +384,10 @@ class Setting extends Controller {
             for (let row in structure[section].items) {
                 let item = structure[section].items[row]
                 // 跳过无 UI 项
-                if (!(item instanceof SettingItem)) continue
-                if (!item.setting) item.setting = this
-                rows.push(item.create($indexPath(section, row)))
+                if (!(item instanceof SettingItem)) {
+                    continue
+                }
+                rows.push(item.create())
             }
             sections.push({
                 title: $l10n(structure[section].title ?? ""),
@@ -413,10 +420,10 @@ class Setting extends Controller {
                 },
                 didSelect: async (tableView, indexPath, data) => {
                     tableView = tableView.ocValue()
-                    tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath.ocValue(), false, 0)
 
-                    const item = structure[indexPath.section]?.items[indexPath.row]
+                    const item = this.getItem(data.props.info.key)
                     if (typeof item?.tapped === "function") {
+                        tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath.ocValue(), false, 0)
                         try {
                             await item.tapped()
                         } catch (error) {

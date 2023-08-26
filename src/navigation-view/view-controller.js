@@ -36,7 +36,7 @@ class ViewController extends Controller {
                 navBarHidden: true
             },
             events: {
-                dealloc: () => {
+                disappeared: () => {
                     this.#onPop(navigationView)
                 }
             },
