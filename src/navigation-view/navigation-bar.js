@@ -30,7 +30,7 @@ class NavigationBar extends View {
     }).height
     navigationBarTitleFontSize = 17
     topSafeArea = true
-    contentViewHeightOffset = 10
+    contentViewHeightOffset = 0
     navigationBarNormalHeight = UIKit.NavigationBarNormalHeight
     navigationBarLargeTitleHeight = UIKit.NavigationBarLargeTitleHeight
 
