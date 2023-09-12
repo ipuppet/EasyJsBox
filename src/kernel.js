@@ -143,12 +143,14 @@ class Kernel {
     }
     KeyboardRenderWithViewFunc(getView) {
         $ui.render()
-
-        $delay(0, async () => {
-            const view = await getView()
-            if (!view.id) view.id = $text.uuid
-            $ui.controller.view = $ui.create(view)
-            $ui.controller.view.layout(view.layout)
+        $delay(0, () => {
+            $ui.controller.view = $ui.create({ type: "view" })
+            $delay(0, async () => {
+                const view = await getView()
+                if (!view.id) view.id = $text.uuid
+                $ui.controller.view = $ui.create(view)
+                $ui.controller.view.layout(view.layout)
+            })
         })
     }
 
