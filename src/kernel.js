@@ -141,6 +141,16 @@ class Kernel {
             $ui.controller.view.layout(view.layout)
         })
     }
+    KeyboardRenderWithViewFunc(getView) {
+        $ui.render()
+
+        $delay(0, async () => {
+            const view = await getView()
+            if (!view.id) view.id = $text.uuid
+            $ui.controller.view = $ui.create(view)
+            $ui.controller.view.layout(view.layout)
+        })
+    }
 
     async checkUpdate() {
         const branche = "dev" // 更新版本，可选 master, dev

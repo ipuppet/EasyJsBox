@@ -256,6 +256,7 @@ class TabBarController extends Controller {
         return Object.values(this.#pages).map(page => {
             if (page.scrollable) {
                 const scrollView = page.scrollableView
+
                 // indicatorInsets
                 if (scrollView.props.indicatorInsets) {
                     const old = scrollView.props.indicatorInsets
@@ -268,17 +269,24 @@ class TabBarController extends Controller {
                 } else {
                     scrollView.props.indicatorInsets = $insets(0, 0, this.contentOffset, 0)
                 }
-                // footer
-                scrollView.props.footer = Object.assign({ props: {} }, scrollView.props.footer ?? {})
-                if (scrollView.props.footer.props.height) {
-                    scrollView.props.footer.props.height += this.contentOffset
+
+                // contentInset
+                if (scrollView.props.contentInset) {
+                    const old = scrollView.props.contentInset
+                    scrollView.props.contentInset = $insets(
+                        old.top,
+                        old.left,
+                        old.bottom + this.contentOffset,
+                        old.right
+                    )
                 } else {
-                    scrollView.props.footer.props.height = this.contentOffset
+                    scrollView.props.contentInset = $insets(0, 0, this.contentOffset, 0)
                 }
+
                 // Scroll
                 if (typeof scrollView.assignEvent === "function") {
                     scrollView.assignEvent("didScroll", sender => {
-                        const contentOffset = sender.contentOffset.y
+                        const contentOffset = sender.contentOffset.y - this.contentOffset
                         const contentSize = sender.contentSize.height + this.bottomSafeAreaInsets
                         const nextSize = contentSize - sender.frame.height
                         if (nextSize - contentOffset <= 1) {
