@@ -134,7 +134,7 @@ class Kernel {
     KeyboardRender(view = {}) {
         if (!view.id) view.id = $text.uuid
 
-        $ui.render({ events: view.events ?? {} })
+        $ui.render()
 
         $delay(0, () => {
             $ui.controller.view = $ui.create(view)
