@@ -14,8 +14,6 @@ class FileManager {
     viewController
 
     constructor() {
-        this.listId = "file-manager-list"
-
         this.edges = 10
         this.iconSize = 25
     }
@@ -89,7 +87,7 @@ class FileManager {
     }
 
     getFiles(basePath = "") {
-        const files = $file
+        return $file
             .list(basePath)
             .map(file => {
                 const path = basePath + "/" + file
@@ -110,8 +108,6 @@ class FileManager {
                     return a.info.info.file.localeCompare(b.info.info.file)
                 }
             })
-
-        return files
     }
 
     async loadFileSize(data) {
@@ -180,13 +176,21 @@ class FileManager {
         }
     }
 
-    #pushPage(title, view) {
-        const tapped = () => {
-            const path = $file.absolutePath($(this.listId).info.basePath)
-            $ui.alert({
+    #pushPage(basePath) {
+        const lastSlash = basePath.lastIndexOf("/")
+        const title = basePath.substring(lastSlash < 0 ? 0 : lastSlash + 1)
+        const view = this.getListView(basePath)
+        const tapped = async () => {
+            const path = $file.absolutePath(basePath)
+            const result = await $ui.alert({
                 title: "Path",
-                message: path
+                message: path,
+                actions: [{ title: $l10n("COPY") }, { title: $l10n("OK") }]
             })
+            if (result.index === 0) {
+                $clipboard.text = path
+                $ui.toast($l10n("COPIED"))
+            }
         }
 
         if (this.viewController) {
@@ -217,9 +221,7 @@ class FileManager {
             // 剪切板列表
             type: "list",
             props: {
-                id: this.listId,
                 menu: this.menu,
-                info: { basePath },
                 bgcolor: UIKit.primaryViewBackgroundColor,
                 separatorInset: $insets(0, this.edges, 0, 0),
                 data: [],
@@ -244,17 +246,17 @@ class FileManager {
             },
             layout: $layout.fill,
             events: {
-                ready: () => {
+                ready: sender => {
                     const data = this.getFiles(basePath)
-                    $(this.listId).data = data
+                    sender.data = data
                     this.loadFileSize(data).then(data => {
-                        $(this.listId).data = data
+                        sender.data = data
                     })
                 },
                 pulled: async sender => {
-                    const data = this.getFiles($(this.listId).info.basePath)
-                    $(this.listId).data = data
-                    $(this.listId).data = await this.loadFileSize(data)
+                    const data = this.getFiles(basePath)
+                    sender.data = data
+                    sender.data = await this.loadFileSize(data)
                     $delay(0.5, () => {
                         sender.endRefreshing()
                     })
@@ -262,7 +264,7 @@ class FileManager {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
                     if (info.isDirectory) {
-                        this.#pushPage(info.file, this.getListView(info.path))
+                        this.#pushPage(info.path)
                     } else {
                         this.edit(info)
                     }
@@ -275,8 +277,7 @@ class FileManager {
      * @param {string} basePath JSBox path
      */
     push(basePath = "") {
-        const pathName = basePath.substring(basePath.lastIndexOf("/"))
-        this.#pushPage(pathName, this.getListView(basePath))
+        this.#pushPage(basePath)
     }
 }
 
