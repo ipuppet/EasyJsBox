@@ -23,6 +23,8 @@ class Sheet {
     style = Sheet.UIModalPresentationStyle.PageSheet
     #preventDismiss = false
     #navBar
+    #willDismiss
+    #didDismiss
 
     static UIModalPresentationStyle = {
         Automatic: -2,
@@ -44,17 +46,32 @@ class Sheet {
 
     init() {
         this.initNavBar()
-        const sheetVC = $objc("UIViewController").invoke("alloc.init")
+        $define({
+            type: "SheetViewController: UIViewController",
+            events: {
+                "viewWillDisappear:": animated => {
+                    if (typeof this.#willDismiss === "function") {
+                        this.#willDismiss(animated)
+                    }
+                },
+                "viewDidDisappear:": animated => {
+                    if (typeof this.#didDismiss === "function") {
+                        this.#didDismiss(animated)
+                    }
+                }
+            }
+        })
+        this.sheetVC = $objc("SheetViewController").$new()
 
-        const view = sheetVC.$view()
+        const view = this.sheetVC.$view()
         view.$addSubview($ui.create({ type: "view" }))
-        sheetVC.$setModalPresentationStyle(this.style)
-        sheetVC.$setModalInPresentation(this.#preventDismiss)
+        this.sheetVC.$setModalPresentationStyle(this.style)
+        this.sheetVC.$setModalInPresentation(this.#preventDismiss)
         this.#present = () => {
             view.jsValue().add(this.navigationView?.getPage().definition ?? this.view)
-            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", sheetVC, true, null)
+            $ui.vc.ocValue().invoke("presentViewController:animated:completion:", this.sheetVC, true, null)
         }
-        this.#dismiss = () => sheetVC.invoke("dismissViewControllerAnimated:completion:", true, null)
+        this.#dismiss = () => this.sheetVC.invoke("dismissViewControllerAnimated:completion:", true, null)
         return this
     }
 
@@ -148,6 +165,15 @@ class Sheet {
      */
     dismiss() {
         this.#dismiss()
+    }
+
+    willDismiss(willDismiss) {
+        this.#willDismiss = willDismiss
+        return this
+    }
+    didDismiss(didDismiss) {
+        this.#didDismiss = didDismiss
+        return this
     }
 
     static quickLookImage(data, title = $l10n("PREVIEW")) {
