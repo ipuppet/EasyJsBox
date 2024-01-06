@@ -17,29 +17,44 @@ class Kernel {
         L10n.init()
     }
 
-    static objectEqual(a, b) {
-        let aProps = Object.getOwnPropertyNames(a)
-        let bProps = Object.getOwnPropertyNames(b)
-        if (aProps.length !== bProps.length) {
+    static isObject(object) {
+        return object != null && typeof object === "object"
+    }
+
+    static objectEqual(obj1, obj2) {
+        // 获取对象的属性名
+        const keys1 = Object.keys(obj1)
+        const keys2 = Object.keys(obj2)
+
+        // 检查属性名的长度是否相等
+        if (keys1.length !== keys2.length) {
             return false
         }
-        for (let i = 0; i < aProps.length; i++) {
-            let propName = aProps[i]
 
-            let propA = a[propName]
-            let propB = b[propName]
-            if (Array.isArray(propA)) {
-                for (let i = 0; i < propA.length; i++) {
-                    if (!Kernel.objectEqual(propA[i], propB[i])) {
-                        return false
-                    }
-                }
-            } else if (typeof propA === "object") {
-                return Kernel.objectEqual(propA, propB)
-            } else if (propA !== propB) {
+        // 排序是为了优化性能，可以快速发现不匹配的属性
+        keys1.sort()
+        keys2.sort()
+
+        // 检查排序后的属性名是否一一对应
+        for (let i = 0; i < keys1.length; i++) {
+            if (keys1[i] !== keys2[i]) {
                 return false
             }
         }
+
+        // 深度比较每个属性的值
+        for (let key of keys1) {
+            const val1 = obj1[key]
+            const val2 = obj2[key]
+
+            // 检查属性值是否是对象，如果是，则递归比较
+            const areObjects = Kernel.isObject(val1) && Kernel.isObject(val2)
+            if ((areObjects && !Kernel.objectEqual(val1, val2)) || (!areObjects && val1 !== val2)) {
+                return false
+            }
+        }
+
+        // 如果所有检查都通过，则两个对象相等
         return true
     }
 
