@@ -38,6 +38,7 @@ class SettingItem {
     #icon
     title
     #options = {}
+    #onSet
 
     constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
@@ -100,7 +101,13 @@ class SettingItem {
     }
 
     set(value) {
+        if (typeof this.#onSet === "function") this.#onSet(value)
         return this.setting.set(this.key, value)
+    }
+
+    onSet(func) {
+        this.#onSet = func
+        return this
     }
 
     get(_default = this.default) {
