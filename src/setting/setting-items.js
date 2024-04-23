@@ -38,6 +38,7 @@ class SettingItem {
     #icon
     title
     #options = {}
+    #onSet
 
     constructor({ setting, key, title, icon, value = null } = {}) {
         this.setting = setting
@@ -100,7 +101,13 @@ class SettingItem {
     }
 
     set(value) {
+        if (typeof this.#onSet === "function") this.#onSet(value)
         return this.setting.set(this.key, value)
+    }
+
+    onSet(func) {
+        this.#onSet = func
+        return this
     }
 
     get(_default = this.default) {
@@ -846,9 +853,9 @@ class SettingInput extends SettingItem {
                         // 与标题间距 SettingItem.edgeOffset
                         make.left.equalTo(view.prev.get("label").right).offset(SettingItem.edgeOffset)
                         make.right.inset(SettingItem.edgeOffset)
-                        make.width.greaterThanOrEqualTo(30) // 30 大约是清空按钮的宽度
+                        make.width.greaterThanOrEqualTo(50) // 30 大约是清空按钮的宽度
                         make.height.equalTo(view.super)
-                        make.left.priority(1)
+                        make.left.priority(10)
                         make.width.priority(10)
                     },
                     events: {

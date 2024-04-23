@@ -298,7 +298,7 @@ class Setting extends Controller {
     }
 
     setFooter(footer) {
-        this.#footer = footer
+        this.footer = footer
         return this
     }
 

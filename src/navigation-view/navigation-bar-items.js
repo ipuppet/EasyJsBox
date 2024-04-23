@@ -57,6 +57,7 @@ class BarButtonItem extends View {
      * @type {string|$image}
      */
     #symbol
+    #symbolType
 
     /**
      * 对齐方式
@@ -64,11 +65,32 @@ class BarButtonItem extends View {
     align = UIKit.align.right
 
     get symbol() {
-        return this.#symbol
+        if (typeof this.#symbol === "string") {
+            if (this.#symbolType === "icon") {
+                return $icon(this.#symbol, this.color)
+            } else {
+                return $image(this.#symbol)
+            }
+        } else {
+            return this.#symbol
+        }
     }
 
     set symbol(symbol) {
-        this.#symbol = typeof symbol === "string" ? $image(symbol) : symbol
+        if (typeof this.#symbol === "string") {
+            if (isNaN(symbol)) {
+                this.#symbolType = "image"
+            } else {
+                this.#symbolType = "icon"
+            }
+        } else {
+            if (String(symbol) === "[object BBFileIcon]") {
+                this.#symbolType = "icon"
+            } else {
+                this.#symbolType = "image"
+            }
+        }
+        this.#symbol = symbol
     }
 
     get width() {
@@ -130,8 +152,12 @@ class BarButtonItem extends View {
      */
     setSymbol(symbol) {
         this.symbol = symbol
-        if ($(this.id)) {
-            $(this.id).symbol = this.symbol
+        if ($(`icon-button-${this.id}`)) {
+            if (this.#symbolType === "icon") {
+                $(`icon-button-${this.id}`).icon = this.symbol
+            } else {
+                $(`icon-button-${this.id}`).image = this.symbol
+            }
         }
         return this
     }
@@ -246,10 +272,14 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: this.color
                                 },
-                                this.symbol ? { image: this.symbol } : {}
+                                this.symbol
+                                    ? this.#symbolType === "icon"
+                                        ? { icon: this.symbol }
+                                        : { image: this.symbol }
+                                    : {}
                             ),
                             layout: (make, view) => {
-                                if (this.symbol) {
+                                if (this.symbol && this.#symbolType === "image") {
                                     make.size.equalTo(UIKit.getSymbolSize(this.symbol, this.iconSize))
                                 }
                                 make.center.equalTo(view.super)
