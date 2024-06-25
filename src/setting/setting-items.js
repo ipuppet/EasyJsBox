@@ -484,6 +484,7 @@ class SettingScript extends SettingItem {
                                 bgcolor: $color("clear"),
                                 tintColor: $color("secondaryText")
                             },
+                            events: { tapped: () => this.tapped() },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.right.inset(0)
@@ -637,7 +638,6 @@ class SettingMenu extends SettingItem {
                     }
                 }
             ],
-            events: { tapped },
             layout: $layout.fill
         }
     }
@@ -1068,6 +1068,7 @@ class SettingPush extends SettingItem {
                         bgcolor: $color("clear"),
                         tintColor: $color("secondaryText")
                     },
+                    events: { tapped: () => this.tapped() },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
                         make.right.inset(SettingItem.edgeOffset)
