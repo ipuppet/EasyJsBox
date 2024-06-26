@@ -3,20 +3,14 @@
         "title": "GENERAL",
         "items": [
             {
-                "icon": [
-                    "tag.fill",
-                    "#9B59B6"
-                ],
+                "icon": ["tag.fill", "#9B59B6"],
                 "title": "TIPS",
                 "type": "script",
                 "key": "tips",
                 "value": "this.method.tips"
             },
             {
-                "icon": [
-                    "doc.on.clipboard",
-                    "#FFCC66"
-                ],
+                "icon": ["doc.on.clipboard", "#FFCC66"],
                 "type": "child",
                 "title": "child",
                 "key": "child",
@@ -24,20 +18,14 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "text.alignleft",
-                                    "#FFCC66"
-                                ],
+                                "icon": ["text.alignleft", "#FFCC66"],
                                 "title": "number",
                                 "type": "number",
                                 "key": "child.number",
                                 "value": 100
                             },
                             {
-                                "icon": [
-                                    "square.and.arrow.down.on.square",
-                                    "#FF6633"
-                                ],
+                                "icon": ["square.and.arrow.down.on.square", "#FF6633"],
                                 "title": "switch",
                                 "type": "switch",
                                 "key": "child.switch",
@@ -53,33 +41,26 @@
         "title": "ABOUT",
         "items": [
             {
-                "icon": [
-                    "/assets/icon/github.com.jpeg",
-                    "white"
-                ],
+                "icon": ["icon_177", "black"],
                 "title": "Github",
                 "type": "info",
-                "key": "github",
-                "value": "https://github.com/ipuppet/EasyJsBox"
+                "value": ["EasyJsBox", "https://github.com/ipuppet/EasyJsBox"]
             },
             {
-                "icon": [
-                    "person.fill",
-                    "#FF9900"
-                ],
+                "icon": ["icon_172", "#1888bf"],
+                "title": "Telegram",
+                "type": "info",
+                "value": ["JSBoxTG", "https://t.me/JSBoxTG"]
+            },
+            {
+                "icon": ["person.fill", "#FF9900"],
                 "title": "AUTHOR",
                 "type": "info",
                 "key": "author",
-                "value": [
-                    "ipuppet",
-                    "https://blog.ipuppet.top"
-                ]
+                "value": ["Blog", "https://blog.ultagic.com"]
             },
             {
-                "icon": [
-                    "book.fill",
-                    "#A569BD"
-                ],
+                "icon": ["book.fill", "#A569BD"],
                 "title": "README",
                 "type": "script",
                 "key": "readme",
