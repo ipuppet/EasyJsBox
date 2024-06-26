@@ -57,7 +57,7 @@
                 "title": "AUTHOR",
                 "type": "info",
                 "key": "author",
-                "value": ["Blog", "https://blog.ultagic.com"]
+                "value": ["ipuppet", "https://blog.ultagic.com"]
             },
             {
                 "icon": ["book.fill", "#A569BD"],
