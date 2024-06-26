@@ -72,7 +72,7 @@ class SettingItem {
         if (!icon) icon = ["square.grid.2x2.fill", SettingItem.iconDefaultColor]
         else if (!Array.isArray(icon)) icon = [icon, SettingItem.iconDefaultColor]
 
-        // `icon[0]` symbol or image
+        // `icon[0]` SF Symbol, JSBox icon, or image
         // if `icon[0]` is array, light and dark mode
         if (!Array.isArray(icon[0])) {
             icon[0] = [icon[0], icon[0]]
@@ -147,10 +147,22 @@ class SettingItem {
                     views: [
                         {
                             type: "image",
-                            props: {
-                                tintColor: $color("white"),
-                                image: $image(this.icon[0][0], this.icon[0][1])
-                            },
+                            props: Object.assign(
+                                { tintColor: $color("white") },
+                                this.icon[0][0].startsWith("icon_")
+                                    ? {
+                                          icon: $icon(
+                                              this.icon[0][0].slice(
+                                                  5,
+                                                  this.icon[0][0].indexOf(".") > 0
+                                                      ? this.icon[0][0].indexOf(".")
+                                                      : this.icon[0][0].length
+                                              ),
+                                              $color("#ffffff")
+                                          )
+                                      }
+                                    : { image: $image(this.icon[0][0], this.icon[0][1]) }
+                            ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
                                 make.size.equalTo(20)
