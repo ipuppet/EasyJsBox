@@ -297,11 +297,6 @@ class Setting extends Controller {
         return this
     }
 
-    setFooter(footer) {
-        this.footer = footer
-        return this
-    }
-
     set footer(footer) {
         this.#footer = footer
     }
@@ -343,6 +338,11 @@ class Setting extends Controller {
         return this.#footer
     }
 
+    setFooter(footer) {
+        this.footer = footer
+        return this
+    }
+
     setReadonly() {
         this.#readonly = true
         return this
@@ -361,8 +361,10 @@ class Setting extends Controller {
 
     getOriginal(key, _default = null) {
         this.#checkLoadConfig()
-        if (Object.prototype.hasOwnProperty.call(this.setting, key)) return this.setting[key]
-        else return _default
+        if (Object.prototype.hasOwnProperty.call(this.setting, key)) {
+            return this.setting[key]
+        }
+        return _default
     }
 
     getItem(key) {
@@ -371,7 +373,7 @@ class Setting extends Controller {
 
     get(key, _default = null) {
         this.#checkLoadConfig()
-        if (!this.getItem(key)) {
+        if (!(this.getItem(key) instanceof SettingItem)) {
             return this.getOriginal(key, _default)
         }
         return this.getItem(key).get(_default)
