@@ -2,47 +2,49 @@
 
 > `Setting` 继承自 `Controller`，提供一个设置功能的 UI 页面和数据存储功能。
 
-## 使用
+## Usage
 
-### `Setting`
+### Methods
 
 > 组件控制器方法
 
 - `constructor(args = {})`
 
-    初始化，args 对象中参数均有 `setXxx(value): this` 实现，如 `setSavePath(path)` 返回值为对象自身，因此可以链式调用。
+    初始化， args 对象中参数均有 `setXxx(value): this` 实现，如 `setSavePath(path)` 返回值为对象自身，因此可以链式调用。
 
-    - `set`
+    **Args**
+
+  - `set`
 
     可用来重写 set 方法，必须同时设置 get 方法。
 
     设置此参数将导致 savePath 参数失效。
 
-    - `get`
+  - `get`
 
     可用来重写 get 方法，必须同时设置 set 方法。
 
     设置此参数将导致 savePath 参数失效。
 
-    - `savePath`
+  - `savePath`
 
     数据文件保存路径。
-    
+
     默认值： "storage/setting.json"
 
-    - `structure`
+  - `structure`
 
     结构数据。`structure` 优先级高于 `structurePath`
 
     若不提供则从 `structurePath` 读取数据。
 
-    - `structurePath`
+  - `structurePath`
 
     结构数据文件路径，如果设置了 `structure` 会使该参数失效。
 
     默认值： "setting.json"
 
-    - `name`
+  - `name`
 
     实例唯一名称，若不提供则自动生成。
 
@@ -68,7 +70,7 @@
 
     用来设置页脚视图，若不调用，将提供默认样式，显示作者和版本号（作者和版本号将从根目录的 `config.js` 获取）。
 
-### events
+### Events
 
 > 通过父类中的方法 `setEvent(event, callback)` 进行设置，详见 [Controller](./controller.md)
 
@@ -257,6 +259,7 @@ const animate = {
     "value": 0
 }
 ```
+
 可选参数 `pullDown`，默认 `false`。
 
 启用后，`menu` 项将以 Pull-Down 菜单样式显示，选项内容将不可动态更改。
