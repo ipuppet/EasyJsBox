@@ -67,7 +67,7 @@ class BarButtonItem extends View {
     get symbol() {
         if (typeof this.#symbol === "string") {
             if (this.#symbolType === "icon") {
-                return $icon(this.#symbol, this.color)
+                return $icon(this.#symbol, this.color).ocValue().$image().jsValue()
             } else {
                 return $image(this.#symbol)
             }
@@ -153,11 +153,7 @@ class BarButtonItem extends View {
     setSymbol(symbol) {
         this.symbol = symbol
         if ($(`icon-button-${this.id}`)) {
-            if (this.#symbolType === "icon") {
-                $(`icon-button-${this.id}`).icon = this.symbol
-            } else {
-                $(`icon-button-${this.id}`).image = this.symbol
-            }
+            $(`icon-button-${this.id}`).image = this.symbol
         }
         return this
     }
@@ -272,14 +268,10 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: this.color
                                 },
-                                this.symbol
-                                    ? this.#symbolType === "icon"
-                                        ? { icon: this.symbol }
-                                        : { image: this.symbol }
-                                    : {}
+                                this.symbol ? { image: this.symbol } : {}
                             ),
                             layout: (make, view) => {
-                                if (this.symbol && this.#symbolType === "image") {
+                                if (this.symbol) {
                                     make.size.equalTo(UIKit.getSymbolSize(this.symbol, this.iconSize))
                                 }
                                 make.center.equalTo(view.super)
