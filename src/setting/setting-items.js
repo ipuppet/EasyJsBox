@@ -147,22 +147,23 @@ class SettingItem {
                     views: [
                         {
                             type: "image",
-                            props: Object.assign(
-                                { tintColor: $color("white") },
-                                this.icon[0][0].startsWith("icon_")
-                                    ? {
-                                          icon: $icon(
-                                              this.icon[0][0].slice(
-                                                  5,
-                                                  this.icon[0][0].indexOf(".") > 0
-                                                      ? this.icon[0][0].indexOf(".")
-                                                      : this.icon[0][0].length
-                                              ),
-                                              $color("#ffffff")
-                                          )
-                                      }
-                                    : { image: $image(this.icon[0][0], this.icon[0][1]) }
-                            ),
+                            props: {
+                                tintColor: $color("white"),
+                                image: this.icon[0][0].startsWith("icon_")
+                                    ? $icon(
+                                          this.icon[0][0].slice(
+                                              5,
+                                              this.icon[0][0].indexOf(".") > 0
+                                                  ? this.icon[0][0].indexOf(".")
+                                                  : this.icon[0][0].length
+                                          ),
+                                          $color("#ffffff")
+                                      )
+                                          .ocValue()
+                                          .$image()
+                                          .jsValue()
+                                    : $image(this.icon[0][0], this.icon[0][1])
+                            },
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
                                 make.size.equalTo(20)
