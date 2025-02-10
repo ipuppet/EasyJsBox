@@ -146,26 +146,30 @@ class Kernel {
         }
     }
 
-    KeyboardRender(view = {}) {
+    KeyboardRender(view = {}, height = 267) {
         if (!view.id) view.id = $text.uuid
 
-        $ui.render()
-
-        $delay(0, () => {
-            $ui.controller.view = $ui.create(view)
-            $ui.controller.view.layout(view.layout)
+        $ui.render({
+            events: {
+                appeared: () => {
+                    $keyboard.height = height
+                    $ui.controller.view = $ui.create(view)
+                    $ui.controller.view.layout(view.layout)
+                }
+            }
         })
     }
-    KeyboardRenderWithViewFunc(getView) {
-        $ui.render()
-        $delay(0, () => {
-            $ui.controller.view = $ui.create({ type: "view" })
-            $delay(0, async () => {
-                const view = await getView()
-                if (!view.id) view.id = $text.uuid
-                $ui.controller.view = $ui.create(view)
-                $ui.controller.view.layout(view.layout)
-            })
+    KeyboardRenderWithViewFunc(getView, height = 267) {
+        $ui.render({
+            events: {
+                appeared: async () => {
+                    $keyboard.height = height
+                    const view = await getView()
+                    if (!view.id) view.id = $text.uuid
+                    $ui.controller.view = $ui.create(view)
+                    $ui.controller.view.layout(view.layout)
+                }
+            }
         })
     }
 
